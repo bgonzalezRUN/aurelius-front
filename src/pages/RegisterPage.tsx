@@ -118,6 +118,21 @@ export const RegisterPage = () => {
                 <option value="requester">Solicitante</option>
                 <option value="director">Director</option>
                 <option value="superintendent">Superintendente</option>
+                <option value="dg-construction">Dirección General de Construcción</option>
+                <option value="director-executive-construction">Director Ejecutivo de Construcción</option>
+                <option value="director-executive-operations">Director Ejecutivo de Operaciones</option>
+                <option value="director-executive-project">Director Ejecutivo del Proyecto</option>
+                <option value="director-construction">Director de Construcción</option>
+                <option value="manager-project">Gerente de Obra / Proyecto</option>
+                <option value="manager-resident">Administrador de Obra / Residente</option>
+                <option value="manager-procurator">Gerente de Procuración de Obra</option>
+                <option value="subdirector-manager">Subdirector / Gerente de Compras</option>
+                <option value="assistant-manager">Auxiliar de Compras</option>
+                <option value="manager-contract">Gerente de Contratos con Terceros (Jurídico)</option>
+                <option value="treasury-accounting">Tesorería y Contabilidad</option>
+                <option value="acsma-quality">ACSMA / Control de Calidad y Evaluaciones</option>
+                <option value="manager-workiva">Administrador de Workiva / Soporte TI</option>
+                <option value="external-provider">Proveedor Externo</option>
               </select>
             </div>
             <div>

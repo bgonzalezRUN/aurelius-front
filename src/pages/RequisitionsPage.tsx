@@ -28,7 +28,7 @@ export default function RequisitionsPage() {
       setRequisitions(data);
     } catch (err) {
       console.error(err);
-      alert("❌ Error al cargar las requisiciones");
+      window.location.href = "/";
     }
   };
 
@@ -42,13 +42,12 @@ export default function RequisitionsPage() {
       setRequisitions(data);
     } catch (err) {
       console.error(err);
-      alert("❌ No se encontró requisición con ese proyecto");
+      window.location.href = "/";
     }
   };
 
   const handleSave = async (data: BackendPayload) => {
     await createRequisition(data);
-    alert("Requisición creada correctamente ✅");
     await fetchAllRequisitions();
     setShowModal(false);
   };
@@ -59,7 +58,7 @@ export default function RequisitionsPage() {
       setSelectedRequisition(data);
     } catch (error) {
       console.error(error);
-      alert("Error al obtener el detalle ❌");
+      window.location.href = "/";
     }
   };
 
