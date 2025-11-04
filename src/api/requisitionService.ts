@@ -4,7 +4,7 @@ import { jwtDecode } from "jwt-decode";
 const API_BASE = "http://localhost:3000/requisitions";
 
 const TOKEN =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6InJlcXVlc3RlciIsImlhdCI6MTc2MTg0NTY0MSwiZXhwIjoxNzYxODQ5MjQxfQ.h-fknVKU9vQ62Q-lHe68gEP0mNbcZj0Qr8ichjG9y4U";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6InJlcXVlc3RlciIsImlhdCI6MTc2MTkyOTExOSwiZXhwIjoxNzYxOTMyNzE5fQ.A33IyJg9K6E4Uvfrhuq4Te6Otfj6C1Vji4_1SIcqHK0";
 
 localStorage.setItem("token", TOKEN);
 

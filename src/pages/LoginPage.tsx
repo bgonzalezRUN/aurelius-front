@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { login } from "../api/authService";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,12 +13,13 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      // TODO: reemplaza con tu llamada real al backend
-      await new Promise((r) => setTimeout(r, 900));
-      alert(`Email: ${email}\nPassword: ${password}`);
-    } catch (err) {
-      setError("No se pudo iniciar sesión. Inténtalo de nuevo.");
-    } finally {
+      const res = await login(email, password);
+      localStorage.setItem("token", res.data.token);
+      
+      setLoading(false);
+      window.location.href = "/reqs";
+    } catch (error) {
+      setError("Error al iniciar sesión");
       setLoading(false);
     }
   };
@@ -27,11 +29,11 @@ export default function LoginPage() {
       <main className="w-full max-w-md">
         <div className="flex items-center mb-4 select-none gap-10 pl-15">
           <div className="bg-blue-500 rounded-full">
-            <img 
-                src="/public/logoGI.png" 
-                alt="Aurelius Logo" 
-                className="relative w-12 h-12 object-contain drop-shadow-sm z-10"
-              />
+            <img
+              src="/public/logoGI.png"
+              alt="Aurelius Logo"
+              className="relative w-12 h-12 object-contain drop-shadow-sm z-10"
+            />
           </div>
           <div className="flex flex-col">
             <h1 className="mt-3 text-2xl text-center font-semibold text-cyan-800">Aurelius</h1>
@@ -43,7 +45,12 @@ export default function LoginPage() {
         <div className="bg-white rounded-2xl shadow-lg ring-1 ring-black/5 p-5 sm:p-6">
           <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl text-sm mb-4">
             <button className="rounded-lg py-2 bg-white shadow-sm font-medium">Iniciar Sesión</button>
-            <button className="rounded-lg py-2 text-slate-400 cursor-not-allowed" title="Deshabilitado">Registrarse</button>
+            <button
+              onClick={() => window.location.href = '/register'}
+              className="rounded-lg py-2 text-slate-500 hover:text-blue-600 font-medium"
+            >
+              Registrarse
+            </button>
           </div>
 
           <h2 className="text-xl font-semibold text-slate-800">Iniciar Sesión</h2>
