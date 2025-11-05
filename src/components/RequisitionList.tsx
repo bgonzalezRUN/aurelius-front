@@ -28,8 +28,19 @@ export default function RequisitionList({
     load();
   }, [filteredRequisitions]);
 
-  const fmt = (iso?: string) =>
-    iso ? new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso)) : "—";
+  /** formateadores **/
+  const fmtDate = (iso?: string) =>
+    iso
+      ? new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(new Date(iso))
+      : "—";
+
+  const fmtTime = (iso?: string) =>
+    iso
+      ? new Intl.DateTimeFormat("es-CO", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }).format(new Date(iso))
+      : "";
 
   const badge = (p: string) => {
     const base = "px-2 py-0.5 rounded-full text-xs font-medium";
@@ -55,7 +66,7 @@ export default function RequisitionList({
                 <th className="p-3">Proyecto</th>
                 <th className="p-3">Prioridad</th>
                 <th className="p-3">Proveedores</th>
-                <th className="p-3">Fecha llegada</th>
+                <th className="p-3">Fecha / Horarios</th>
                 <th className="p-3">Ítems</th>
                 <th className="p-3">Comentarios</th>
               </tr>
@@ -73,20 +84,46 @@ export default function RequisitionList({
                     <td className="p-3">
                       <div className="flex flex-wrap gap-1">
                         {r.sendTo?.map((s, i) => (
-                          <span key={i} className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
+                          <span
+                            key={i}
+                            className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full"
+                          >
                             {s.name}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td className="p-3">{fmt(r.arrivalDate)}</td>
+
+                    {/* 🆕 Fecha y franjas */}
+                    <td className="p-3">
+                      <div className="flex flex-col text-sm text-gray-700">
+                        <span className="font-medium">{fmtDate(r.arrivalDate)}</span>
+                        {Array.isArray((r as any).arrivalWindows) &&
+                          (r as any).arrivalWindows.length > 0 && (
+                            <div className="mt-1 flex flex-col gap-0.5">
+                              {(r as any).arrivalWindows.map((w: any, i: number) => (
+                                <span
+                                  key={i}
+                                  className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md w-fit"
+                                >
+                                  {fmtTime(w.start)} – {fmtTime(w.end)}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                      </div>
+                    </td>
+
                     <td className="p-3">{r.items?.length ?? 0}</td>
                     <td className="p-3">{r.comments}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="p-6 text-center text-gray-500 italic bg-gray-50">
+                  <td
+                    colSpan={6}
+                    className="p-6 text-center text-gray-500 italic bg-gray-50"
+                  >
                     Sin datos
                   </td>
                 </tr>

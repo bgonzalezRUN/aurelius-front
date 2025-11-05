@@ -16,7 +16,7 @@ export type BackendPayload = {
   comments: string;
   sendTo: BackendSendTo[];
   items: BackendItem[];
-  arrivalDate: string; // ISO con Z
+  arrivalDate: string; 
 };
 
 export type Requisition = {

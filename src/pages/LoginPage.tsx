@@ -19,7 +19,7 @@ export default function LoginPage() {
       setLoading(false);
       window.location.href = "/reqs";
     } catch (error) {
-      setError("Error al iniciar sesión");
+      setError("Correo o contraseña incorrectos");
       setLoading(false);
     }
   };
@@ -110,7 +110,7 @@ export default function LoginPage() {
 
         {/* enlaces auxiliares */}
         <div className="mt-4 text-center text-sm text-slate-500">
-          <a href="#" className="hover:text-blue-600 hover:underline">¿Olvidaste tu contraseña?</a>
+          <a href="/recovery-link" className="hover:text-blue-600 hover:underline">¿Olvidaste tu contraseña?</a>
         </div>
       </main>
     </div>

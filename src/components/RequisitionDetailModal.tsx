@@ -17,17 +17,20 @@ export default function RequisitionDetailModal({
   const [agree, setAgree] = useState(false);
   const [signature, setSignature] = useState("");
 
-  // Nuevo: modal de eliminación
+  // Modal de eliminación
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const fmt = (iso?: string) =>
+  // ---- Formateadores ----
+  const fmtDate = (iso?: string) =>
     iso
-      ? new Intl.DateTimeFormat("es-CO", {
-          dateStyle: "medium",
-          timeStyle: "short",
-        }).format(new Date(iso))
+      ? new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(new Date(iso))
       : "—";
+
+  const fmtTime = (iso?: string) =>
+    iso
+      ? new Intl.DateTimeFormat("es-CO", { hour: "2-digit", minute: "2-digit" }).format(new Date(iso))
+      : "";
 
   const roleFromToken = useMemo(() => {
     try {
@@ -63,9 +66,7 @@ export default function RequisitionDetailModal({
   };
 
   // --- Eliminación ---
-  const openDeleteConfirm = () => {
-    setShowDeleteModal(true);
-  };
+  const openDeleteConfirm = () => setShowDeleteModal(true);
 
   const onConfirmDelete = async () => {
     try {
@@ -79,6 +80,15 @@ export default function RequisitionDetailModal({
     }
   };
 
+  // Badge de prioridad
+  const badge = (p?: string) => {
+    const base = "px-2 py-0.5 rounded-full text-xs font-medium";
+    if (p === "alta") return <span className={`${base} bg-red-100 text-red-700`}>Alta</span>;
+    if (p === "media") return <span className={`${base} bg-yellow-100 text-yellow-800`}>Media</span>;
+    if (p === "baja") return <span className={`${base} bg-green-100 text-green-700`}>Baja</span>;
+    return <span className={`${base} bg-gray-100 text-gray-700`}>{p ?? "—"}</span>;
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
       <div className="bg-white rounded-xl shadow-lg p-6 w-[750px] max-h-[90vh] overflow-y-auto relative">
@@ -90,15 +100,39 @@ export default function RequisitionDetailModal({
             <p>
               <span className="font-semibold">Proyecto:</span> {requisition.project}
             </p>
-            <p>
-              <span className="font-semibold">Prioridad:</span> {requisition.priority}
+            <p className="flex items-center gap-2">
+              <span className="font-semibold">Prioridad:</span> {badge(requisition.priority)}
             </p>
+
             <p className="col-span-2">
               <span className="font-semibold">Comentarios:</span> {requisition.comments}
             </p>
-            <p>
-              <span className="font-semibold">Fecha llegada:</span> {fmt(requisition.arrivalDate)}
-            </p>
+
+            {/* Fecha + Franjas */}
+            <div className="col-span-2">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
+                <span className="font-semibold">Fecha de llegada:</span>
+                <span>{fmtDate(requisition.arrivalDate)}</span>
+              </div>
+
+              {Array.isArray((requisition as any).arrivalWindows) &&
+                (requisition as any).arrivalWindows.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {(requisition as any).arrivalWindows.map(
+                      (w: { start: string; end: string }, i: number) => (
+                        <span
+                          key={i}
+                          className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md"
+                          title={`${fmtDate(w.start)} ${fmtTime(w.start)} – ${fmtTime(w.end)}`}
+                        >
+                          {fmtTime(w.start)} – {fmtTime(w.end)}
+                        </span>
+                      )
+                    )}
+                  </div>
+                )}
+            </div>
+
             <div className="col-span-2">
               <span className="font-semibold">Enviar a:</span>{" "}
               {requisition.sendTo?.map((s, i) => (
@@ -195,9 +229,7 @@ export default function RequisitionDetailModal({
                 requisición del proyecto <span className="font-semibold">{requisition.project}</span>.
               </p>
 
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tu firma
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tu firma</label>
               <input
                 value={signature}
                 onChange={(e) => setSignature(e.target.value)}
@@ -250,8 +282,8 @@ export default function RequisitionDetailModal({
               <p className="text-sm text-gray-600 mb-4">
                 Vas a eliminar la requisición con id{" "}
                 <span className="font-semibold">{requisition.id}</span> del proyecto{" "}
-                <span className="font-semibold">{requisition.project}</span>.
-                Esta acción no se puede deshacer.
+                <span className="font-semibold">{requisition.project}</span>. Esta acción no se puede
+                deshacer.
               </p>
 
               <div className="flex justify-end gap-2">

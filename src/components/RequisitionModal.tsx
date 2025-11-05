@@ -10,10 +10,37 @@ type Item = {
   subpart: string;
 };
 
-const VENDORS = ["proveedor 1", "proveedor 2", "proveedor 3"];
+type TimeWindow = { start: string; end: string }; // "HH:MM"
 
+/** Utils **/
+const VENDORS = ["proveedor 1", "proveedor 2", "proveedor 3"];
 const normalize = (s: any) => (s ?? "").toString().trim();
-const toISOZ = (local: string) => (local ? new Date(local).toISOString() : "");
+
+// "2025-11-04", "09:00" -> "2025-11-04T09:00:00.000Z" (según TZ local del usuario)
+const toISOFromDateAndTime = (dateStr: string, timeStr: string) => {
+  if (!dateStr || !timeStr) return "";
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const [hh, mm] = timeStr.split(":").map(Number);
+  const dt = new Date(y, m - 1, d, hh, mm, 0);
+  return dt.toISOString();
+};
+
+const toMinutes = (hhmm: string) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+};
+
+const hasOverlaps = (wins: TimeWindow[]) => {
+  const arr = wins
+    .map((w) => ({ s: toMinutes(w.start), e: toMinutes(w.end) }))
+    .sort((a, b) => a.s - b.s);
+
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i].s >= arr[i].e) return true; // inicio >= fin => inválido
+    if (i > 0 && arr[i].s < arr[i - 1].e) return true; // solapado con anterior
+  }
+  return false;
+};
 
 export default function RequisitionModal({
   open,
@@ -29,7 +56,8 @@ export default function RequisitionModal({
     comments: "",
     project: "",
     sendTo: [] as string[],
-    arrivalDate: "",
+    arrivalDay: "", // "YYYY-MM-DD"
+    arrivalWindows: [{ start: "", end: "" }] as TimeWindow[], // múltiples rangos
     items: [
       { material: "", metricUnit: "", quantity: "", part: "", subpart: "" },
     ] as Item[],
@@ -37,27 +65,57 @@ export default function RequisitionModal({
 
   const [loading, setLoading] = useState(false);
 
-  // Errores simples para UX
+  // Errores UX
   const [vendorsError, setVendorsError] = useState(false);
-  const [arrivalError, setArrivalError] = useState(false);
+  const [arrivalDayError, setArrivalDayError] = useState(false);
+  const [arrivalWindowsError, setArrivalWindowsError] = useState<string | null>(null);
   const [itemsErrors, setItemsErrors] = useState<number[]>([]); // índices inválidos
 
-  const isChecked = (n: string) => form.sendTo.includes(n);
+  // ---- PDF (solo UI; sin lógica de subida por ahora) ----
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] || null;
+    setPdfFile(f);
+  };
+
+  const onDropFile = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    const f = e.dataTransfer.files?.[0] || null;
+    setPdfFile(f);
+  };
+
+  const onDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const onDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setDragOver(false);
+  };
+
+  /** Vendors **/
+  const isCheckedVendor = (n: string) => form.sendTo.includes(n);
   const toggleVendor = (n: string) => {
     setForm((p) => {
-      const updated = isChecked(n) ? p.sendTo.filter((x) => x !== n) : [...p.sendTo, n];
-      // limpiar error si ya hay alguno seleccionado
+      const updated = isCheckedVendor(n)
+        ? p.sendTo.filter((x) => x !== n)
+        : [...p.sendTo, n];
       if (updated.length > 0 && vendorsError) setVendorsError(false);
       return { ...p, sendTo: updated };
     });
   };
 
+  /** Ítems **/
   const handleItemChange = (i: number, field: keyof Item, val: string) => {
     const items = [...form.items];
     (items[i] as any)[field] = val;
     setForm({ ...form, items });
 
-    // Si el usuario corrige algo en un ítem marcado como inválido, revalida ese ítem
     if (itemsErrors.includes(i)) {
       const idxs = itemsErrors.filter((idx) => idx !== i);
       setItemsErrors(idxs);
@@ -75,11 +133,34 @@ export default function RequisitionModal({
 
   const removeItem = (i: number) => {
     setForm((p) => ({ ...p, items: p.items.filter((_, idx) => idx !== i) }));
-    // limpia error asociado a ese índice
     setItemsErrors((prev) => prev.filter((idx) => idx !== i));
   };
 
-  // ---------- Validación ----------
+  /** Ventanas de tiempo **/
+  const addWindow = () =>
+    setForm((p) => ({
+      ...p,
+      arrivalWindows: [...p.arrivalWindows, { start: "", end: "" }],
+    }));
+
+  const removeWindow = (i: number) => {
+    setForm((p) => ({
+      ...p,
+      arrivalWindows: p.arrivalWindows.filter((_, idx) => idx !== i),
+    }));
+    setArrivalWindowsError(null);
+  };
+
+  const setWindow = (i: number, field: keyof TimeWindow, value: string) => {
+    setForm((p) => {
+      const arr = [...p.arrivalWindows];
+      arr[i] = { ...arr[i], [field]: value };
+      return { ...p, arrivalWindows: arr };
+    });
+    setArrivalWindowsError(null);
+  };
+
+  /** Validación **/
   const validate = () => {
     let ok = true;
 
@@ -91,12 +172,24 @@ export default function RequisitionModal({
       setVendorsError(false);
     }
 
-    // Fecha de llegada
-    if (!form.arrivalDate) {
-      setArrivalError(true);
+    // Día de llegada
+    if (!form.arrivalDay) {
+      setArrivalDayError(true);
       ok = false;
     } else {
-      setArrivalError(false);
+      setArrivalDayError(false);
+    }
+
+    // Ventanas de tiempo
+    const wins = form.arrivalWindows.filter((w) => w.start && w.end);
+    if (form.arrivalWindows.length === 0 || wins.length === 0) {
+      setArrivalWindowsError("Agrega al menos una franja válida (inicio y fin).");
+      ok = false;
+    } else if (hasOverlaps(wins)) {
+      setArrivalWindowsError("Las franjas no deben solaparse y cada inicio debe ser menor al fin.");
+      ok = false;
+    } else {
+      setArrivalWindowsError(null);
     }
 
     // Ítems
@@ -122,18 +215,33 @@ export default function RequisitionModal({
     return ok;
   };
 
+  /** Submit **/
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validación previa
     if (!validate()) {
-      alert("Por favor completa: al menos 1 proveedor.");
+      alert("Por favor completa: proveedores, día y al menos una franja válida; además, revisa los ítems.");
       return;
     }
 
     setLoading(true);
     try {
-      const payload: BackendPayload = {
+      // Ventanas en ISO
+      const windowsISO = form.arrivalWindows
+        .filter((w) => w.start && w.end)
+        .map((w) => ({
+          start: toISOFromDateAndTime(form.arrivalDay, w.start),
+          end: toISOFromDateAndTime(form.arrivalDay, w.end),
+        }));
+
+      // Compatibilidad con back actual (inicio del día)
+      const arrivalDateISO = form.arrivalDay
+        ? toISOFromDateAndTime(form.arrivalDay, "00:00")
+        : "";
+
+      const payload: BackendPayload & {
+        arrivalWindows?: { start: string; end: string }[];
+      } = {
         priority: normalize(form.priority),
         project: normalize(form.project),
         comments: normalize(form.comments),
@@ -145,7 +253,8 @@ export default function RequisitionModal({
           part: normalize(it.part),
           subpart: normalize(it.subpart),
         })) as any,
-        arrivalDate: toISOZ(form.arrivalDate),
+        arrivalDate: arrivalDateISO,
+        arrivalWindows: windowsISO,
       };
 
       if (onSave) await onSave(payload);
@@ -181,7 +290,6 @@ export default function RequisitionModal({
 
         {/* Form principal */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
           {/* Proyecto */}
           <div>
             <label className="text-sm text-gray-600 font-medium mb-1 block">Proyecto *</label>
@@ -246,7 +354,7 @@ export default function RequisitionModal({
                     <input
                       id={id}
                       type="checkbox"
-                      checked={isChecked(v)}
+                      checked={isCheckedVendor(v)}
                       onChange={() => toggleVendor(v)}
                       className="h-4 w-4 rounded border-gray-300"
                     />
@@ -260,28 +368,148 @@ export default function RequisitionModal({
             )}
           </div>
 
-          {/* Fecha de llegada */}
+          {/* Día de llegada */}
           <div>
             <label className="text-sm text-gray-600 font-medium mb-1 block">
-              Fecha de llegada necesaria *
+              Día de llegada necesario *
             </label>
             <input
-              type="datetime-local"
-              name="arrivalDate"
-              value={form.arrivalDate}
+              type="date"
+              name="arrivalDay"
+              value={form.arrivalDay}
               onChange={(e) => {
-                setForm({ ...form, arrivalDate: e.target.value });
-                if (arrivalError && e.target.value) setArrivalError(false);
+                setForm({ ...form, arrivalDay: e.target.value });
+                if (arrivalDayError && e.target.value) setArrivalDayError(false);
               }}
               className={`w-full rounded-lg border p-2 focus:ring-2 focus:ring-blue-400 outline-none ${
-                arrivalError ? "border-red-500" : "border-gray-300"
+                arrivalDayError ? "border-red-500" : "border-gray-300"
               }`}
               required
             />
-            {arrivalError && (
-              <p className="mt-1 text-xs text-red-600">La fecha de llegada es obligatoria.</p>
+            {arrivalDayError && (
+              <p className="mt-1 text-xs text-red-600">El día de llegada es obligatorio.</p>
             )}
           </div>
+
+          {/* Franjas horarias dinámicas */}
+          <div className="md:col-span-2">
+            <label className="text-sm text-gray-600 font-medium mb-1 block">
+              Horarios de recepción (puedes agregar varias franjas) *
+            </label>
+
+            <div className="space-y-3">
+              {form.arrivalWindows.map((w, i) => (
+                <div
+                  key={i}
+                  className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center"
+                >
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <span className="text-sm text-gray-500 w-16">Inicio</span>
+                    <input
+                      type="time"
+                      value={w.start}
+                      onChange={(e) => setWindow(i, "start", e.target.value)}
+                      className="border rounded-lg p-2 w-full sm:w-40 focus:ring-2 focus:ring-blue-400 outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <span className="text-sm text-gray-500 w-16">Fin</span>
+                    <input
+                      type="time"
+                      value={w.end}
+                      onChange={(e) => setWindow(i, "end", e.target.value)}
+                      className="border rounded-lg p-2 w-full sm:w-40 focus:ring-2 focus:ring-blue-400 outline-none"
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => removeWindow(i)}
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 self-start"
+                    title="Eliminar franja"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Quitar
+                  </button>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={addWindow}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+              >
+                <Plus className="h-4 w-4" /> Agregar franja
+              </button>
+            </div>
+
+            {arrivalWindowsError && (
+              <p className="mt-2 text-xs text-red-600">{arrivalWindowsError}</p>
+            )}
+          </div>
+
+          {/* ---------- PDF opcional (debajo de horarios) ---------- */}
+          <div className="md:col-span-2 mt-4">
+            <label className="text-sm text-gray-600 font-medium mb-2 block">
+              Cargar PDF de materiales (opcional)
+            </label>
+
+            <label
+              htmlFor="materialsPdf"
+              onDrop={onDropFile}
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              className={`w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition ${
+                dragOver ? "border-blue-400 bg-blue-50/50" : "border-gray-300"
+              }`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-8 h-8 text-gray-400"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.5"
+                  d="M3 15a4 4 0 004 4h10a4 4 0 000-8h-.026A8 8 0 104 15h-.001z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.5"
+                  d="M12 12v9m0 0l-3.5-3.5M12 21l3.5-3.5"
+                />
+              </svg>
+
+              <p className="mt-2 text-sm text-gray-600">
+                Selecciona un PDF con la tabla{" "}
+                <span className="italic">(Material | Unidad Métrica | Cantidad | Partida | Subpartida)</span>
+              </p>
+
+              <span className="mt-1 text-blue-600 text-sm underline">Examinar…</span>
+
+              {pdfFile && (
+                <div className="mt-3 text-xs text-gray-700 bg-gray-50 px-3 py-1 rounded-full">
+                  Archivo seleccionado: <b>{pdfFile.name}</b>
+                </div>
+              )}
+            </label>
+
+            <input
+              id="materialsPdf"
+              type="file"
+              accept="application/pdf"
+              onChange={onPickFile}
+              className="hidden"
+            />
+          </div>
+          {/* ---------- /PDF opcional ---------- */}
         </div>
 
         {/* Ítems */}
