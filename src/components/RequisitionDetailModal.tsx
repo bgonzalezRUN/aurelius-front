@@ -179,19 +179,19 @@ export default function RequisitionDetailModal({
           <h3 className="text-lg font-semibold text-blue-700 mb-2">Firmas</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-gray-700">
             <div className="p-3 border rounded-md">
-              <p className="font-semibold">Solicitante</p>
+              <p className="font-semibold">Gerente de obra</p>
               <p className="text-sm text-gray-600 mt-1">
                 {requisition.requesterSignature || "⛔ No firmada"}
               </p>
             </div>
             <div className="p-3 border rounded-md">
-              <p className="font-semibold">Director</p>
+              <p className="font-semibold">Director de construcción</p>
               <p className="text-sm text-gray-600 mt-1">
                 {requisition.directorSignature || "⛔ No firmada"}
               </p>
             </div>
             <div className="p-3 border rounded-md">
-              <p className="font-semibold">Superintendente</p>
+              <p className="font-semibold">Subdirector de procuración</p>
               <p className="text-sm text-gray-600 mt-1">
                 {requisition.superintendentSignature || "⛔ No firmada"}
               </p>

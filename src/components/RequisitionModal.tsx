@@ -2,6 +2,12 @@ import { useState } from "react";
 import { Plus, Trash2, X } from "lucide-react";
 import { createRequisition, type BackendPayload } from "../api/requisitionService";
 
+import * as pdfjs from "pdfjs-dist";
+import PdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?worker";
+pdfjs.GlobalWorkerOptions.workerPort = new PdfWorker();
+
+import * as XLSX from "xlsx";
+
 type Item = {
   material: string;
   metricUnit: string;
@@ -16,7 +22,7 @@ type TimeWindow = { start: string; end: string }; // "HH:MM"
 const VENDORS = ["proveedor 1", "proveedor 2", "proveedor 3"];
 const normalize = (s: any) => (s ?? "").toString().trim();
 
-// "2025-11-04", "09:00" -> "2025-11-04T09:00:00.000Z" (según TZ local del usuario)
+// "2025-11-04", "09:00" -> "2025-11-04T09:00:00.000Z"
 const toISOFromDateAndTime = (dateStr: string, timeStr: string) => {
   if (!dateStr || !timeStr) return "";
   const [y, m, d] = dateStr.split("-").map(Number);
@@ -36,11 +42,352 @@ const hasOverlaps = (wins: TimeWindow[]) => {
     .sort((a, b) => a.s - b.s);
 
   for (let i = 0; i < arr.length; i++) {
-    if (arr[i].s >= arr[i].e) return true; // inicio >= fin => inválido
-    if (i > 0 && arr[i].s < arr[i - 1].e) return true; // solapado con anterior
+    if (arr[i].s >= arr[i].e) return true;
+    if (i > 0 && arr[i].s < arr[i - 1].e) return true;
   }
   return false;
 };
+
+/* ====== Extractor PDF ====== */
+type PdfCell = { text: string; x: number; y: number };
+const DEBUG_PDF = true;
+
+const UNIT_TOKENS = new Set([
+  "PZAS","PZA","PIEZAS","PIEZA",
+  "ROLLOS","ROLLO",
+  "TON","TONELADAS","TONELADA",
+  "MTRS","MTR","MTS","MT",
+  "KG","KGS",
+  "TAMBOS","TAMBO",
+  "CAJAS","CAJA",
+  "LTS","LT","LITROS","LITRO",
+  "M2","M3","ML","UNIDAD","UNIDADES"
+]);
+
+const normalizeQtyStr = (s: string) => {
+  if (!s) return "";
+  let t = s.replace(/(?<=\d)[.,](?=\d{3}\b)/g, "");
+  const parts = t.split(".");
+  if (parts.length > 2) {
+    const dec = parts.pop()!;
+    t = parts.join("") + "." + dec;
+  }
+  return t;
+};
+
+const clusterByY = (cells: PdfCell[], tol = 4.5) => {
+  const lines: { y: number; cells: { x: number; text: string }[] }[] = [];
+  for (const it of cells) {
+    const t = (it.text ?? "").toString().trim();
+    if (!t) continue;
+    let line = lines.find((ln) => Math.abs(ln.y - it.y) < tol);
+    if (!line) {
+      line = { y: it.y, cells: [] };
+      lines.push(line);
+    }
+    line.cells.push({ x: it.x, text: t });
+  }
+  lines.sort((a, b) => b.y - a.y);
+  lines.forEach((ln) => ln.cells.sort((a, b) => a.x - b.x));
+  return lines;
+};
+
+const calcBoundariesFromHeader = (headerCells: { x: number; text: string }[]) => {
+  const cells = headerCells.map((c) => ({ x: c.x, text: c.text.replace(/\s+/g, " ").trim() }));
+
+  const labels = [
+    { key: "numero",   rx: /^(N[º°. ]|N°|Nº|No\.?)$/i },
+    { key: "material", rx: /^MATERIAL(?:ES)?$/i },
+    { key: "unidad",   rx: /^(UNIDAD|M[ÉE]TRICA|UNIDAD\s*M[ÉE]TRICA)$/i },
+    { key: "cantidad", rx: /^CANTIDAD$/i },
+    { key: "partida",  rx: /^PARTIDA$/i },
+    { key: "subpart",  rx: /^(SUBPARTIDA|CONCEPTO|SUBPARTIDA\s*O\s*CONCEPTO)$/i },
+  ];
+
+  const found: Record<string, number> = {};
+  for (const c of cells) {
+    for (const lb of labels) {
+      if (!found[lb.key] && lb.rx.test(c.text)) found[lb.key] = c.x;
+    }
+  }
+  if (found.material != null && found.cantidad != null && found.unidad == null) {
+    found.unidad = (found.material + found.cantidad) / 2;
+  }
+  if (found.partida != null && found.subpart == null) {
+    found.subpart = found.partida + 60;
+  }
+
+  const cols = Object.entries(found).map(([key, x]) => ({ key, x })).sort((a, b) => a.x - b.x);
+
+  if (cols.length < 3) {
+    return {
+      numero: [65,110],
+      material: [120,460],
+      unidad: [470,560],
+      cantidad: [570,650],
+      partida: [660,740],
+      subpart: [750,1200],
+    } as Record<string,[number,number]>;
+  }
+
+  const bounds: Record<string, [number, number]> = {} as any;
+  for (let i = 0; i < cols.length; i++) {
+    const left = cols[i];
+    const right = cols[i + 1];
+    const min = left.x - 2;
+    const max = right ? right.x - 2 : left.x + 2000;
+    bounds[left.key] = [min, max];
+  }
+
+  if (!bounds.unidad && bounds.material && bounds.cantidad) {
+    bounds.unidad = [bounds.material[1], bounds.cantidad[0]];
+  }
+  if (!bounds.subpart && bounds.partida) {
+    bounds.subpart = [bounds.partida[1], bounds.partida[1] + 2000];
+  }
+
+  return bounds;
+};
+
+const textInBand = (cells: { x: number; text: string }[], band?: [number, number]) =>
+  band ? cells.filter(c => c.x >= band[0] && c.x < band[1]).map(c => c.text).join(" ").trim() : "";
+
+const lastQuantityMatch = (s: string): { token: string; index: number } | null => {
+  const re = /\b\d{1,3}(?:[.,]\d{3})*(?:[.,]\d+)?\b|\b\d+(?:[.,]\d+)?\b/g;
+  let m: RegExpExecArray | null, last: RegExpExecArray | null = null;
+  while ((m = re.exec(s))) last = m;
+  return last ? { token: last[0], index: last.index } : null;
+};
+
+const inferUnitBeforeQuantity = (left: string): { unit?: string; materialLeft: string } => {
+  const tokens = [...left.matchAll(/\S+/g)];
+  if (tokens.length === 0) return { materialLeft: left.trim() };
+  const prevTok = tokens[tokens.length - 1][0];
+  const isWord = /^[A-Za-zÁÉÍÓÚÜÑ]{1,12}s?$/i.test(prevTok);
+  const hasDigits = /\d/.test(prevTok);
+  if (isWord && !hasDigits) {
+    const start = tokens[tokens.length - 1].index!;
+    const end = start + prevTok.length;
+    const materialLeft = (left.slice(0, start) + left.slice(end)).replace(/\s+/g, " ").trim();
+    return { unit: prevTok, materialLeft };
+  }
+  return { materialLeft: left.trim() };
+};
+
+const findUnitTokenByList = (s: string) => {
+  const tok = s.split(/\s+/).find(t => UNIT_TOKENS.has(t.toUpperCase()));
+  return tok;
+};
+
+async function extractItemsFromPdf(file: File): Promise<Item[]> {
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjs.getDocument({ data: buf }).promise;
+  const out: Item[] = [];
+
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    const cells: PdfCell[] = (content.items as any[]).map((i) => {
+      const [, , , , e, f] = i.transform;
+      return { text: String(i.str || ""), x: e as number, y: f as number };
+    });
+
+    const lines = clusterByY(cells, 4.5);
+    if (DEBUG_PDF) {
+      console.group(`📄 Página ${p}`);
+      lines.slice(0, 120).forEach((ln, i) =>
+        console.log(`#${i} y=${ln.y.toFixed(1)} |`, ln.cells.map(c => c.text).join(" "))
+      );
+      console.groupEnd();
+    }
+
+    const headerIdx = lines.findIndex(ln => /MATERIAL(?:ES)?/i.test(ln.cells.map(c => c.text).join(" ")));
+    if (headerIdx < 0) continue;
+
+    const headerLines = [lines[headerIdx], lines[headerIdx + 1], lines[headerIdx + 2]].filter(Boolean);
+    const headerCells = headerLines.flatMap(l => l.cells);
+    const headerFloorY = Math.min(...headerLines.map(l => l.y));
+    const bounds = calcBoundariesFromHeader(headerCells);
+
+    for (let i = headerIdx + headerLines.length; i < lines.length; i++) {
+      const ln = lines[i];
+      if (ln.y >= headerFloorY) continue;
+
+      let joined = ln.cells.map(c => c.text).join(" ").trim();
+      if (!joined) continue;
+      if (/ENVIAR A|OBSERVACIONES?|CROQUIS|DIRECCI[ÓO]N|NOTA:|SOLICITADO POR/i.test(joined)) break;
+
+      joined = joined.replace(/^\s*\d+\b\s*/, "");
+
+      const q = lastQuantityMatch(joined);
+      if (!q) continue;
+
+      const qty = normalizeQtyStr(q.token);
+      const leftSide = joined.slice(0, q.index).trim();
+
+      let { unit, materialLeft } = inferUnitBeforeQuantity(leftSide);
+
+      if (!unit) unit = findUnitTokenByList(leftSide) || findUnitTokenByList(joined);
+      if (!unit) {
+        const unitBand = textInBand(ln.cells, bounds.unidad);
+        if (unitBand) unit = unitBand.split(/\s+/)[0];
+      }
+
+      let materialFrag = materialLeft || textInBand(ln.cells, bounds.material);
+
+      if (unit && /M[ÉE]TRICA/i.test(unit)) unit = "";
+
+      let lookahead = 0;
+      while (lookahead < 2 && i + 1 < lines.length) {
+        const nxt = lines[i + 1];
+        if (nxt.y >= headerFloorY) break;
+        const jn = nxt.cells.map(c => c.text).join(" ").trim();
+        if (!jn) break;
+        const hasNum = !!lastQuantityMatch(jn);
+        const hasUnitAny = !!findUnitTokenByList(jn);
+        const matNext = textInBand(nxt.cells, bounds.material) || jn;
+        if (!hasNum && !hasUnitAny && matNext) {
+          materialFrag = (materialFrag ? materialFrag + " " : "") + matNext;
+          i++; lookahead++;
+        } else {
+          break;
+        }
+      }
+
+      const item: Item = {
+        material: (materialFrag || "").replace(/\s+/g, " ").trim(),
+        metricUnit: (unit || "").trim(),
+        quantity: qty,
+        part: textInBand(ln.cells, bounds.partida),
+        subpart: textInBand(ln.cells, bounds.subpart),
+      };
+
+      if (!item.material) {
+        const leftOfUnit = ln.cells
+          .filter(c => c.x < (bounds.unidad?.[0] ?? Number.MAX_SAFE_INTEGER))
+          .map(c => c.text).join(" ").trim();
+        if (leftOfUnit) item.material = leftOfUnit;
+      }
+
+      if (item.material) out.push(item);
+    }
+  }
+
+  if (DEBUG_PDF) console.log("RESULTADOS FINALES:", out.length, out);
+  return out;
+}
+
+const HEADER_MAP: Record<string, keyof Item> = {
+  "material": "material",
+  "materiales": "material",
+  "desc": "material",
+  "descripcion": "material",
+  "descripción": "material",
+  "unidad": "metricUnit",
+  "unid": "metricUnit",
+  "unidad metrica": "metricUnit",
+  "unidad métrica": "metricUnit",
+  "u.m.": "metricUnit",
+  "um": "metricUnit",
+  "cantidad": "quantity",
+  "cant": "quantity",
+  "qty": "quantity",
+  "partida": "part",
+  "pda": "part",
+  "subpartida": "subpart",
+  "concepto": "subpart",
+  "sub-partida": "subpart",
+};
+
+const normalizeHeader = (h: string) =>
+  h
+    .toString()
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/[._-]+/g, " ")
+    .trim();
+
+function pickHeaderIndex(row0: any[]): Record<keyof Item, number | undefined> {
+  const out: Record<keyof Item, number | undefined> = {
+    material: undefined,
+    metricUnit: undefined,
+    quantity: undefined,
+    part: undefined,
+    subpart: undefined,
+  };
+  row0.forEach((h, idx) => {
+    const k = HEADER_MAP[normalizeHeader(String(h || ""))];
+    if (k && out[k] == null) out[k] = idx;
+  });
+  return out;
+}
+
+async function extractItemsFromExcel(file: File): Promise<Item[]> {
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: "array" });
+  const sheetName = wb.SheetNames[0];
+  const ws = wb.Sheets[sheetName];
+  if (!ws) return [];
+
+  const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: "" });
+  if (!rows.length) return [];
+
+  const headerIdxMap = pickHeaderIndex(rows[0]);
+
+  const fallback = (i: number, def?: number) => headerIdxMap[i as unknown as keyof Item] ?? def;
+
+  const idxMaterial = headerIdxMap.material ?? 0;
+  const idxUM = fallback("metricUnit" as any, 1) as number;
+  const idxQty = fallback("quantity" as any, 2) as number;
+  const idxPart = fallback("part" as any, 3) as number;
+  const idxSub = fallback("subpart" as any, 4) as number;
+
+  const out: Item[] = [];
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    if (!row) continue;
+
+    // Evitar filas totalmente vacías
+    const compact = (row[idxMaterial] ?? "").toString().trim();
+    const qtyRaw = (row[idxQty] ?? "").toString().trim();
+    const umRaw = (row[idxUM] ?? "").toString().trim();
+
+    if (!compact && !qtyRaw && !umRaw) continue;
+
+    // Cantidad a string, manteniendo puntos/decimales
+    const qtyVal = (() => {
+      const raw = String(qtyRaw ?? "").replace(/,/g, ".").trim();
+      return raw === "" ? "" : raw;
+    })();
+
+    const item: Item = {
+      material: String(row[idxMaterial] ?? "").toString().trim(),
+      metricUnit: umRaw,
+      quantity: qtyVal,
+      part: String(row[idxPart] ?? "").toString().trim(),
+      subpart: String(row[idxSub] ?? "").toString().trim(),
+    };
+
+    // Filtrar filas sin material o sin cantidad válida
+    if (!item.material) continue;
+    out.push(item);
+  }
+
+  return out;
+}
+
+/* ====== /Extractor Excel ====== */
+
+function isExcelLike(file: File | null) {
+  if (!file) return false;
+  const name = file.name.toLowerCase();
+  return (
+    name.endsWith(".xlsx") ||
+    name.endsWith(".xls") ||
+    name.endsWith(".csv") ||
+    /spreadsheet|excel|csv/i.test(file.type)
+  );
+}
 
 export default function RequisitionModal({
   open,
@@ -56,8 +403,8 @@ export default function RequisitionModal({
     comments: "",
     project: "",
     sendTo: [] as string[],
-    arrivalDay: "", // "YYYY-MM-DD"
-    arrivalWindows: [{ start: "", end: "" }] as TimeWindow[], // múltiples rangos
+    arrivalDay: "",
+    arrivalWindows: [{ start: "", end: "" }] as TimeWindow[],
     items: [
       { material: "", metricUnit: "", quantity: "", part: "", subpart: "" },
     ] as Item[],
@@ -69,23 +416,30 @@ export default function RequisitionModal({
   const [vendorsError, setVendorsError] = useState(false);
   const [arrivalDayError, setArrivalDayError] = useState(false);
   const [arrivalWindowsError, setArrivalWindowsError] = useState<string | null>(null);
-  const [itemsErrors, setItemsErrors] = useState<number[]>([]); // índices inválidos
+  const [itemsErrors, setItemsErrors] = useState<number[]>([]);
 
-  // ---- PDF (solo UI; sin lógica de subida por ahora) ----
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  // ---- Archivos (UI) ----
+  const [pickedFile, setPickedFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [parsing, setParsing] = useState(false);
+  const [parseMsg, setParseMsg] = useState<string | null>(null);
 
-  const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // --- Dropdown Proveedores ---
+  const [vendorsOpen, setVendorsOpen] = useState(false);
+
+  const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] || null;
-    setPdfFile(f);
+    setPickedFile(f);
+    if (f) await parseAndFill(f);
   };
 
-  const onDropFile = (e: React.DragEvent<HTMLLabelElement>) => {
+  const onDropFile = async (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setDragOver(false);
     const f = e.dataTransfer.files?.[0] || null;
-    setPdfFile(f);
+    setPickedFile(f);
+    if (f) await parseAndFill(f);
   };
 
   const onDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -96,6 +450,40 @@ export default function RequisitionModal({
   const onDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     setDragOver(false);
+  };
+
+  const parseAndFill = async (file: File) => {
+    try {
+      setParsing(true);
+      let items: Item[] = [];
+      if (isExcelLike(file)) {
+        items = await extractItemsFromExcel(file);
+      } else if (/pdf/i.test(file.type) || file.name.toLowerCase().endsWith(".pdf")) {
+        items = await extractItemsFromPdf(file);
+      } else {
+        throw new Error("Formato no soportado");
+      }
+
+      setForm((p) => ({
+        ...p,
+        items: items.length
+          ? items.map((it) => ({
+              material: normalize(it.material),
+              metricUnit: normalize(it.metricUnit),
+              quantity: String(it.quantity ?? "").trim(),
+              part: normalize(it.part),
+              subpart: normalize(it.subpart),
+            }))
+          : p.items,
+      }));
+      setParseMsg(`Cargados ${items.length} ítems desde ${isExcelLike(file) ? "Excel" : "PDF"}`);
+    } catch (e) {
+      console.error(e);
+      setParseMsg("Error al leer archivo");
+    } finally {
+      setParsing(false);
+      setTimeout(() => setParseMsg(null), 4000);
+    }
   };
 
   /** Vendors **/
@@ -154,7 +542,7 @@ export default function RequisitionModal({
   const setWindow = (i: number, field: keyof TimeWindow, value: string) => {
     setForm((p) => {
       const arr = [...p.arrivalWindows];
-      arr[i] = { ...arr[i], [field]: value };
+      arr[i] = { ...arr[i], [field]: value } as TimeWindow;
       return { ...p, arrivalWindows: arr };
     });
     setArrivalWindowsError(null);
@@ -164,7 +552,6 @@ export default function RequisitionModal({
   const validate = () => {
     let ok = true;
 
-    // Proveedores
     if (form.sendTo.length === 0) {
       setVendorsError(true);
       ok = false;
@@ -172,7 +559,6 @@ export default function RequisitionModal({
       setVendorsError(false);
     }
 
-    // Día de llegada
     if (!form.arrivalDay) {
       setArrivalDayError(true);
       ok = false;
@@ -180,7 +566,6 @@ export default function RequisitionModal({
       setArrivalDayError(false);
     }
 
-    // Ventanas de tiempo
     const wins = form.arrivalWindows.filter((w) => w.start && w.end);
     if (form.arrivalWindows.length === 0 || wins.length === 0) {
       setArrivalWindowsError("Agrega al menos una franja válida (inicio y fin).");
@@ -192,7 +577,6 @@ export default function RequisitionModal({
       setArrivalWindowsError(null);
     }
 
-    // Ítems
     const badIdxs: number[] = [];
     form.items.forEach((it, idx) => {
       const material = normalize(it.material);
@@ -226,7 +610,6 @@ export default function RequisitionModal({
 
     setLoading(true);
     try {
-      // Ventanas en ISO
       const windowsISO = form.arrivalWindows
         .filter((w) => w.start && w.end)
         .map((w) => ({
@@ -234,7 +617,6 @@ export default function RequisitionModal({
           end: toISOFromDateAndTime(form.arrivalDay, w.end),
         }));
 
-      // Compatibilidad con back actual (inicio del día)
       const arrivalDateISO = form.arrivalDay
         ? toISOFromDateAndTime(form.arrivalDay, "00:00")
         : "";
@@ -333,36 +715,79 @@ export default function RequisitionModal({
             />
           </div>
 
-          {/* Proveedores (checklist) */}
+          {/* Proveedores (dropdown multiselección) */}
           <div className="md:col-span-2">
             <label className="text-sm text-gray-600 font-medium mb-2 block">
               Enviar a (proveedores) *
             </label>
+
             <div
-              className={`grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 rounded-lg bg-gray-50 border ${
-                vendorsError ? "border-red-500" : "border-gray-200"
-              }`}
+              className="relative"
+              tabIndex={0}
+              onBlur={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                  setVendorsOpen(false);
+                }
+              }}
             >
-              {VENDORS.map((v) => {
-                const id = `VENDORS-${v}`;
-                return (
-                  <label
-                    key={v}
-                    htmlFor={id}
-                    className="flex items-center gap-2 p-2 rounded-md hover:bg-white border border-transparent hover:border-gray-200 cursor-pointer"
-                  >
-                    <input
-                      id={id}
-                      type="checkbox"
-                      checked={isCheckedVendor(v)}
-                      onChange={() => toggleVendor(v)}
-                      className="h-4 w-4 rounded border-gray-300"
-                    />
-                    <span className="text-sm text-gray-800">{v}</span>
-                  </label>
-                );
-              })}
+              <button
+                type="button"
+                onClick={() => setVendorsOpen((v) => !v)}
+                className={`w-full rounded-lg border p-2 text-left flex items-center justify-between ${
+                  vendorsError ? "border-red-500" : "border-gray-300"
+                } focus:ring-2 focus:ring-blue-400`}
+                aria-haspopup="listbox"
+                aria-expanded={vendorsOpen}
+              >
+                <span className={`text-sm ${form.sendTo.length ? "text-gray-800" : "text-gray-500"}`}>
+                  {form.sendTo.length > 0
+                    ? form.sendTo.join(", ")
+                    : "Selecciona uno o varios proveedores"}
+                </span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={`h-4 w-4 ml-2 transition-transform ${vendorsOpen ? "rotate-180" : ""}`}
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+
+              {vendorsOpen && (
+                <div
+                  className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-2 max-h-56 overflow-auto"
+                  role="listbox"
+                  aria-label="Seleccionar proveedores"
+                >
+                  {VENDORS.map((v) => {
+                    const id = `VENDORS-${v}`;
+                    const checked = isCheckedVendor(v);
+                    return (
+                      <label
+                        key={v}
+                        htmlFor={id}
+                        className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-50 cursor-pointer"
+                      >
+                        <input
+                          id={id}
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleVendor(v)}
+                          className="h-4 w-4 rounded border-gray-300"
+                        />
+                        <span className="text-sm text-gray-800">{v}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
             </div>
+
             {vendorsError && (
               <p className="mt-1 text-xs text-red-600">Selecciona al menos un proveedor.</p>
             )}
@@ -391,7 +816,7 @@ export default function RequisitionModal({
             )}
           </div>
 
-          {/* Franjas horarias dinámicas */}
+          {/* Franjas horarias */}
           <div className="md:col-span-2">
             <label className="text-sm text-gray-600 font-medium mb-1 block">
               Horarios de recepción (puedes agregar varias franjas) *
@@ -451,14 +876,14 @@ export default function RequisitionModal({
             )}
           </div>
 
-          {/* ---------- PDF opcional (debajo de horarios) ---------- */}
+          {/* Carga de archivo (PDF o Excel) */}
           <div className="md:col-span-2 mt-4">
             <label className="text-sm text-gray-600 font-medium mb-2 block">
-              Cargar PDF de materiales (opcional)
+              Cargar materiales desde PDF o Excel (opcional)
             </label>
 
             <label
-              htmlFor="materialsPdf"
+              htmlFor="materialsFile"
               onDrop={onDropFile}
               onDragOver={onDragOver}
               onDragLeave={onDragLeave}
@@ -488,28 +913,30 @@ export default function RequisitionModal({
               </svg>
 
               <p className="mt-2 text-sm text-gray-600">
-                Selecciona un PDF con la tabla{" "}
-                <span className="italic">(Material | Unidad Métrica | Cantidad | Partida | Subpartida)</span>
+                Selecciona un archivo con columnas
+                <span className="italic"> (Material | Unidad Métrica | Cantidad | Partida | Subpartida)</span>
               </p>
 
               <span className="mt-1 text-blue-600 text-sm underline">Examinar…</span>
 
-              {pdfFile && (
+              {pickedFile && (
                 <div className="mt-3 text-xs text-gray-700 bg-gray-50 px-3 py-1 rounded-full">
-                  Archivo seleccionado: <b>{pdfFile.name}</b>
+                  Archivo: <b>{pickedFile.name}</b>
                 </div>
               )}
+              {parsing && <p className="mt-2 text-xs text-gray-500">Leyendo archivo…</p>}
+              {parseMsg && <p className="mt-2 text-xs text-gray-700">{parseMsg}</p>}
             </label>
 
             <input
-              id="materialsPdf"
+              id="materialsFile"
               type="file"
-              accept="application/pdf"
+              accept="application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,.xls,.xlsx,.csv"
               onChange={onPickFile}
               className="hidden"
             />
           </div>
-          {/* ---------- /PDF opcional ---------- */}
+          {/* /Carga de archivo */}
         </div>
 
         {/* Ítems */}

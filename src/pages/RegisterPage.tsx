@@ -115,9 +115,6 @@ export const RegisterPage = () => {
                 className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Selecciona un rol</option>
-                <option value="requester">Solicitante</option>
-                <option value="director">Director</option>
-                <option value="superintendent">Superintendente</option>
                 <option value="dg-construction">Dirección General de Construcción</option>
                 <option value="director-executive-construction">Director Ejecutivo de Construcción</option>
                 <option value="director-executive-operations">Director Ejecutivo de Operaciones</option>
