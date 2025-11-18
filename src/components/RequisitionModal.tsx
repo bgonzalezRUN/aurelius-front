@@ -1,6 +1,10 @@
-import { useState } from "react";
-import { Plus, Trash2, X } from "lucide-react";
-import { createRequisition, type BackendPayload } from "../api/requisitionService";
+import { useEffect, useState } from "react";
+import { ChevronDown, CircleX, Plus, Trash2 } from "lucide-react";
+import {
+  createRequisition,
+  updateRequisition,
+  type BackendPayload,
+} from "../api/requisitionService";
 
 import * as pdfjs from "pdfjs-dist";
 import PdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?worker";
@@ -16,13 +20,12 @@ type Item = {
   subpart: string;
 };
 
-type TimeWindow = { start: string; end: string }; // "HH:MM"
+type TimeWindow = { start: string; end: string };
 
 /** Utils **/
 const VENDORS = ["proveedor 1", "proveedor 2", "proveedor 3"];
 const normalize = (s: any) => (s ?? "").toString().trim();
 
-// "2025-11-04", "09:00" -> "2025-11-04T09:00:00.000Z"
 const toISOFromDateAndTime = (dateStr: string, timeStr: string) => {
   if (!dateStr || !timeStr) return "";
   const [y, m, d] = dateStr.split("-").map(Number);
@@ -53,15 +56,34 @@ type PdfCell = { text: string; x: number; y: number };
 const DEBUG_PDF = true;
 
 const UNIT_TOKENS = new Set([
-  "PZAS","PZA","PIEZAS","PIEZA",
-  "ROLLOS","ROLLO",
-  "TON","TONELADAS","TONELADA",
-  "MTRS","MTR","MTS","MT",
-  "KG","KGS",
-  "TAMBOS","TAMBO",
-  "CAJAS","CAJA",
-  "LTS","LT","LITROS","LITRO",
-  "M2","M3","ML","UNIDAD","UNIDADES"
+  "PZAS",
+  "PZA",
+  "PIEZAS",
+  "PIEZA",
+  "ROLLOS",
+  "ROLLO",
+  "TON",
+  "TONELADAS",
+  "TONELADA",
+  "MTRS",
+  "MTR",
+  "MTS",
+  "MT",
+  "KG",
+  "KGS",
+  "TAMBOS",
+  "TAMBO",
+  "CAJAS",
+  "CAJA",
+  "LTS",
+  "LT",
+  "LITROS",
+  "LITRO",
+  "M2",
+  "M3",
+  "ML",
+  "UNIDAD",
+  "UNIDADES",
 ]);
 
 const normalizeQtyStr = (s: string) => {
@@ -92,16 +114,24 @@ const clusterByY = (cells: PdfCell[], tol = 4.5) => {
   return lines;
 };
 
-const calcBoundariesFromHeader = (headerCells: { x: number; text: string }[]) => {
-  const cells = headerCells.map((c) => ({ x: c.x, text: c.text.replace(/\s+/g, " ").trim() }));
+const calcBoundariesFromHeader = (
+  headerCells: { x: number; text: string }[]
+) => {
+  const cells = headerCells.map((c) => ({
+    x: c.x,
+    text: c.text.replace(/\s+/g, " ").trim(),
+  }));
 
   const labels = [
-    { key: "numero",   rx: /^(N[º°. ]|N°|Nº|No\.?)$/i },
+    { key: "numero", rx: /^(N[º°. ]|N°|Nº|No\.?)$/i },
     { key: "material", rx: /^MATERIAL(?:ES)?$/i },
-    { key: "unidad",   rx: /^(UNIDAD|M[ÉE]TRICA|UNIDAD\s*M[ÉE]TRICA)$/i },
+    { key: "unidad", rx: /^(UNIDAD|M[ÉE]TRICA|UNIDAD\s*M[ÉE]TRICA)$/i },
     { key: "cantidad", rx: /^CANTIDAD$/i },
-    { key: "partida",  rx: /^PARTIDA$/i },
-    { key: "subpart",  rx: /^(SUBPARTIDA|CONCEPTO|SUBPARTIDA\s*O\s*CONCEPTO)$/i },
+    { key: "partida", rx: /^PARTIDA$/i },
+    {
+      key: "subpart",
+      rx: /^(SUBPARTIDA|CONCEPTO|SUBPARTIDA\s*O\s*CONCEPTO)$/i,
+    },
   ];
 
   const found: Record<string, number> = {};
@@ -110,24 +140,30 @@ const calcBoundariesFromHeader = (headerCells: { x: number; text: string }[]) =>
       if (!found[lb.key] && lb.rx.test(c.text)) found[lb.key] = c.x;
     }
   }
-  if (found.material != null && found.cantidad != null && found.unidad == null) {
+  if (
+    found.material != null &&
+    found.cantidad != null &&
+    found.unidad == null
+  ) {
     found.unidad = (found.material + found.cantidad) / 2;
   }
   if (found.partida != null && found.subpart == null) {
     found.subpart = found.partida + 60;
   }
 
-  const cols = Object.entries(found).map(([key, x]) => ({ key, x })).sort((a, b) => a.x - b.x);
+  const cols = Object.entries(found)
+    .map(([key, x]) => ({ key, x }))
+    .sort((a, b) => a.x - b.x);
 
   if (cols.length < 3) {
     return {
-      numero: [65,110],
-      material: [120,460],
-      unidad: [470,560],
-      cantidad: [570,650],
-      partida: [660,740],
-      subpart: [750,1200],
-    } as Record<string,[number,number]>;
+      numero: [65, 110],
+      material: [120, 460],
+      unidad: [470, 560],
+      cantidad: [570, 650],
+      partida: [660, 740],
+      subpart: [750, 1200],
+    } as Record<string, [number, number]>;
   }
 
   const bounds: Record<string, [number, number]> = {} as any;
@@ -149,17 +185,31 @@ const calcBoundariesFromHeader = (headerCells: { x: number; text: string }[]) =>
   return bounds;
 };
 
-const textInBand = (cells: { x: number; text: string }[], band?: [number, number]) =>
-  band ? cells.filter(c => c.x >= band[0] && c.x < band[1]).map(c => c.text).join(" ").trim() : "";
+const textInBand = (
+  cells: { x: number; text: string }[],
+  band?: [number, number]
+) =>
+  band
+    ? cells
+        .filter((c) => c.x >= band[0] && c.x < band[1])
+        .map((c) => c.text)
+        .join(" ")
+        .trim()
+    : "";
 
-const lastQuantityMatch = (s: string): { token: string; index: number } | null => {
+const lastQuantityMatch = (
+  s: string
+): { token: string; index: number } | null => {
   const re = /\b\d{1,3}(?:[.,]\d{3})*(?:[.,]\d+)?\b|\b\d+(?:[.,]\d+)?\b/g;
-  let m: RegExpExecArray | null, last: RegExpExecArray | null = null;
+  let m: RegExpExecArray | null,
+    last: RegExpExecArray | null = null;
   while ((m = re.exec(s))) last = m;
   return last ? { token: last[0], index: last.index } : null;
 };
 
-const inferUnitBeforeQuantity = (left: string): { unit?: string; materialLeft: string } => {
+const inferUnitBeforeQuantity = (
+  left: string
+): { unit?: string; materialLeft: string } => {
   const tokens = [...left.matchAll(/\S+/g)];
   if (tokens.length === 0) return { materialLeft: left.trim() };
   const prevTok = tokens[tokens.length - 1][0];
@@ -168,14 +218,16 @@ const inferUnitBeforeQuantity = (left: string): { unit?: string; materialLeft: s
   if (isWord && !hasDigits) {
     const start = tokens[tokens.length - 1].index!;
     const end = start + prevTok.length;
-    const materialLeft = (left.slice(0, start) + left.slice(end)).replace(/\s+/g, " ").trim();
+    const materialLeft = (left.slice(0, start) + left.slice(end))
+      .replace(/\s+/g, " ")
+      .trim();
     return { unit: prevTok, materialLeft };
   }
   return { materialLeft: left.trim() };
 };
 
 const findUnitTokenByList = (s: string) => {
-  const tok = s.split(/\s+/).find(t => UNIT_TOKENS.has(t.toUpperCase()));
+  const tok = s.split(/\s+/).find((t) => UNIT_TOKENS.has(t.toUpperCase()));
   return tok;
 };
 
@@ -195,27 +247,46 @@ async function extractItemsFromPdf(file: File): Promise<Item[]> {
     const lines = clusterByY(cells, 4.5);
     if (DEBUG_PDF) {
       console.group(`📄 Página ${p}`);
-      lines.slice(0, 120).forEach((ln, i) =>
-        console.log(`#${i} y=${ln.y.toFixed(1)} |`, ln.cells.map(c => c.text).join(" "))
-      );
+      lines
+        .slice(0, 120)
+        .forEach((ln, i) =>
+          console.log(
+            `#${i} y=${ln.y.toFixed(1)} |`,
+            ln.cells.map((c) => c.text).join(" ")
+          )
+        );
       console.groupEnd();
     }
 
-    const headerIdx = lines.findIndex(ln => /MATERIAL(?:ES)?/i.test(ln.cells.map(c => c.text).join(" ")));
+    const headerIdx = lines.findIndex((ln) =>
+      /MATERIAL(?:ES)?/i.test(ln.cells.map((c) => c.text).join(" "))
+    );
     if (headerIdx < 0) continue;
 
-    const headerLines = [lines[headerIdx], lines[headerIdx + 1], lines[headerIdx + 2]].filter(Boolean);
-    const headerCells = headerLines.flatMap(l => l.cells);
-    const headerFloorY = Math.min(...headerLines.map(l => l.y));
+    const headerLines = [
+      lines[headerIdx],
+      lines[headerIdx + 1],
+      lines[headerIdx + 2],
+    ].filter(Boolean);
+    const headerCells = headerLines.flatMap((l) => l.cells);
+    const headerFloorY = Math.min(...headerLines.map((l) => l.y));
     const bounds = calcBoundariesFromHeader(headerCells);
 
     for (let i = headerIdx + headerLines.length; i < lines.length; i++) {
       const ln = lines[i];
       if (ln.y >= headerFloorY) continue;
 
-      let joined = ln.cells.map(c => c.text).join(" ").trim();
+      let joined = ln.cells
+        .map((c) => c.text)
+        .join(" ")
+        .trim();
       if (!joined) continue;
-      if (/ENVIAR A|OBSERVACIONES?|CROQUIS|DIRECCI[ÓO]N|NOTA:|SOLICITADO POR/i.test(joined)) break;
+      if (
+        /ENVIAR A|OBSERVACIONES?|CROQUIS|DIRECCI[ÓO]N|NOTA:|SOLICITADO POR/i.test(
+          joined
+        )
+      )
+        break;
 
       joined = joined.replace(/^\s*\d+\b\s*/, "");
 
@@ -227,7 +298,8 @@ async function extractItemsFromPdf(file: File): Promise<Item[]> {
 
       let { unit, materialLeft } = inferUnitBeforeQuantity(leftSide);
 
-      if (!unit) unit = findUnitTokenByList(leftSide) || findUnitTokenByList(joined);
+      if (!unit)
+        unit = findUnitTokenByList(leftSide) || findUnitTokenByList(joined);
       if (!unit) {
         const unitBand = textInBand(ln.cells, bounds.unidad);
         if (unitBand) unit = unitBand.split(/\s+/)[0];
@@ -241,14 +313,18 @@ async function extractItemsFromPdf(file: File): Promise<Item[]> {
       while (lookahead < 2 && i + 1 < lines.length) {
         const nxt = lines[i + 1];
         if (nxt.y >= headerFloorY) break;
-        const jn = nxt.cells.map(c => c.text).join(" ").trim();
+        const jn = nxt.cells
+          .map((c) => c.text)
+          .join(" ")
+          .trim();
         if (!jn) break;
         const hasNum = !!lastQuantityMatch(jn);
         const hasUnitAny = !!findUnitTokenByList(jn);
         const matNext = textInBand(nxt.cells, bounds.material) || jn;
         if (!hasNum && !hasUnitAny && matNext) {
           materialFrag = (materialFrag ? materialFrag + " " : "") + matNext;
-          i++; lookahead++;
+          i++;
+          lookahead++;
         } else {
           break;
         }
@@ -264,8 +340,10 @@ async function extractItemsFromPdf(file: File): Promise<Item[]> {
 
       if (!item.material) {
         const leftOfUnit = ln.cells
-          .filter(c => c.x < (bounds.unidad?.[0] ?? Number.MAX_SAFE_INTEGER))
-          .map(c => c.text).join(" ").trim();
+          .filter((c) => c.x < (bounds.unidad?.[0] ?? Number.MAX_SAFE_INTEGER))
+          .map((c) => c.text)
+          .join(" ")
+          .trim();
         if (leftOfUnit) item.material = leftOfUnit;
       }
 
@@ -278,24 +356,24 @@ async function extractItemsFromPdf(file: File): Promise<Item[]> {
 }
 
 const HEADER_MAP: Record<string, keyof Item> = {
-  "material": "material",
-  "materiales": "material",
-  "desc": "material",
-  "descripcion": "material",
-  "descripción": "material",
-  "unidad": "metricUnit",
-  "unid": "metricUnit",
+  material: "material",
+  materiales: "material",
+  desc: "material",
+  descripcion: "material",
+  descripción: "material",
+  unidad: "metricUnit",
+  unid: "metricUnit",
   "unidad metrica": "metricUnit",
   "unidad métrica": "metricUnit",
   "u.m.": "metricUnit",
-  "um": "metricUnit",
-  "cantidad": "quantity",
-  "cant": "quantity",
-  "qty": "quantity",
-  "partida": "part",
-  "pda": "part",
-  "subpartida": "subpart",
-  "concepto": "subpart",
+  um: "metricUnit",
+  cantidad: "quantity",
+  cant: "quantity",
+  qty: "quantity",
+  partida: "part",
+  pda: "part",
+  subpartida: "subpart",
+  concepto: "subpart",
   "sub-partida": "subpart",
 };
 
@@ -329,12 +407,17 @@ async function extractItemsFromExcel(file: File): Promise<Item[]> {
   const ws = wb.Sheets[sheetName];
   if (!ws) return [];
 
-  const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: "" });
+  const rows: any[][] = XLSX.utils.sheet_to_json(ws, {
+    header: 1,
+    raw: true,
+    defval: "",
+  });
   if (!rows.length) return [];
 
   const headerIdxMap = pickHeaderIndex(rows[0]);
 
-  const fallback = (i: number, def?: number) => headerIdxMap[i as unknown as keyof Item] ?? def;
+  const fallback = (i: number, def?: number) =>
+    headerIdxMap[i as unknown as keyof Item] ?? def;
 
   const idxMaterial = headerIdxMap.material ?? 0;
   const idxUM = fallback("metricUnit" as any, 1) as number;
@@ -347,36 +430,39 @@ async function extractItemsFromExcel(file: File): Promise<Item[]> {
     const row = rows[r];
     if (!row) continue;
 
-    // Evitar filas totalmente vacías
     const compact = (row[idxMaterial] ?? "").toString().trim();
     const qtyRaw = (row[idxQty] ?? "").toString().trim();
     const umRaw = (row[idxUM] ?? "").toString().trim();
 
     if (!compact && !qtyRaw && !umRaw) continue;
 
-    // Cantidad a string, manteniendo puntos/decimales
     const qtyVal = (() => {
-      const raw = String(qtyRaw ?? "").replace(/,/g, ".").trim();
+      const raw = String(qtyRaw ?? "")
+        .replace(/,/g, ".")
+        .trim();
       return raw === "" ? "" : raw;
     })();
 
     const item: Item = {
-      material: String(row[idxMaterial] ?? "").toString().trim(),
+      material: String(row[idxMaterial] ?? "")
+        .toString()
+        .trim(),
       metricUnit: umRaw,
       quantity: qtyVal,
-      part: String(row[idxPart] ?? "").toString().trim(),
-      subpart: String(row[idxSub] ?? "").toString().trim(),
+      part: String(row[idxPart] ?? "")
+        .toString()
+        .trim(),
+      subpart: String(row[idxSub] ?? "")
+        .toString()
+        .trim(),
     };
 
-    // Filtrar filas sin material o sin cantidad válida
     if (!item.material) continue;
     out.push(item);
   }
 
   return out;
 }
-
-/* ====== /Extractor Excel ====== */
 
 function isExcelLike(file: File | null) {
   if (!file) return false;
@@ -393,14 +479,18 @@ export default function RequisitionModal({
   open,
   onClose,
   onSave,
+  editingRequisition, // NUEVO: recibe la requisición a editar
 }: {
   open: boolean;
   onClose: () => void;
   onSave?: (data: BackendPayload) => Promise<void> | void;
+  editingRequisition?: Requisition | null; // NUEVO
 }) {
+  const isEditing = !!editingRequisition; // NUEVO: determina si está editando
+
   const [form, setForm] = useState({
-    priority: "media",
-    comments: "",
+    requisitionPriority: "media",
+    requisitionComments: "",
     project: "",
     sendTo: [] as string[],
     arrivalDay: "",
@@ -410,22 +500,68 @@ export default function RequisitionModal({
     ] as Item[],
   });
 
-  const [loading, setLoading] = useState(false);
+  // NUEVO: useEffect para cargar datos cuando se está editando
+  useEffect(() => {
+    if (editingRequisition) {
+      // Convertir la fecha ISO a formato date input (YYYY-MM-DD)
+      const arrivalDay = editingRequisition.arrivalDate
+        ? editingRequisition.arrivalDate.split("T")[0]
+        : "";
 
-  // Errores UX
+      // Convertir las ventanas de tiempo
+      const arrivalWindows = (editingRequisition as any).arrivalWindows?.map(
+        (w: any) => ({
+          start: w.start ? new Date(w.start).toTimeString().slice(0, 5) : "",
+          end: w.end ? new Date(w.end).toTimeString().slice(0, 5) : "",
+        })
+      ) || [{ start: "", end: "" }];
+
+      setForm({
+        requisitionPriority: editingRequisition.requisitionPriority || "media",
+        requisitionComments: editingRequisition.requisitionComments || "",
+        project: editingRequisition.project || "",
+        sendTo: editingRequisition.sendTo?.map((v) => v.name) || [],
+        arrivalDay,
+        arrivalWindows,
+        items: editingRequisition.items?.map((it) => ({
+          material: it.material || "",
+          metricUnit: it.metricUnit || "",
+          quantity: String(it.quantity || ""),
+          part: it.part || "",
+          subpart: it.subpart || "",
+        })) || [
+          { material: "", metricUnit: "", quantity: "", part: "", subpart: "" },
+        ],
+      });
+    } else {
+      // Resetear el formulario cuando no hay edición
+      setForm({
+        requisitionPriority: "media",
+        requisitionComments: "",
+        project: "",
+        sendTo: [],
+        arrivalDay: "",
+        arrivalWindows: [{ start: "", end: "" }],
+        items: [
+          { material: "", metricUnit: "", quantity: "", part: "", subpart: "" },
+        ],
+      });
+    }
+  }, [editingRequisition]);
+
+  const [loading, setLoading] = useState(false);
   const [vendorsError, setVendorsError] = useState(false);
   const [arrivalDayError, setArrivalDayError] = useState(false);
-  const [arrivalWindowsError, setArrivalWindowsError] = useState<string | null>(null);
+  const [arrivalWindowsError, setArrivalWindowsError] = useState<string | null>(
+    null
+  );
   const [itemsErrors, setItemsErrors] = useState<number[]>([]);
-
-  // ---- Archivos (UI) ----
   const [pickedFile, setPickedFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [parseMsg, setParseMsg] = useState<string | null>(null);
-
-  // --- Dropdown Proveedores ---
   const [vendorsOpen, setVendorsOpen] = useState(false);
+  const [priorityOpen, setPriorityOpen] = useState(false);
 
   const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] || null;
@@ -458,7 +594,10 @@ export default function RequisitionModal({
       let items: Item[] = [];
       if (isExcelLike(file)) {
         items = await extractItemsFromExcel(file);
-      } else if (/pdf/i.test(file.type) || file.name.toLowerCase().endsWith(".pdf")) {
+      } else if (
+        /pdf/i.test(file.type) ||
+        file.name.toLowerCase().endsWith(".pdf")
+      ) {
         items = await extractItemsFromPdf(file);
       } else {
         throw new Error("Formato no soportado");
@@ -476,7 +615,11 @@ export default function RequisitionModal({
             }))
           : p.items,
       }));
-      setParseMsg(`Cargados ${items.length} ítems desde ${isExcelLike(file) ? "Excel" : "PDF"}`);
+      setParseMsg(
+        `Cargados ${items.length} ítems desde ${
+          isExcelLike(file) ? "Excel" : "PDF"
+        }`
+      );
     } catch (e) {
       console.error(e);
       setParseMsg("Error al leer archivo");
@@ -486,7 +629,6 @@ export default function RequisitionModal({
     }
   };
 
-  /** Vendors **/
   const isCheckedVendor = (n: string) => form.sendTo.includes(n);
   const toggleVendor = (n: string) => {
     setForm((p) => {
@@ -498,7 +640,6 @@ export default function RequisitionModal({
     });
   };
 
-  /** Ítems **/
   const handleItemChange = (i: number, field: keyof Item, val: string) => {
     const items = [...form.items];
     (items[i] as any)[field] = val;
@@ -524,7 +665,6 @@ export default function RequisitionModal({
     setItemsErrors((prev) => prev.filter((idx) => idx !== i));
   };
 
-  /** Ventanas de tiempo **/
   const addWindow = () =>
     setForm((p) => ({
       ...p,
@@ -548,7 +688,6 @@ export default function RequisitionModal({
     setArrivalWindowsError(null);
   };
 
-  /** Validación **/
   const validate = () => {
     let ok = true;
 
@@ -568,10 +707,14 @@ export default function RequisitionModal({
 
     const wins = form.arrivalWindows.filter((w) => w.start && w.end);
     if (form.arrivalWindows.length === 0 || wins.length === 0) {
-      setArrivalWindowsError("Agrega al menos una franja válida (inicio y fin).");
+      setArrivalWindowsError(
+        "Agrega al menos una franja válida (inicio y fin)."
+      );
       ok = false;
     } else if (hasOverlaps(wins)) {
-      setArrivalWindowsError("Las franjas no deben solaparse y cada inicio debe ser menor al fin.");
+      setArrivalWindowsError(
+        "Las franjas no deben solaparse y cada inicio debe ser menor al fin."
+      );
       ok = false;
     } else {
       setArrivalWindowsError(null);
@@ -599,12 +742,13 @@ export default function RequisitionModal({
     return ok;
   };
 
-  /** Submit **/
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validate()) {
-      alert("Por favor completa: proveedores, día y al menos una franja válida; además, revisa los ítems.");
+      alert(
+        "Por favor completa: proveedores, día y al menos una franja válida; además, revisa los ítems."
+      );
       return;
     }
 
@@ -624,9 +768,9 @@ export default function RequisitionModal({
       const payload: BackendPayload & {
         arrivalWindows?: { start: string; end: string }[];
       } = {
-        priority: normalize(form.priority),
+        requisitionPriority: normalize(form.requisitionPriority),
         project: normalize(form.project),
-        comments: normalize(form.comments),
+        requisitionComments: normalize(form.requisitionComments),
         sendTo: form.sendTo.map((n) => ({ name: n })),
         items: form.items.map((it) => ({
           material: normalize(it.material),
@@ -640,13 +784,18 @@ export default function RequisitionModal({
       };
 
       if (onSave) await onSave(payload);
-      else await createRequisition(payload);
+      else if (isEditing) {
+        // NUEVO: lógica para actualizar
+        await updateRequisition(editingRequisition.requisitionId, payload);
+      } else {
+        await createRequisition(payload);
+      }
 
       onClose();
       location.reload();
     } catch (err) {
       console.error(err);
-      alert("❌ Error al crear la requisición");
+      alert(`❌ Error al ${isEditing ? "actualizar" : "crear"} la requisición`);
     } finally {
       setLoading(false);
     }
@@ -655,279 +804,284 @@ export default function RequisitionModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-2">
       <form
         onSubmit={submit}
-        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl p-8 overflow-y-auto max-h-[90vh]"
+        className="relative bg-white rounded-lg shadow-sm w-full max-w-4xl p-5 overflow-y-auto custom-scroll max-h-[95vh] border border-gray-200"
       >
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            {isEditing ? "Editar Requisición" : "Nueva Requisición"}
+          </h2>
 
-        <h2 className="text-2xl font-semibold text-gray-800 mb-6">Nueva Requisición</h2>
+          <button
+            onClick={onClose}
+            className="px-2 py-2 rounded-lg hover:bg-gray-300 text-gray-800 transition"
+          >
+            <CircleX />
+          </button>
+        </div>
 
         {/* Form principal */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Proyecto */}
-          <div>
-            <label className="text-sm text-gray-600 font-medium mb-1 block">Proyecto *</label>
-            <input
-              name="project"
-              value={form.project}
-              onChange={(e) => setForm({ ...form, project: e.target.value })}
-              placeholder="remodelacionesSAS"
-              className="w-full rounded-lg border border-gray-300 p-2 focus:ring-2 focus:ring-blue-400 outline-none"
-              required
-            />
-          </div>
+        <div className="space-y-4">
+          {/* Fila 1: Proyecto y Prioridad */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-gray-600 mb-1 block">
+                Proyecto *
+              </label>
+              <input
+                value={form.project}
+                onChange={(e) => setForm({ ...form, project: e.target.value })}
+                placeholder="remodelacionesSAS"
+                className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:ring-1 focus:ring-[#05a7c2] focus:border-[#05a7c2] outline-none"
+                required
+              />
+            </div>
 
-          {/* Prioridad */}
-          <div>
-            <label className="text-sm text-gray-600 font-medium mb-1 block">Prioridad *</label>
-            <select
-              name="priority"
-              value={form.priority}
-              onChange={(e) => setForm({ ...form, priority: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 p-2 focus:ring-2 focus:ring-blue-400 outline-none"
-              required
-            >
-              <option value="alta">Alta</option>
-              <option value="media">Media</option>
-              <option value="baja">Baja</option>
-            </select>
+            <div>
+              <label className="text-xs text-gray-600 mb-1 block">
+                Prioridad *
+              </label>
+              <div
+                className="relative"
+                tabIndex={0}
+                onBlur={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                    setPriorityOpen(false);
+                  }
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setPriorityOpen(!priorityOpen)}
+                  className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm text-left flex items-center justify-between focus:ring-1 focus:ring-[#05a7c2] focus:border-[#05a7c2] outline-none"
+                >
+                  <span
+                    className={
+                      form.requisitionPriority
+                        ? "text-gray-900"
+                        : "text-gray-400"
+                    }
+                  >
+                    {form.requisitionPriority || "Selecciona"}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                </button>
+
+                {priorityOpen && (
+                  <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded shadow-lg overflow-hidden">
+                    {["alta", "media", "baja"].map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => {
+                          setForm({ ...form, requisitionPriority: p });
+                          setPriorityOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50 capitalize"
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Comentarios */}
-          <div className="md:col-span-2">
-            <label className="text-sm text-gray-600 font-medium mb-1 block">Comentarios *</label>
+          <div>
+            <label className="text-xs text-gray-600 mb-1 block">
+              Comentarios *
+            </label>
             <textarea
-              name="comments"
-              value={form.comments}
-              onChange={(e) => setForm({ ...form, comments: e.target.value })}
+              value={form.requisitionComments}
+              onChange={(e) =>
+                setForm({ ...form, requisitionComments: e.target.value })
+              }
               placeholder="Comentarios acerca de la requisición..."
-              className="w-full rounded-lg border border-gray-300 p-2 focus:ring-2 focus:ring-blue-400 outline-none resize-none"
-              rows={3}
+              className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:ring-1 focus:ring-[#05a7c2] focus:border-[#05a7c2] outline-none resize-none"
+              rows={2}
               required
             />
           </div>
 
-          {/* Proveedores (dropdown multiselección) */}
-          <div className="md:col-span-2">
-            <label className="text-sm text-gray-600 font-medium mb-2 block">
-              Enviar a (proveedores) *
-            </label>
-
-            <div
-              className="relative"
-              tabIndex={0}
-              onBlur={(e) => {
-                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                  setVendorsOpen(false);
-                }
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => setVendorsOpen((v) => !v)}
-                className={`w-full rounded-lg border p-2 text-left flex items-center justify-between ${
-                  vendorsError ? "border-red-500" : "border-gray-300"
-                } focus:ring-2 focus:ring-blue-400`}
-                aria-haspopup="listbox"
-                aria-expanded={vendorsOpen}
-              >
-                <span className={`text-sm ${form.sendTo.length ? "text-gray-800" : "text-gray-500"}`}>
-                  {form.sendTo.length > 0
-                    ? form.sendTo.join(", ")
-                    : "Selecciona uno o varios proveedores"}
-                </span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className={`h-4 w-4 ml-2 transition-transform ${vendorsOpen ? "rotate-180" : ""}`}
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
-
-              {vendorsOpen && (
-                <div
-                  className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-2 max-h-56 overflow-auto"
-                  role="listbox"
-                  aria-label="Seleccionar proveedores"
-                >
-                  {VENDORS.map((v) => {
-                    const id = `VENDORS-${v}`;
-                    const checked = isCheckedVendor(v);
-                    return (
-                      <label
-                        key={v}
-                        htmlFor={id}
-                        className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-50 cursor-pointer"
-                      >
-                        <input
-                          id={id}
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleVendor(v)}
-                          className="h-4 w-4 rounded border-gray-300"
-                        />
-                        <span className="text-sm text-gray-800">{v}</span>
-                      </label>
-                    );
-                  })}
-                </div>
+          {/* Fila 2: Día llegada y Proveedores */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-gray-600 mb-1 block">
+                Día de llegada *
+              </label>
+              <input
+                type="date"
+                value={form.arrivalDay}
+                onChange={(e) => {
+                  setForm({ ...form, arrivalDay: e.target.value });
+                  if (arrivalDayError && e.target.value)
+                    setArrivalDayError(false);
+                }}
+                className={`w-full rounded border px-3 py-1.5 text-sm focus:ring-1 focus:ring-[#05a7c2] focus:border-[#05a7c2] outline-none ${
+                  arrivalDayError ? "border-red-500" : "border-gray-300"
+                }`}
+                required
+              />
+              {arrivalDayError && (
+                <p className="mt-1 text-xs text-red-600">
+                  El día de llegada es obligatorio.
+                </p>
               )}
             </div>
 
-            {vendorsError && (
-              <p className="mt-1 text-xs text-red-600">Selecciona al menos un proveedor.</p>
-            )}
-          </div>
-
-          {/* Día de llegada */}
-          <div>
-            <label className="text-sm text-gray-600 font-medium mb-1 block">
-              Día de llegada necesario *
-            </label>
-            <input
-              type="date"
-              name="arrivalDay"
-              value={form.arrivalDay}
-              onChange={(e) => {
-                setForm({ ...form, arrivalDay: e.target.value });
-                if (arrivalDayError && e.target.value) setArrivalDayError(false);
-              }}
-              className={`w-full rounded-lg border p-2 focus:ring-2 focus:ring-blue-400 outline-none ${
-                arrivalDayError ? "border-red-500" : "border-gray-300"
-              }`}
-              required
-            />
-            {arrivalDayError && (
-              <p className="mt-1 text-xs text-red-600">El día de llegada es obligatorio.</p>
-            )}
-          </div>
-
-          {/* Franjas horarias */}
-          <div className="md:col-span-2">
-            <label className="text-sm text-gray-600 font-medium mb-1 block">
-              Horarios de recepción (puedes agregar varias franjas) *
-            </label>
-
-            <div className="space-y-3">
-              {form.arrivalWindows.map((w, i) => (
-                <div
-                  key={i}
-                  className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center"
+            <div>
+              <label className="text-xs text-gray-600 mb-1 block">
+                Proveedores *
+              </label>
+              <div
+                className="relative"
+                tabIndex={0}
+                onBlur={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                    setVendorsOpen(false);
+                  }
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setVendorsOpen(!vendorsOpen)}
+                  className={`w-full rounded border px-3 py-1.5 text-sm text-left flex items-center justify-between focus:ring-1 focus:ring-[#05a7c2] focus:border-[#05a7c2] outline-none ${
+                    vendorsError ? "border-red-500" : "border-gray-300"
+                  }`}
                 >
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <span className="text-sm text-gray-500 w-16">Inicio</span>
-                    <input
-                      type="time"
-                      value={w.start}
-                      onChange={(e) => setWindow(i, "start", e.target.value)}
-                      className="border rounded-lg p-2 w-full sm:w-40 focus:ring-2 focus:ring-blue-400 outline-none"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <span className="text-sm text-gray-500 w-16">Fin</span>
-                    <input
-                      type="time"
-                      value={w.end}
-                      onChange={(e) => setWindow(i, "end", e.target.value)}
-                      className="border rounded-lg p-2 w-full sm:w-40 focus:ring-2 focus:ring-blue-400 outline-none"
-                      required
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => removeWindow(i)}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 self-start"
-                    title="Eliminar franja"
+                  <span
+                    className={
+                      form.sendTo.length ? "text-gray-900" : "text-gray-400"
+                    }
                   >
-                    <Trash2 className="w-4 h-4" />
-                    Quitar
-                  </button>
+                    {form.sendTo.length > 0
+                      ? `${form.sendTo.length} seleccionados`
+                      : "Selecciona"}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                </button>
+
+                {vendorsOpen && (
+                  <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded shadow-lg max-h-48 overflow-auto">
+                    {VENDORS.map((v) => {
+                      const id = `VENDORS-${v}`;
+                      return (
+                        <label
+                          key={v}
+                          htmlFor={id}
+                          className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
+                        >
+                          <input
+                            id={id}
+                            type="checkbox"
+                            checked={isCheckedVendor(v)}
+                            onChange={() => toggleVendor(v)}
+                            className="h-3.5 w-3.5 rounded border-gray-300"
+                          />
+                          <span className="text-sm text-gray-700">{v}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              {vendorsError && (
+                <p className="mt-1 text-xs text-red-600">
+                  Selecciona al menos un proveedor.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Horarios */}
+          <div>
+            <label className="text-xs text-gray-600 mb-1 block">
+              Horarios de recepción *
+            </label>
+            <div className="space-y-2">
+              {form.arrivalWindows.map((w, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <input
+                    type="time"
+                    value={w.start}
+                    onChange={(e) => setWindow(i, "start", e.target.value)}
+                    className="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-[#05a7c2] focus:border-[#05a7c2] outline-none"
+                    required
+                  />
+                  <span className="text-gray-400 text-xs">-</span>
+                  <input
+                    type="time"
+                    value={w.end}
+                    onChange={(e) => setWindow(i, "end", e.target.value)}
+                    className="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-[#05a7c2] focus:border-[#05a7c2] outline-none"
+                    required
+                  />
+                  {form.arrivalWindows.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeWindow(i)}
+                      className="p-1 text-red-500 hover:bg-red-50 rounded transition"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               ))}
-
               <button
                 type="button"
                 onClick={addWindow}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                className="text-xs text-[#009cb8] hover:text-[#0586a0] flex items-center gap-1 transition"
               >
-                <Plus className="h-4 w-4" /> Agregar franja
+                <Plus className="w-3.5 h-3.5" /> Agregar horario
               </button>
             </div>
-
             {arrivalWindowsError && (
-              <p className="mt-2 text-xs text-red-600">{arrivalWindowsError}</p>
+              <p className="mt-1 text-xs text-red-600">{arrivalWindowsError}</p>
             )}
           </div>
 
-          {/* Carga de archivo (PDF o Excel) */}
-          <div className="md:col-span-2 mt-4">
-            <label className="text-sm text-gray-600 font-medium mb-2 block">
-              Cargar materiales desde PDF o Excel (opcional)
+          {/* Carga archivo */}
+          <div>
+            <label className="text-xs text-gray-600 mb-1 block">
+              Cargar materiales (opcional)
             </label>
-
             <label
               htmlFor="materialsFile"
               onDrop={onDropFile}
               onDragOver={onDragOver}
               onDragLeave={onDragLeave}
-              className={`w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition ${
-                dragOver ? "border-blue-400 bg-blue-50/50" : "border-gray-300"
+              className={`w-full border border-dashed rounded p-3 flex flex-col items-center justify-center cursor-pointer hover:border-[#009cb8] hover:bg-[#009cb805] transition ${
+                dragOver ? "border-[#009cb8] bg-[#009cb80f]" : "border-gray-300"
               }`}
             >
               <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-8 h-8 text-gray-400"
-                viewBox="0 0 24 24"
+                className="w-6 h-6 text-gray-400"
                 fill="none"
+                viewBox="0 0 24 24"
                 stroke="currentColor"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.5"
-                  d="M3 15a4 4 0 004 4h10a4 4 0 000-8h-.026A8 8 0 104 15h-.001z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.5"
-                  d="M12 12v9m0 0l-3.5-3.5M12 21l3.5-3.5"
-                />
+                <path d="M3 15a4 4 0 004 4h10a4 4 0 000-8h-.026A8 8 0 104 15z" />
+                <path d="M12 12v9m0 0l-3.5-3.5M12 21l3.5-3.5" />
               </svg>
-
-              <p className="mt-2 text-sm text-gray-600">
-                Selecciona un archivo con columnas
-                <span className="italic"> (Material | Unidad Métrica | Cantidad | Partida | Subpartida)</span>
+              <p className="mt-1 text-xs text-gray-500">
+                Arrastra o <span className="text-[#009cb8]">examina</span>
               </p>
-
-              <span className="mt-1 text-blue-600 text-sm underline">Examinar…</span>
-
               {pickedFile && (
-                <div className="mt-3 text-xs text-gray-700 bg-gray-50 px-3 py-1 rounded-full">
-                  Archivo: <b>{pickedFile.name}</b>
-                </div>
+                <span className="mt-1 text-xs text-gray-700 font-medium">
+                  {pickedFile.name}
+                </span>
               )}
-              {parsing && <p className="mt-2 text-xs text-gray-500">Leyendo archivo…</p>}
-              {parseMsg && <p className="mt-2 text-xs text-gray-700">{parseMsg}</p>}
+              {parsing && (
+                <p className="mt-1 text-xs text-gray-500">Leyendo archivo…</p>
+              )}
+              {parseMsg && (
+                <p className="mt-1 text-xs text-gray-700">{parseMsg}</p>
+              )}
             </label>
-
             <input
               id="materialsFile"
               type="file"
@@ -936,44 +1090,47 @@ export default function RequisitionModal({
               className="hidden"
             />
           </div>
-          {/* /Carga de archivo */}
         </div>
 
         {/* Ítems */}
-        <div className="border-t border-gray-200 pt-6 mt-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-lg text-gray-800">
-              Materiales / Ítems {form.items?.length ? `(${form.items.length})` : ""}
+        <div className="border-t border-gray-200 pt-4 mt-4">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-medium text-sm text-gray-900">
+              Materiales {form.items.length > 0 && `(${form.items.length})`}
             </h3>
             <button
               type="button"
               onClick={addItem}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+              className="text-xs text-[#009cb8] hover:text-[#0586a0] flex items-center gap-1 transition"
             >
-              <Plus className="h-4 w-4" /> Agregar Ítem
+              <Plus className="w-3.5 h-3.5" /> Agregar ítem
             </button>
           </div>
 
-          {form.items.map((it, i) => {
-            const hasError = itemsErrors.includes(i);
-            const fieldClass = `border rounded-md p-2 w-full focus:ring-2 focus:ring-blue-400 outline-none ${
-              hasError ? "border-red-500" : "border-gray-300"
-            }`;
-
-            return (
-              <div
-                key={i}
-                className={`relative grid grid-cols-1 md:grid-cols-5 gap-3 mb-3 p-4 rounded-xl bg-gray-50 border ${
-                  hasError ? "border-red-500" : "border-gray-200"
-                }`}
-              >
-                {(["material", "metricUnit", "quantity", "part", "subpart"] as (keyof Item)[]).map(
-                  (f) => (
+          <div className="space-y-2">
+            {form.items.map((it, i) => {
+              const hasError = itemsErrors.includes(i);
+              return (
+                <div
+                  key={i}
+                  className={`relative grid grid-cols-5 gap-2 p-2 rounded bg-gray-50 border ${
+                    hasError ? "border-red-500" : "border-gray-200"
+                  }`}
+                >
+                  {(
+                    [
+                      "material",
+                      "metricUnit",
+                      "quantity",
+                      "part",
+                      "subpart",
+                    ] as (keyof Item)[]
+                  ).map((f) => (
                     <input
                       key={f}
                       placeholder={
                         f === "metricUnit"
-                          ? "Unidad Métrica"
+                          ? "Unidad"
                           : f === "quantity"
                           ? "Cantidad"
                           : f === "part"
@@ -985,40 +1142,47 @@ export default function RequisitionModal({
                       type={f === "quantity" ? "number" : "text"}
                       value={String((it as any)[f] ?? "")}
                       onChange={(e) => handleItemChange(i, f, e.target.value)}
-                      className={fieldClass}
+                      className={`border rounded px-2 py-1 text-xs focus:ring-1 focus:ring-[#05a7c2] focus:border-[#05a7c2] outline-none ${
+                        hasError ? "border-red-500" : "border-gray-300"
+                      }`}
                       required
                       min={f === "quantity" ? 0.0000001 : undefined}
                       step={f === "quantity" ? "any" : undefined}
                     />
-                  )
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => removeItem(i)}
-                  className="absolute -top-3 -right-3 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-md"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-
-                {hasError && (
-                  <p className="md:col-span-5 text-xs text-red-600">
-                    Completa todos los campos del ítem y usa una cantidad mayor a 0.
-                  </p>
-                )}
-              </div>
-            );
-          })}
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => removeItem(i)}
+                    className="absolute -top-1.5 -right-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 shadow transition"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                  {hasError && (
+                    <p className="col-span-5 text-xs text-red-600 mt-1">
+                      Completa todos los campos del ítem y usa una cantidad
+                      mayor a 0.
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Guardar */}
-        <div className="flex justify-end mt-6">
+        <div className="flex justify-end mt-4 pt-4 border-t border-gray-200">
           <button
             type="submit"
             disabled={loading}
-            className="px-5 py-2.5 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 disabled:opacity-50"
+            className="px-4 py-1.5 rounded bg-[#01687d] text-white text-sm font-medium hover:bg-[#038aa5] disabled:opacity-50 transition"
           >
-            {loading ? "Guardando..." : "Crear Requisición"}
+            {loading
+              ? isEditing
+                ? "Actualizando..."
+                : "Guardando..."
+              : isEditing
+              ? "Actualizar Requisición"
+              : "Crear Requisición"}
           </button>
         </div>
       </form>

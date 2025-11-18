@@ -1,5 +1,5 @@
 import "./index.css";
-import "./pdfjs-setup"; 
+import "./pdfjs-setup";
 
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";

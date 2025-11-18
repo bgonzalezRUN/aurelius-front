@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { register } from "../api/authService";
+import { Eye, EyeOff } from "lucide-react";
 
 export const RegisterPage = () => {
   const [userName, setUserName] = useState("");
@@ -26,26 +27,25 @@ export const RegisterPage = () => {
       setLoading(false);
       window.location.href = "/";
     } catch (error) {
-      setError("Error al registrar");
+      setError("Error al registrar" + error);
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 flex items-start sm:items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-white to-blue-50 flex items-start sm:items-center justify-center p-4">
       <main className="w-full max-w-md">
-        <div className="flex items-center mb-4 select-none gap-10 pl-15">
-          <div className="bg-blue-500 rounded-full">
+        <div className="flex flex-col justify-center items-center mb-4 select-none gap-6">
+          <div className="bg-[#01687d] rounded-full p-2">
             <img
               src="/public/logoGI.png"
               alt="Aurelius Logo"
-              className="relative w-12 h-12 object-contain drop-shadow-sm z-10"
+              className="w-12 h-12 object-contain drop-shadow-sm"
             />
           </div>
-          <div className="flex flex-col">
-            <h1 className="mt-3 text-2xl text-center font-semibold text-cyan-800">
-              Aurelius
-            </h1>
+
+          <div className="flex flex-col items-center">
+            <h1 className="text-2xl font-semibold text-[#01687d]">Aurelius</h1>
             <p className="text-slate-500 text-sm">
               Sistema de Compras Inteligente
             </p>
@@ -57,7 +57,7 @@ export const RegisterPage = () => {
           <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl text-sm mb-4">
             <button
               onClick={() => (window.location.href = "/")}
-              className="rounded-lg py-2 text-slate-500 hover:text-blue-600 font-medium"
+              className="rounded-lg py-2 text-slate-500 hover:text-[#01687d] font-medium"
             >
               Iniciar Sesión
             </button>
@@ -91,7 +91,7 @@ export const RegisterPage = () => {
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
                 placeholder="Tu nombre"
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-[#01687d] focus:border-[#01687d]"
               />
             </div>
             <div>
@@ -109,7 +109,7 @@ export const RegisterPage = () => {
                 value={userLastName}
                 onChange={(e) => setUserLastName(e.target.value)}
                 placeholder="Tu apellido"
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-[#01687d] focus:border-[#01687d]"
               />
             </div>
             <div>
@@ -126,8 +126,8 @@ export const RegisterPage = () => {
                 required
                 value={userEmail}
                 onChange={(e) => setUserEmail(e.target.value)}
-                placeholder="tu@correo.com"
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="example@example.com"
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-[#01687d] focus:border-[#01687d]"
               />
             </div>
             <div>
@@ -138,24 +138,32 @@ export const RegisterPage = () => {
                 >
                   Contraseña
                 </label>
+              </div>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  minLength={8}
+                  required
+                  placeholder="••••••••"
+                  value={userPassword}
+                  onChange={(e) => setUserPassword(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-[#01687d] focus:border-[#01687d]"
+                />
                 <button
                   type="button"
-                  onClick={() => setShowPassword((s) => !s)}
-                  className="text-xs text-blue-600 hover:underline"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  disabled={loading}
                 >
-                  {showPassword ? "Ocultar" : "Mostrar"}
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
                 </button>
               </div>
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                minLength={8}
-                required
-                value={userPassword}
-                onChange={(e) => setUserPassword(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
             </div>
             <div>
               <div className="flex items-center justify-between">
@@ -165,23 +173,31 @@ export const RegisterPage = () => {
                 >
                   Confirmar Contraseña
                 </label>
+              </div>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showConfirmPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-[#01687d] focus:border-[#01687d]"
+                />
                 <button
                   type="button"
-                  onClick={() => setShowConfirmPassword((s) => !s)}
-                  className="text-xs text-blue-600 hover:underline"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  disabled={loading}
                 >
-                  {showConfirmPassword ? "Ocultar" : "Mostrar"}
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
                 </button>
               </div>
-              <input
-                id="password"
-                type={showConfirmPassword ? "text" : "password"}
-                autoComplete="current-password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
             </div>
 
             {error && <div className="text-red-600 text-sm">{error}</div>}
@@ -189,7 +205,7 @@ export const RegisterPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl py-2.5 font-medium bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600 disabled:opacity-60"
+              className="w-full rounded-xl py-2.5 font-medium bg-[#01687d] text-white hover:bg-[#027c94] disabled:opacity-60"
             >
               {loading ? "Creando Cuenta..." : "Crear Cuenta"}
             </button>

@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { getRequisitions, type Requisition } from "../api/requisitionService";
+import { Eye, Edit, FileText } from "lucide-react";
 
 export default function RequisitionList({
   onSelect,
+  onEdit,
   filteredRequisitions,
 }: {
   onSelect: (id: string) => void;
+  onEdit: (id: string) => void;
   filteredRequisitions?: Requisition[];
 }) {
   const [rows, setRows] = useState<Requisition[]>([]);
@@ -28,10 +31,11 @@ export default function RequisitionList({
     load();
   }, [filteredRequisitions]);
 
-  /** formateadores **/
   const fmtDate = (iso?: string) =>
     iso
-      ? new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(new Date(iso))
+      ? new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(
+          new Date(iso)
+        )
       : "—";
 
   const fmtTime = (iso?: string) =>
@@ -43,94 +47,153 @@ export default function RequisitionList({
       : "";
 
   const badge = (p: string) => {
-    const base = "px-2 py-0.5 rounded-full text-xs font-medium";
-    if (p === "alta") return <span className={`${base} bg-red-100 text-red-700`}>Alta</span>;
-    if (p === "media") return <span className={`${base} bg-yellow-100 text-yellow-800`}>Media</span>;
-    if (p === "baja") return <span className={`${base} bg-green-100 text-green-700`}>Baja</span>;
+    const base = "px-2 py-0.5 rounded-lg text-xs font-medium";
+    if (p === "alta")
+      return <span className={`${base} bg-red-100 text-red-700`}>Alta</span>;
+    if (p === "media")
+      return (
+        <span className={`${base} bg-yellow-100 text-yellow-800`}>Media</span>
+      );
+    if (p === "baja")
+      return (
+        <span className={`${base} bg-green-100 text-green-700`}>Baja</span>
+      );
     return <span className={`${base} bg-gray-100 text-gray-700`}>{p}</span>;
   };
 
+  if (loading) {
+    return <div className="p-6 text-center text-gray-500">Cargando…</div>;
+  }
+
   return (
-    <div className="w-full bg-white rounded-lg shadow-sm border overflow-hidden">
-      <div className="px-4 py-3 border-b bg-gray-50">
-        <h3 className="text-sm font-semibold text-gray-700">Requisiciones</h3>
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {rows.length ? (
+        rows.map((r) => (
+          <div
+            key={r.requisitionId}
+            className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition flex flex-col"
+          >
+            {/* Título + Fecha */}
+            <div className="flex justify-between items-start mb-1">
+              <h2 className="text-base font-semibold text-[#01687d] leading-tight">
+                {r.project}
+              </h2>
+              <span className="text-[12px] text-gray-600">
+                {fmtDate(r.arrivalDate)}
+              </span>
+            </div>
 
-      {loading ? (
-        <div className="p-6 text-center text-gray-500">Cargando…</div>
+            {/* Proveedor */}
+
+            {/* Prioridad + Ventana */}
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-gray-600 mb-2 leading-tight">
+                <span className="font-medium">Proveedor:</span>{" "}
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {r.sendTo?.map((prov) => (
+                    <span
+                      key={prov.id}
+                      className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-[10px]"
+                    >
+                      {prov.name}
+                    </span>
+                  ))}
+                </div>
+              </p>
+
+              {Array.isArray((r as any).arrivalWindows) &&
+                (r as any).arrivalWindows.length > 0 && (
+                  <div className="text-[12px] border border-[#01687d] text-black px-2 py-0.5 rounded-md">
+                    {fmtTime((r as any).arrivalWindows[0].start)} –{" "}
+                    {fmtTime((r as any).arrivalWindows[0].end)}
+                  </div>
+                )}
+            </div>
+
+            {/* Items (Items arriba, número abajo) */}
+            <div className="flex justify-between items-center mb-2">
+              {/* Prioridad */}
+              <p className="text-xs text-gray-600 mb-2 leading-tight">
+                <span className="font-medium">Prioridad:</span>{" "}
+                {badge(r.requisitionPriority)}
+              </p>
+
+              {/* Items + número juntos */}
+              <div className="flex flex-col text-right leading-none">
+                <span className="text-[11px] text-[#01687d] font-medium">
+                  Items
+                </span>
+                <span className="text-sm text-gray-800 font-semibold">
+                  {r.items?.length ?? 0}
+                </span>
+              </div>
+            </div>
+
+            {/* Comentarios */}
+            <p className="text-xs text-gray-700 mb-0 leading-none font-medium">
+              Comentarios:
+            </p>
+            <p className="text-xs text-gray-600 mb-2 leading-snug">
+              {r.requisitionComments?.trim()
+                ? r.requisitionComments
+                : "No hay comentarios"}
+            </p>
+
+            <hr className="my-2" />
+
+            {/* Footer */}
+            <div className="flex justify-between items-center mt-1">
+              <div className="flex gap-1 text-[#01687d]">
+                {/* VER */}
+                <div
+                  className="p-1.5 rounded-full hover:bg-gray-200 transition cursor-pointer flex items-center justify-center"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelect(r.requisitionId);
+                  }}
+                >
+                  <Eye size={16} />
+                </div>
+
+                {/* EDITAR */}
+                <div
+                  className="p-1.5 rounded-full hover:bg-gray-200 transition cursor-pointer flex items-center justify-center"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(r.requisitionId);
+                  }}
+                >
+                  <Edit size={16} />
+                </div>
+
+                {/* DUPLICAR */}
+                <div
+                  className="p-1.5 rounded-full hover:bg-gray-200 transition cursor-pointer flex items-center justify-center"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log("Duplicar", r.requisitionId);
+                  }}
+                >
+                  <FileText size={16} />
+                </div>
+              </div>
+
+              <button
+                className="bg-[#01687d] text-white px-3 py-1.5 rounded-md text-xs hover:bg-[#5bb4cf]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  console.log("Enviar a aprobación", r.requisitionId);
+                }}
+              >
+                Enviar a aprobación
+              </button>
+            </div>
+          </div>
+        ))
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead>
-              <tr className="bg-gray-100 text-left text-gray-700">
-                <th className="p-3">Proyecto</th>
-                <th className="p-3">Prioridad</th>
-                <th className="p-3">Proveedores</th>
-                <th className="p-3">Fecha / Horarios</th>
-                <th className="p-3">Ítems</th>
-                <th className="p-3">Comentarios</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length ? (
-                rows.map((r) => (
-                  <tr
-                    key={r.id}
-                    className="border-t hover:bg-blue-50 cursor-pointer"
-                    onClick={() => onSelect(r.id)}
-                  >
-                    <td className="p-3">{r.project}</td>
-                    <td className="p-3">{badge(r.priority)}</td>
-                    <td className="p-3">
-                      <div className="flex flex-wrap gap-1">
-                        {r.sendTo?.map((s, i) => (
-                          <span
-                            key={i}
-                            className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full"
-                          >
-                            {s.name}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-
-                    {/* 🆕 Fecha y franjas */}
-                    <td className="p-3">
-                      <div className="flex flex-col text-sm text-gray-700">
-                        <span className="font-medium">{fmtDate(r.arrivalDate)}</span>
-                        {Array.isArray((r as any).arrivalWindows) &&
-                          (r as any).arrivalWindows.length > 0 && (
-                            <div className="mt-1 flex flex-col gap-0.5">
-                              {(r as any).arrivalWindows.map((w: any, i: number) => (
-                                <span
-                                  key={i}
-                                  className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md w-fit"
-                                >
-                                  {fmtTime(w.start)} – {fmtTime(w.end)}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                      </div>
-                    </td>
-
-                    <td className="p-3">{r.items?.length ?? 0}</td>
-                    <td className="p-3">{r.comments}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="p-6 text-center text-gray-500 italic bg-gray-50"
-                  >
-                    Sin datos
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <p className="col-span-full text-center text-gray-500 italic">
+          Sin datos
+        </p>
       )}
     </div>
   );

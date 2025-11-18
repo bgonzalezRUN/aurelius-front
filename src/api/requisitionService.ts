@@ -11,25 +11,23 @@ export type BackendItem = {
 };
 
 export type BackendPayload = {
-  priority: string;
+  requisitionPriority: string;
   project: string;
-  comments: string;
+  requisitionComments: string;
   sendTo: BackendSendTo[];
   items: BackendItem[];
-  arrivalDate: string; 
+  arrivalDate: string;
 };
 
 export type Requisition = {
-  id: string;
-  priority: string;
+  requisitionId: string;
+  requisitionPriority: string;
   project: string;
-  comments: string;
+  requisitionComments: string;
   sendTo: BackendSendTo[];
   items: BackendItem[];
   arrivalDate?: string;
-  requesterSignature?: string | null;
-  directorSignature?: string | null;
-  superintendentSignature?: string | null;
+  requisitionSignature?: string;
 };
 
 const REQUISITIONS_BASE = "/requisitions";
@@ -49,8 +47,12 @@ export const getRequisitions = async (): Promise<Requisition[]> => {
 };
 
 // Obtener una requisición por ID
-export const getRequisitionById = async (id: string): Promise<Requisition> => {
-  const res = await api.get<Requisition>(`${REQUISITIONS_BASE}/${id}`);
+export const getRequisitionById = async (
+  requisitionId: string
+): Promise<Requisition> => {
+  const res = await api.get<Requisition>(
+    `${REQUISITIONS_BASE}/${requisitionId}`
+  );
   return res.data;
 };
 
@@ -64,22 +66,41 @@ export const searchRequisitionsByProject = async (
   return res.data;
 };
 
+export const updateRequisition = async (
+  requisitionId: string,
+  data: BackendItem[]
+): Promise<Requisition> => {
+  const res = await api.patch<Requisition>(
+    `${REQUISITIONS_BASE}/${requisitionId}`,
+    data
+  );
+  return res.data;
+};
+
 // Eliminar una requisición
-export const deleteRequisition = async (id: string): Promise<any> => {
-  const res = await api.delete(`${REQUISITIONS_BASE}/${id}`);
+export const deleteRequisition = async (
+  requisitionId: string
+): Promise<any> => {
+  const res = await api.delete(`${REQUISITIONS_BASE}/${requisitionId}`);
   return res.data;
 };
 
 // Firmar requisición
 export const signRequisition = async (
-  id: string,
-  signatureText: string,
-  role: string
+  requisitionId: string,
+  user: string
 ): Promise<any> => {
-  // El interceptor ya pone el token, aquí SOLO enviamos role y signature
-  const res = await api.patch(`/requisitions/${id}`, {
-    role,
-    signature: signatureText,
+  const ip = await fetch("https://api.ipify.org?format=json")
+    .then((res) => res.json())
+    .then((data) => data.ip)
+    .catch(() => "unknown");
+
+  const res = await api.patch(`/requisitions/${requisitionId}/sign`, {
+    requisitionId,
+    user,
+    ip,
+    action: "sign",
   });
+
   return res.data;
 };
