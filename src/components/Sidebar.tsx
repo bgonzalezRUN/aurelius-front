@@ -1,4 +1,5 @@
 import { jwtDecode } from "jwt-decode";
+import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Sidebar() {
@@ -55,22 +56,9 @@ export default function Sidebar() {
         {/* BOTÓN DE CERRAR SESIÓN */}
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition font-medium shadow-md"
+          className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition font-medium shadow-md"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 002 2h3a2 2 0 002-2V7a2 2 0 00-2-2h-3a2 2 0 00-2 2v1"
-            />
-          </svg>
+          <LogOut className="transform rotate-180" />
           Cerrar sesión
         </button>
       </div>

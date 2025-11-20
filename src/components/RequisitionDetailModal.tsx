@@ -265,7 +265,7 @@ export default function RequisitionDetailModal({
                   }
 
                   return (
-                    <div className="text-sm text-green-700 mt-1">
+                    <div className="text-sm text-green-700 mt-1 flex items-center gap-1">
                       <p>
                         ✅ Firmada por: <strong>{signature.user}</strong>
                       </p>

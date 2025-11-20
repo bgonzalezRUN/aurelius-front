@@ -30,6 +30,8 @@ export type Requisition = {
   requisitionSignature?: string;
 };
 
+export type IRequisitionStatus = { status: string };
+
 const REQUISITIONS_BASE = "/requisitions";
 
 // Crear requisición
@@ -77,10 +79,19 @@ export const updateRequisition = async (
   return res.data;
 };
 
+export const updateStatusRequisition = async (
+  requisitionId: string
+): Promise<Requisition> => {
+  const res = await api.patch<Requisition>(
+    `${REQUISITIONS_BASE}/${requisitionId}/pending`
+  );
+  return res.data;
+};
+
 // Eliminar una requisición
 export const deleteRequisition = async (
   requisitionId: string
-): Promise<any> => {
+): Promise<number> => {
   const res = await api.delete(`${REQUISITIONS_BASE}/${requisitionId}`);
   return res.data;
 };
@@ -89,7 +100,7 @@ export const deleteRequisition = async (
 export const signRequisition = async (
   requisitionId: string,
   user: string
-): Promise<any> => {
+): Promise<Requisition> => {
   const ip = await fetch("https://api.ipify.org?format=json")
     .then((res) => res.json())
     .then((data) => data.ip)

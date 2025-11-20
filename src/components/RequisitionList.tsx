@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { getRequisitions, type Requisition } from "../api/requisitionService";
 import { Eye, Edit, FileText } from "lucide-react";
+import Restricted from "./Restricted";
 
 export default function RequisitionList({
   onSelect,
   onEdit,
+  onSend,
   filteredRequisitions,
 }: {
   onSelect: (id: string) => void;
   onEdit: (id: string) => void;
+  onSend: (id: string) => void;
   filteredRequisitions?: Requisition[];
 }) {
   const [rows, setRows] = useState<Requisition[]>([]);
@@ -177,12 +180,11 @@ export default function RequisitionList({
                   <FileText size={16} />
                 </div>
               </div>
-
               <button
-                className="bg-[#01687d] text-white px-3 py-1.5 rounded-md text-xs hover:bg-[#5bb4cf]"
+                className="bg-[#01687d] text-white px-3 py-1.5 cursor-pointer rounded-md text-xs hover:bg-[#5bb4cf]"
                 onClick={(e) => {
                   e.stopPropagation();
-                  console.log("Enviar a aprobación", r.requisitionId);
+                  onSend(r.requisitionId);
                 }}
               >
                 Enviar a aprobación
@@ -191,7 +193,7 @@ export default function RequisitionList({
           </div>
         ))
       ) : (
-        <p className="col-span-full text-center text-gray-500 italic">
+        <p className="col-span-full text-center text-7xl font-bold text-gray-500 italic">
           Sin datos
         </p>
       )}

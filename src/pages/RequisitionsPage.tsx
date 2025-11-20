@@ -9,6 +9,7 @@ import {
   getRequisitions,
   searchRequisitionsByProject,
   updateRequisition,
+  updateStatusRequisition,
   type BackendPayload,
   type Requisition,
 } from "../api/requisitionService";
@@ -61,6 +62,16 @@ export default function RequisitionsPage() {
     }
   };
 
+  const handleSendStatus = async (reqId: string) => {
+    try {
+      await updateStatusRequisition(reqId);
+      await fetchAllRequisitions();
+    } catch (error) {
+      console.error(error);
+      alert("Error al actualizar el estado de la requisición");
+    }
+  };
+
   const handleEditRequisition = async (reqId: string) => {
     try {
       const data = await getRequisitionById(reqId);
@@ -80,7 +91,7 @@ export default function RequisitionsPage() {
     }
     await fetchAllRequisitions();
     setShowModal(false);
-    setEditingRequisition(null); // NUEVO: limpiar estado
+    setEditingRequisition(null);
     setCurrentPage(1);
   };
 
@@ -153,7 +164,8 @@ export default function RequisitionsPage() {
             {/* Lista */}
             <RequisitionList
               onSelect={handleSelectRequisition}
-              onEdit={handleEditRequisition} // NUEVO: pasar función de edición
+              onEdit={handleEditRequisition}
+              onSend={handleSendStatus}
               filteredRequisitions={currentItems}
             />
           </div>
