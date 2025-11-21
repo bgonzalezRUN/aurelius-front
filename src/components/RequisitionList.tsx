@@ -1,21 +1,46 @@
 import { useEffect, useState } from "react";
 import { getRequisitions, type Requisition } from "../api/requisitionService";
 import { Eye, Edit, FileText } from "lucide-react";
-import Restricted from "./Restricted";
 
 export default function RequisitionList({
+  status,
   onSelect,
   onEdit,
   onSend,
+  onValidate,
+  onApprove,
   filteredRequisitions,
 }: {
+  status: string;
   onSelect: (id: string) => void;
   onEdit: (id: string) => void;
   onSend: (id: string) => void;
+  onValidate: (id: string) => void;
+  onApprove: (id: string, user: string) => void;
   filteredRequisitions?: Requisition[];
 }) {
   const [rows, setRows] = useState<Requisition[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const ACTIONS_BY_STATUS: Record<
+    string,
+    { label: string; onClick?: (id: string, user: string) => void } | null
+  > = {
+    DRAFT: {
+      label: "Enviar a validación",
+      onClick: (id) => onSend(id),
+    },
+    PENDING: {
+      label: "Confirmar requisición",
+      onClick: (id) => onValidate(id),
+    },
+    VALIDATED: {
+      label: "Aprobar requisición",
+      onClick: (id, user) => onApprove(id, user),
+    },
+    APPROVED: null,
+    REJECTED: null,
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -24,15 +49,16 @@ export default function RequisitionList({
         if (filteredRequisitions !== undefined) {
           setRows(filteredRequisitions);
         } else {
-          const data = await getRequisitions();
+          const data = await getRequisitions(status);
           setRows(data);
         }
       } finally {
         setLoading(false);
       }
     };
+
     load();
-  }, [filteredRequisitions]);
+  }, [status, filteredRequisitions]);
 
   const fmtDate = (iso?: string) =>
     iso
@@ -60,6 +86,33 @@ export default function RequisitionList({
     if (p === "baja")
       return (
         <span className={`${base} bg-green-100 text-green-700`}>Baja</span>
+      );
+    return <span className={`${base} bg-gray-100 text-gray-700`}>{p}</span>;
+  };
+
+  const statusBadge = (p: string) => {
+    const base = "px-2 py-0.5 rounded-lg text-xs font-medium";
+    if (p === "DRAFT")
+      return (
+        <span className={`${base} bg-blue-100 text-blue-700`}>Borrador</span>
+      );
+    if (p === "PENDING")
+      return (
+        <span className={`${base} bg-yellow-100 text-yellow-800`}>
+          Pendiente
+        </span>
+      );
+    if (p === "VALIDATED")
+      return (
+        <span className={`${base} bg-green-100 text-green-700`}>Validada</span>
+      );
+    if (p === "APPROVED")
+      return (
+        <span className={`${base} bg-green-100 text-green-700`}>Aprobada</span>
+      );
+    if (p === "REJECTED")
+      return (
+        <span className={`${base} bg-red-100 text-red-700`}>Rechazada</span>
       );
     return <span className={`${base} bg-gray-100 text-gray-700`}>{p}</span>;
   };
@@ -94,10 +147,7 @@ export default function RequisitionList({
                 <span className="font-medium">Proveedor:</span>{" "}
                 <div className="flex flex-wrap gap-1 mt-1">
                   {r.sendTo?.map((prov) => (
-                    <span
-                      key={prov.id}
-                      className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-[10px]"
-                    >
+                    <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-[10px]">
                       {prov.name}
                     </span>
                   ))}
@@ -133,14 +183,22 @@ export default function RequisitionList({
             </div>
 
             {/* Comentarios */}
-            <p className="text-xs text-gray-700 mb-0 leading-none font-medium">
-              Comentarios:
-            </p>
-            <p className="text-xs text-gray-600 mb-2 leading-snug">
-              {r.requisitionComments?.trim()
-                ? r.requisitionComments
-                : "No hay comentarios"}
-            </p>
+            <div className="flex justify-between items-start">
+              <div className="flex flex-col">
+                <p className="text-xs text-gray-700 mb-0 leading-none font-medium">
+                  Comentarios:
+                </p>
+                <p className="text-xs text-gray-600 mb-2 leading-snug">
+                  {r.requisitionComments?.trim()
+                    ? r.requisitionComments
+                    : "No hay comentarios"}
+                </p>
+              </div>
+              <p className="text-xs text-gray-600 mb-2 leading-tight">
+                <span className="font-medium">Estado:</span>{" "}
+                {statusBadge(r.requisitionStatus)}
+              </p>
+            </div>
 
             <hr className="my-2" />
 
@@ -157,17 +215,17 @@ export default function RequisitionList({
                 >
                   <Eye size={16} />
                 </div>
-
-                {/* EDITAR */}
-                <div
-                  className="p-1.5 rounded-full hover:bg-gray-200 transition cursor-pointer flex items-center justify-center"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit(r.requisitionId);
-                  }}
-                >
-                  <Edit size={16} />
-                </div>
+                {r.requisitionStatus === "APPROVED" ? null : (
+                  <div
+                    className="p-1.5 rounded-full hover:bg-gray-200 transition cursor-pointer flex items-center justify-center"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(r.requisitionId);
+                    }}
+                  >
+                    <Edit size={16} />
+                  </div>
+                )}
 
                 {/* DUPLICAR */}
                 <div
@@ -180,22 +238,35 @@ export default function RequisitionList({
                   <FileText size={16} />
                 </div>
               </div>
-              <button
-                className="bg-[#01687d] text-white px-3 py-1.5 cursor-pointer rounded-md text-xs hover:bg-[#5bb4cf]"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSend(r.requisitionId);
-                }}
-              >
-                Enviar a aprobación
-              </button>
+              {(() => {
+                const config = ACTIONS_BY_STATUS[r.requisitionStatus];
+
+                if (!config)
+                  return (
+                    <p className="text-xs text-gray-600">Requisición firmada</p>
+                  );
+
+                return (
+                  <button
+                    className="bg-[#01687d] text-white px-3 py-1.5 cursor-pointer rounded-md text-xs hover:bg-[#5bb4cf]"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      config.onClick(r.requisitionId);
+                    }}
+                  >
+                    {config.label}
+                  </button>
+                );
+              })()}
             </div>
           </div>
         ))
       ) : (
-        <p className="col-span-full text-center text-7xl font-bold text-gray-500 italic">
-          Sin datos
-        </p>
+        <div className="flex items-center justify-center h-[45vh] w-[65vw]">
+          <p className="text-center text-5xl font-bold text-gray-500 italic">
+            No hay requisiciones en este estado
+          </p>
+        </div>
       )}
     </div>
   );

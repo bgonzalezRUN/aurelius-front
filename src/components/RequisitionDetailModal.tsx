@@ -6,7 +6,7 @@ import {
 } from "../api/requisitionService";
 import { jwtDecode } from "jwt-decode";
 import Restricted from "./Restricted";
-import { CircleX, Eye, Layers, Trash2 } from "lucide-react";
+import { Check, CircleX, Eye, Layers, Trash2 } from "lucide-react";
 
 export interface DecodedSignature {
   requisition_id: number;
@@ -242,14 +242,70 @@ export default function RequisitionDetailModal({
           </section>
 
           {/* Firmas */}
-          <section className="mb-4">
-            <h3 className="text-lg font-semibold text-[#058cb5] mb-3">
-              Firmas
-            </h3>
-
-            <div className="p-4 border rounded-xl bg-[#f8fafa] shadow-sm flex items-center justify-between">
+          <h3 className="text-md font-semibold text-[#058cb5] mb-2">
+            Aprobaciones
+          </h3>
+          <section className="flex flex-row gap-2 justify-around mb-8">
+            {/* BLOQUE 1 */}
+            <div className="p-5 h-[100px] border rounded-xl bg-[#f8fafa] shadow-sm mb-4 flex items-center justify-between">
               <div>
-                <p className="font-semibold text-[#01687d]">Director de Obra</p>
+                <p className="font-semibold text-[#01687d] text-sm">
+                  Solicitante
+                </p>
+
+                {!requisition.requester ? (
+                  <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
+                    ⛔ <span>No solicitada</span>
+                  </p>
+                ) : (
+                  <div className="mt-2">
+                    <p className="text-sm text-green-700 flex items-center gap-1">
+                      <Check />
+                      <strong>{requisition.requester.requester}</strong>
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(
+                        requisition.requester.timestamp
+                      ).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* BLOQUE 2 */}
+            <div className="p-5 h-[100px] border rounded-xl bg-[#f8fafa] shadow-sm mb-4 flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-[#01687d] text-sm">
+                  Gerente de obra
+                </p>
+
+                {!requisition.validator ? (
+                  <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
+                    ⛔ <span>No validada</span>
+                  </p>
+                ) : (
+                  <div className="mt-2">
+                    <p className="text-sm text-green-700 flex items-center gap-1">
+                      <Check />
+                      <strong>{requisition.validator.validator}</strong>
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(
+                        requisition.validator.timestamp
+                      ).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* BLOQUE 3 */}
+            <div className="p-5 h-[100px] border rounded-xl bg-[#f8fafa] shadow-sm mb-4 flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-[#01687d] text-sm">
+                  Director de obra
+                </p>
 
                 {(() => {
                   const signature = decodeSignature(
@@ -265,9 +321,10 @@ export default function RequisitionDetailModal({
                   }
 
                   return (
-                    <div className="text-sm text-green-700 mt-1 flex items-center gap-1">
-                      <p>
-                        ✅ Firmada por: <strong>{signature.user}</strong>
+                    <div className="mt-2">
+                      <p className="text-sm text-green-700 mt-1 flex items-center gap-1">
+                        <Check />
+                        <strong>{signature.user}</strong>
                       </p>
                       <p className="text-xs text-gray-500">
                         {new Date(signature.timestamp).toLocaleString()}
@@ -276,17 +333,6 @@ export default function RequisitionDetailModal({
                   );
                 })()}
               </div>
-
-              <Restricted permission="sign:requisition">
-                {!requisition.requisitionSignature && (
-                  <button
-                    onClick={() => setShowSignModal(true)}
-                    className="px-3 py-1.5 rounded-lg bg-[#058cb5] hover:bg-[#037997] text-white transition text-sm whitespace-nowrap"
-                  >
-                    Firmar
-                  </button>
-                )}
-              </Restricted>
             </div>
           </section>
         </div>

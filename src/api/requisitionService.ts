@@ -2,6 +2,8 @@
 import api from "./http";
 
 export type BackendSendTo = { name: string };
+export type IRequisitionRequester = { requester: string; timestamp: string };
+export type IRequisitionValidator = { validator: string; timestamp: string };
 export type BackendItem = {
   material: string;
   metricUnit: string;
@@ -24,9 +26,12 @@ export type Requisition = {
   requisitionPriority: string;
   project: string;
   requisitionComments: string;
+  requisitionStatus: string;
   sendTo: BackendSendTo[];
   items: BackendItem[];
   arrivalDate?: string;
+  requester: IRequisitionRequester;
+  validator: IRequisitionValidator;
   requisitionSignature?: string;
 };
 
@@ -43,8 +48,13 @@ export const createRequisition = async (
 };
 
 // Obtener todas las requisiciones
-export const getRequisitions = async (): Promise<Requisition[]> => {
-  const res = await api.get<Requisition[]>(`${REQUISITIONS_BASE}/`);
+export const getRequisitions = async (
+  status: string
+): Promise<Requisition[]> => {
+  const res = await api.get<Requisition[]>(`${REQUISITIONS_BASE}/`, {
+    params: { status },
+  });
+
   return res.data;
 };
 
@@ -83,7 +93,16 @@ export const updateStatusRequisition = async (
   requisitionId: string
 ): Promise<Requisition> => {
   const res = await api.patch<Requisition>(
-    `${REQUISITIONS_BASE}/${requisitionId}/pending`
+    `${REQUISITIONS_BASE}/${requisitionId}/submit`
+  );
+  return res.data;
+};
+
+export const updateValidateRequisition = async (
+  requisitionId: string
+): Promise<Requisition> => {
+  const res = await api.patch<Requisition>(
+    `${REQUISITIONS_BASE}/${requisitionId}/validate`
   );
   return res.data;
 };
