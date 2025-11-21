@@ -2,8 +2,8 @@
 import api from "./http";
 
 export type BackendSendTo = { name: string };
-export type IRequisitionRequester = { requester: string; timestamp: string };
-export type IRequisitionValidator = { validator: string; timestamp: string };
+export type IRequisitionRequester = { name: string; timestamp: string };
+export type IRequisitionValidator = { name: string; timestamp: string };
 export type BackendItem = {
   material: string;
   metricUnit: string;
@@ -48,13 +48,8 @@ export const createRequisition = async (
 };
 
 // Obtener todas las requisiciones
-export const getRequisitions = async (
-  status: string
-): Promise<Requisition[]> => {
-  const res = await api.get<Requisition[]>(`${REQUISITIONS_BASE}/`, {
-    params: { status },
-  });
-
+export const getRequisitions = async (): Promise<Requisition[]> => {
+  const res = await api.get<Requisition[]>(`${REQUISITIONS_BASE}/`);
   return res.data;
 };
 
@@ -89,7 +84,7 @@ export const updateRequisition = async (
   return res.data;
 };
 
-export const updateStatusRequisition = async (
+export const updateSubmitRequisition = async (
   requisitionId: string
 ): Promise<Requisition> => {
   const res = await api.patch<Requisition>(

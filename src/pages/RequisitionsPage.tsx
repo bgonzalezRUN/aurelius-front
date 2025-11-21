@@ -10,7 +10,7 @@ import {
   searchRequisitionsByProject,
   signRequisition,
   updateRequisition,
-  updateStatusRequisition,
+  updateSubmitRequisition,
   updateValidateRequisition,
   type BackendPayload,
   type Requisition,
@@ -26,27 +26,16 @@ export default function RequisitionsPage() {
     useState<Requisition | null>(null);
   const [projectName, setProjectName] = useState("");
   const [requisitions, setRequisitions] = useState<Requisition[]>([]);
-  const [status, setStatus] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  const estatutos = [
-    "DRAFT",
-    "PENDING",
-    "VALIDATED",
-    "APPROVED",
-    "SENT_TO_PURCHEASE",
-    "REJECTED",
-  ];
-
   useEffect(() => {
     fetchAllRequisitions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status]);
+  }, []);
 
   const fetchAllRequisitions = async () => {
     try {
-      const data = await getRequisitions(status);
+      const data = await getRequisitions();
       setRequisitions(data);
     } catch (err) {
       console.error(err);
@@ -75,7 +64,7 @@ export default function RequisitionsPage() {
 
   const handleSendStatus = async (reqId: string) => {
     try {
-      await updateStatusRequisition(reqId);
+      await updateSubmitRequisition(reqId);
       await fetchAllRequisitions();
     } catch (error) {
       console.error(error);
@@ -189,27 +178,11 @@ export default function RequisitionsPage() {
                 <h2 className="text-xl font-bold text-[#01687d]">
                   Centro de costos CC-1002
                 </h2>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className=" w-52 px-4 py-2 rounded-lg bg-white border border-[#01687d]/40 text-[#01687d] font-medium shadow-sm focus:outline-none  focus:ring-2 focus:ring-[#01687d] hover:border-[#01687d] cursor-pointer transition-all"
-                >
-                  <option value="" disabled hidden>
-                    Seleccionar estado...
-                  </option>
-
-                  {estatutos.map((s) => (
-                    <option key={s} value={s} className="text-gray-700">
-                      {s}
-                    </option>
-                  ))}
-                </select>
               </div>
             </div>
 
             {/* Lista */}
             <RequisitionList
-              status={status}
               onSelect={handleSelectRequisition}
               onEdit={handleEditRequisition}
               onSend={handleSendStatus}

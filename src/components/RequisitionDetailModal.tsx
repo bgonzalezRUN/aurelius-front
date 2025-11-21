@@ -261,7 +261,7 @@ export default function RequisitionDetailModal({
                   <div className="mt-2">
                     <p className="text-sm text-green-700 flex items-center gap-1">
                       <Check />
-                      <strong>{requisition.requester.requester}</strong>
+                      <strong>{requisition.requester.name}</strong>
                     </p>
                     <p className="text-xs text-gray-500">
                       {new Date(
@@ -288,7 +288,7 @@ export default function RequisitionDetailModal({
                   <div className="mt-2">
                     <p className="text-sm text-green-700 flex items-center gap-1">
                       <Check />
-                      <strong>{requisition.validator.validator}</strong>
+                      <strong>{requisition.validator.name}</strong>
                     </p>
                     <p className="text-xs text-gray-500">
                       {new Date(

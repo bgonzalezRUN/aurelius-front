@@ -3,7 +3,6 @@ import { getRequisitions, type Requisition } from "../api/requisitionService";
 import { Eye, Edit, FileText } from "lucide-react";
 
 export default function RequisitionList({
-  status,
   onSelect,
   onEdit,
   onSend,
@@ -11,7 +10,6 @@ export default function RequisitionList({
   onApprove,
   filteredRequisitions,
 }: {
-  status: string;
   onSelect: (id: string) => void;
   onEdit: (id: string) => void;
   onSend: (id: string) => void;
