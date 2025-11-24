@@ -1,4 +1,5 @@
 // requisitionService.ts
+import type { HistoryRequisition } from "../types";
 import api from "./http";
 
 export type BackendSendTo = { name: string };
@@ -127,5 +128,12 @@ export const signRequisition = async (
     action: "sign",
   });
 
+  return res.data;
+};
+
+export const historyRequisition = async (
+  requisitionId: string
+): Promise<HistoryRequisition[]> => {
+  const res = await api.get(`requisition-history/${requisitionId}`);
   return res.data;
 };
