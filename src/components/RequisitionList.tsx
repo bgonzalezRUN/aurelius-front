@@ -1,9 +1,10 @@
-import {  useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getRequisitions, type Requisition } from '../api/requisitionService';
-import { Eye, Edit, FileText } from 'lucide-react';
+import { Eye, Edit, FileText, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { ButtonBase } from './common';
 
 import OrderHistory from './requisition/OrderHistory';
+import RejectRequisition from './requisition/RejectRequisition';
 
 export default function RequisitionList({
   onSelect,
@@ -22,10 +23,16 @@ export default function RequisitionList({
 }) {
   const [rows, setRows] = useState<Requisition[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isPopupsOpen, setIsPopupsOpen] = useState({
+    orderHistory: false,
+    reject: false,
+  });
+  const [idRequisition, setIdRequisition] = useState<string>('');
 
-  const openPopup = () => setIsPopupOpen(true);
-  const closePopup = () => setIsPopupOpen(false);
+  const openPopups = (popupName: string) =>
+    setIsPopupsOpen({ ...isPopupsOpen, [popupName]: true });
+  const closePopups = (popupName: string) =>
+    setIsPopupsOpen({ ...isPopupsOpen, [popupName]: false });
 
   const ACTIONS_BY_STATUS: Record<
     string,
@@ -132,7 +139,7 @@ export default function RequisitionList({
         {rows.length ? (
           rows.map(r => (
             <div
-              key={r.requisitionId}
+              key={r.requisitionCode}
               className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition flex flex-col"
             >
               {/* Título + Fecha */}
@@ -209,8 +216,8 @@ export default function RequisitionList({
               <hr className="my-2" />
 
               {/* Footer */}
-              <div className="flex justify-between flex-wrap items-center mt-1">
-                <div className="flex gap-1 text-[#01687d]">
+              <div className="flex flex-wrap items-center justify-between mt-1">
+                <div className="flex text-[#01687d]">
                   {/* VER */}
                   <div
                     className="p-1.5 rounded-full hover:bg-gray-200 transition cursor-pointer flex items-center justify-center"
@@ -219,7 +226,7 @@ export default function RequisitionList({
                       onSelect(r.requisitionId);
                     }}
                   >
-                    <Eye size={16} />
+                    <Eye size={18} />
                   </div>
                   {r.requisitionStatus === 'APPROVED' ? null : (
                     <div
@@ -229,7 +236,7 @@ export default function RequisitionList({
                         onEdit(r.requisitionId);
                       }}
                     >
-                      <Edit size={16} />
+                      <Edit size={18} />
                     </div>
                   )}
 
@@ -241,7 +248,7 @@ export default function RequisitionList({
                       console.log('Duplicar', r.requisitionId);
                     }}
                   >
-                    <FileText size={16} />
+                    <FileText size={18} />
                   </div>
                 </div>
                 {(() => {
@@ -255,19 +262,52 @@ export default function RequisitionList({
                     );
 
                   return (
-                    <button
-                      className="bg-[#01687d] text-white px-3 py-1.5 cursor-pointer rounded-md text-xs hover:bg-[#5bb4cf]"
-                      onClick={e => {
-                        e.stopPropagation();
-                        config.onClick(r.requisitionId);
-                      }}
-                    >
-                      {config.label}
-                    </button>
+                    <>
+                      <button
+                        className="text-green-primary p-1.5 rounded-full hover:bg-gray-200 transition flex items-center justify-center"
+                        onClick={e => {
+                          e.stopPropagation();
+                          config.onClick(r.requisitionId);
+                        }}
+                      >
+                        <ThumbsUp size={18} />
+                      </button>
+                      <button
+                        className="text-red-primary p-1.5 rounded-full hover:bg-gray-200 transition flex items-center justify-center"
+                        onClick={() => {
+                          openPopups('reject');
+                        }}
+                      >
+                        <ThumbsDown size={18} />
+                      </button>
+                      <RejectRequisition
+                        isPopupOpen={isPopupsOpen.reject}
+                        closePopup={() => {
+                          closePopups('reject');
+                        }}
+                        requisitionId={r.requisitionId}
+                      />
+                    </>
                   );
                 })()}
-                <ButtonBase label="Consultar Historico" onclick={openPopup} />
-                <OrderHistory isPopupOpen={isPopupOpen} closePopup={closePopup} requisitionInfo={r}/>
+                <ButtonBase
+                  label="Consultar Historico"
+                  onclick={() => {
+                    setIdRequisition(r.requisitionId);
+                    openPopups('orderHistory');
+                  }}
+                />
+                {
+                  r.requisitionId === idRequisition ? (<OrderHistory
+                  isPopupOpen={isPopupsOpen.orderHistory}
+                  closePopup={() => {
+
+                    closePopups('orderHistory');
+                  }}
+                  requisitionInfo={r}
+                />) : null
+                }
+                
               </div>
             </div>
           ))
@@ -279,8 +319,6 @@ export default function RequisitionList({
           </div>
         )}
       </div>
-
-      
     </>
   );
 }

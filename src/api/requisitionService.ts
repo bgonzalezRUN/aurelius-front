@@ -1,6 +1,6 @@
 // requisitionService.ts
-import type { HistoryRequisition } from "../types";
-import api from "./http";
+import type { HistoryRequisition } from '../types';
+import api from './http';
 
 export type BackendSendTo = { name: string };
 export type IRequisitionRequester = { name: string; timestamp: string };
@@ -24,6 +24,7 @@ export type BackendPayload = {
 
 export type Requisition = {
   requisitionId: string;
+  requisitionCode: string;
   requisitionPriority: string;
   project: string;
   requisitionComments: string;
@@ -38,7 +39,7 @@ export type Requisition = {
 
 export type IRequisitionStatus = { status: string };
 
-const REQUISITIONS_BASE = "/requisitions";
+const REQUISITIONS_BASE = '/requisitions';
 
 // Crear requisición
 export const createRequisition = async (
@@ -50,8 +51,12 @@ export const createRequisition = async (
 
 // Obtener todas las requisiciones
 export const getRequisitions = async (): Promise<Requisition[]> => {
-  const res = await api.get<Requisition[]>(`${REQUISITIONS_BASE}/`);
-  return res.data;
+  const res = await api.get<Record<string, Requisition[]>>(
+    `${REQUISITIONS_BASE}/`
+  );
+  // Unificar todas las requisiciones en un solo array
+  const flat = Object.values(res.data).flat();
+  return flat;
 };
 
 // Obtener una requisición por ID
@@ -94,11 +99,18 @@ export const updateSubmitRequisition = async (
   return res.data;
 };
 
-export const updateValidateRequisition = async (
-  requisitionId: string
-): Promise<Requisition> => {
+export const updateStateRequisition = async ({
+  requisitionId,
+  observation,
+  type,
+}: {
+  requisitionId: string;
+  observation?: string;
+  type: 'validate' | 'reject';
+}): Promise<Requisition> => {
   const res = await api.patch<Requisition>(
-    `${REQUISITIONS_BASE}/${requisitionId}/validate`
+    `${REQUISITIONS_BASE}/${requisitionId}/${type}`,
+    { observation }
   );
   return res.data;
 };
@@ -116,16 +128,16 @@ export const signRequisition = async (
   requisitionId: string,
   user: string
 ): Promise<Requisition> => {
-  const ip = await fetch("https://api.ipify.org?format=json")
-    .then((res) => res.json())
-    .then((data) => data.ip)
-    .catch(() => "unknown");
+  const ip = await fetch('https://api.ipify.org?format=json')
+    .then(res => res.json())
+    .then(data => data.ip)
+    .catch(() => 'unknown');
 
   const res = await api.patch(`/requisitions/${requisitionId}/sign`, {
     requisitionId,
     user,
     ip,
-    action: "sign",
+    action: 'sign',
   });
 
   return res.data;

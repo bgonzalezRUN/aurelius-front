@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
-import Sidebar from "../components/Sidebar";
-import RequisitionList from "../components/RequisitionList";
-import RequisitionModal from "../components/RequisitionModal";
-import RequisitionDetailModal from "../components/RequisitionDetailModal";
+import { useEffect, useState } from 'react';
+import Sidebar from '../components/Sidebar';
+import RequisitionList from '../components/RequisitionList';
+import RequisitionModal from '../components/RequisitionModal';
+import RequisitionDetailModal from '../components/RequisitionDetailModal';
 import {
   createRequisition,
   getRequisitionById,
@@ -10,13 +10,13 @@ import {
   searchRequisitionsByProject,
   signRequisition,
   updateRequisition,
+  updateStateRequisition,
   updateSubmitRequisition,
-  updateValidateRequisition,
   type BackendPayload,
   type Requisition,
-} from "../api/requisitionService";
-import Restricted from "../components/Restricted";
-import { ChevronLeft, ChevronRight, PlusIcon, Search } from "lucide-react";
+} from '../api/requisitionService';
+import Restricted from '../components/Restricted';
+import { ChevronLeft, ChevronRight, PlusIcon, Search } from 'lucide-react';
 
 export default function RequisitionsPage() {
   const [showModal, setShowModal] = useState(false);
@@ -24,7 +24,7 @@ export default function RequisitionsPage() {
     useState<Requisition | null>(null);
   const [editingRequisition, setEditingRequisition] =
     useState<Requisition | null>(null);
-  const [projectName, setProjectName] = useState("");
+  const [projectName, setProjectName] = useState('');
   const [requisitions, setRequisitions] = useState<Requisition[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
@@ -68,17 +68,17 @@ export default function RequisitionsPage() {
       await fetchAllRequisitions();
     } catch (error) {
       console.error(error);
-      alert("Error al actualizar el estado de la requisición");
+      alert('Error al actualizar el estado de la requisición');
     }
   };
 
   const handleValidateStatus = async (reqId: string) => {
     try {
-      await updateValidateRequisition(reqId);
+      await updateStateRequisition({ requisitionId: reqId, type: 'validate' });
       await fetchAllRequisitions();
     } catch (error) {
       console.error(error);
-      alert("Error al actualizar el estado de la requisición");
+      alert('Error al actualizar el estado de la requisición');
     }
   };
 
@@ -88,7 +88,7 @@ export default function RequisitionsPage() {
       await fetchAllRequisitions();
     } catch (error) {
       console.error(error);
-      alert("Error al actualizar el estado de la requisición");
+      alert('Error al actualizar el estado de la requisición');
     }
   };
 
@@ -99,7 +99,7 @@ export default function RequisitionsPage() {
       setShowModal(true);
     } catch (error) {
       console.error(error);
-      alert("Error al cargar la requisición");
+      alert('Error al cargar la requisición');
     }
   };
 
@@ -168,7 +168,7 @@ export default function RequisitionsPage() {
                   <input
                     type="text"
                     value={projectName}
-                    onChange={(e) => setProjectName(e.target.value)}
+                    onChange={e => setProjectName(e.target.value)}
                     placeholder="Buscar"
                     className="w-full bg-white drop-shadow-lg rounded-lg pl-10 pr-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#01687d]"
                   />
@@ -192,15 +192,15 @@ export default function RequisitionsPage() {
             />
           </div>
         </main>
-        {requisitions.length > itemsPerPage && (
+        {/* {requisitions.length > itemsPerPage && (
           <div className="flex justify-center items-center gap-4 mt-6">
             <button
               disabled={currentPage === 1}
-              onClick={() => setCurrentPage((prev) => prev - 1)}
+              onClick={() => setCurrentPage(prev => prev - 1)}
               className={`px-2 py-2 rounded-lg shadow ${
                 currentPage === 1
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-[#01687d] text-white hover:bg-[#02566a]"
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-[#01687d] text-white hover:bg-[#02566a]'
               }`}
             >
               <ChevronLeft />
@@ -212,17 +212,17 @@ export default function RequisitionsPage() {
 
             <button
               disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((prev) => prev + 1)}
+              onClick={() => setCurrentPage(prev => prev + 1)}
               className={`px-2 py-2 rounded-lg shadow ${
                 currentPage === totalPages
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-[#01687d] text-white hover:bg-[#02566a]"
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-[#01687d] text-white hover:bg-[#02566a]'
               }`}
             >
               <ChevronRight />
             </button>
           </div>
-        )}
+        )} */}
       </div>
 
       <RequisitionModal

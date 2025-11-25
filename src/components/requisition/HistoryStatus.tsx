@@ -5,11 +5,13 @@ import { ThumbsUp, ThumbsDown, Clock5 } from 'lucide-react';
 const statusStyles: Partial<Record<Status, string>> = {
   APPROVED: 'text-green-primary',
   REJECTED: 'text-red-primary',
+  VALIDATED: 'text-green-primary',
 };
 
 const statusIcons: Partial<Record<Status, ReactNode>> = {
   APPROVED: <ThumbsUp />,
   REJECTED: <ThumbsDown />,
+  VALIDATED: <ThumbsUp />,
 };
 
 export default function HistoryStatus({ status }: { status: Status }) {

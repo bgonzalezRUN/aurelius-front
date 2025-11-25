@@ -17,24 +17,27 @@ import { dateformatter } from '../../utils/dateformatter';
 import HistoryStatus from './HistoryStatus';
 import clsx from 'clsx';
 
-interface OrderHistory {
+interface OrderHistoryProps {
   isPopupOpen: boolean;
   closePopup: () => void;
   requisitionInfo: Requisition;
 }
 
-const OrderHistory: FC<OrderHistory> = ({
+const OrderHistory: FC<OrderHistoryProps> = ({
   isPopupOpen,
   closePopup,
   requisitionInfo,
 }) => {
   const [historyData, sethistoryData] = useState<HistoryRequisition[]>([]);
 
+  console.log(requisitionInfo);
+  
+
   const getHIstoryData = useCallback(async () => {
     const data = await historyRequisition(requisitionInfo.requisitionId);
 
     sethistoryData(data);
-  }, [requisitionInfo.requisitionId]);
+  }, [requisitionInfo]);
 
   useEffect(() => {
     getHIstoryData();
