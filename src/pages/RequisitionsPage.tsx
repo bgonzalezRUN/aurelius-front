@@ -1,91 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import RequisitionList from '../components/RequisitionList';
 import RequisitionModal from '../components/RequisitionModal';
-import RequisitionDetailModal from '../components/RequisitionDetailModal';
+
 import {
   createRequisition,
-  getRequisitionById,
-  getRequisitions,
-  signRequisition,
   updateRequisition,
-  updateStateRequisition,
-  updateSubmitRequisition,
-  type BackendPayload,
-  type Requisition,
 } from '../api/requisitionService';
 import Restricted from '../components/Restricted';
 import { PlusIcon, Search } from 'lucide-react';
-import { useAuthStore } from '../store/Auth';
+import type { BackendPayload, Requisition } from '../types';
 
 export default function RequisitionsPage() {
-  const [showModal, setShowModal] = useState(false);
-  const [selectedRequisition, setSelectedRequisition] =
-    useState<Requisition | null>(null);
+  const [showModal, setShowModal] = useState(false);  
   const [editingRequisition, setEditingRequisition] =
     useState<Requisition | null>(null);
   const [projectName, setProjectName] = useState('');
-  const [requisitions, setRequisitions] = useState<Requisition[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
-
-  useEffect(() => {
-    fetchAllRequisitions();
-  }, []);
-
-  const fetchAllRequisitions = async () => {
-    try {
-      const data = await getRequisitions();
-      setRequisitions(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const indexOfLast = currentPage * itemsPerPage;
-  const indexOfFirst = indexOfLast - itemsPerPage;
-  const currentItems = requisitions.slice(indexOfFirst, indexOfLast);
-
-  const handleSendStatus = async (reqId: string) => {
-    try {
-      await updateSubmitRequisition(reqId);
-      await fetchAllRequisitions();
-    } catch (error) {
-      console.error(error);
-      alert('Error al actualizar el estado de la requisición');
-    }
-  };
-
-  const handleValidateStatus = async (reqId: string) => {
-    try {
-      await updateStateRequisition({ requisitionId: reqId, type: 'validate' });
-      await fetchAllRequisitions();
-    } catch (error) {
-      console.error(error);
-      alert('Error al actualizar el estado de la requisición');
-    }
-  };
-
-  const handleApproveStatus = async (reqId: string, user: string) => {
-    try {
-      await signRequisition(reqId, user);
-      await fetchAllRequisitions();
-    } catch (error) {
-      console.error(error);
-      alert('Error al actualizar el estado de la requisición');
-    }
-  };
-
-  const handleEditRequisition = async (reqId: string) => {
-    try {
-      const data = await getRequisitionById(reqId);
-      setEditingRequisition(data);
-      setShowModal(true);
-    } catch (error) {
-      console.error(error);
-      alert('Error al cargar la requisición');
-    }
-  };
 
   const handleSave = async (data: BackendPayload) => {
     if (editingRequisition) {
@@ -93,24 +23,14 @@ export default function RequisitionsPage() {
     } else {
       await createRequisition(data);
     }
-    await fetchAllRequisitions();
+
     setShowModal(false);
     setEditingRequisition(null);
-    setCurrentPage(1);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingRequisition(null);
-  };
-
-  const handleSelectRequisition = async (reqId: string) => {
-    try {
-      const data = await getRequisitionById(reqId);
-      setSelectedRequisition(data);
-    } catch (error) {
-      console.error(error);
-    }
   };
 
   return (
@@ -166,14 +86,7 @@ export default function RequisitionsPage() {
             </div>
 
             {/* Lista */}
-            <RequisitionList
-              onSelect={handleSelectRequisition}
-              onEdit={handleEditRequisition}
-              onSend={handleSendStatus}
-              onValidate={handleValidateStatus}
-              onApprove={handleApproveStatus}
-              filteredRequisitions={currentItems}
-            />
+            <RequisitionList />
           </div>
         </main>
         {/* {requisitions.length > itemsPerPage && (
@@ -216,11 +129,7 @@ export default function RequisitionsPage() {
         editingRequisition={editingRequisition}
       />
 
-      <RequisitionDetailModal
-        open={!!selectedRequisition}
-        requisition={selectedRequisition}
-        onClose={() => setSelectedRequisition(null)}
-      />
+      
     </div>
   );
 }

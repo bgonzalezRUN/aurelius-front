@@ -1,7 +1,9 @@
 // requisitionService.ts
-import type { HistoryRequisition } from "../types";
-import type { BackendPayload, LineItem, Requisition } from "../types";
-import api from "./http";
+import type { BackendPayload, HistoryRequisition, LineItem, Requisition } from "../../types";
+import api from "../http";
+
+
+
 
 const REQUISITIONS_BASE = "/requisitions";
 

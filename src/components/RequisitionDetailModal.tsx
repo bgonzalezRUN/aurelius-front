@@ -2,10 +2,12 @@ import { useState } from "react";
 import {
   deleteRequisition,
   signRequisition,
-  type Requisition,
+  
 } from "../api/requisitionService";
 import { jwtDecode } from "jwt-decode";
 import { Check, CircleX, Eye, Layers, Trash2 } from "lucide-react";
+import { useRequisitionById } from "../api/queries/requisitionQueries";
+import { Loading } from "./common";
 
 export interface DecodedSignature {
   requisition_id: number;
@@ -23,12 +25,13 @@ interface DecodedToken {
 export default function RequisitionDetailModal({
   open,
   onClose,
-  requisition,
+  requisitionId,
 }: {
   open: boolean;
   onClose: () => void;
-  requisition: Requisition | null;
+  requisitionId: string;
 }) {
+  const { data, isLoading } = useRequisitionById(requisitionId);
   const [showSignModal, setShowSignModal] = useState(false);
 
   // Modal de eliminación
@@ -51,7 +54,7 @@ export default function RequisitionDetailModal({
         }).format(new Date(iso))
       : "";
 
-  if (!open || !requisition) return null;
+  if (!open || !data) return null;
 
   const token = localStorage.getItem("token");
   let user = "";
@@ -83,7 +86,7 @@ export default function RequisitionDetailModal({
     }
 
     try {
-      await signRequisition(requisition.requisitionId, user);
+      await signRequisition(data.requisitionId, user);
       alert("✅ Requisición firmada exitosamente");
       setShowSignModal(false);
       onClose();
@@ -100,7 +103,7 @@ export default function RequisitionDetailModal({
   const onConfirmDelete = async () => {
     try {
       setIsDeleting(true);
-      await deleteRequisition(requisition.requisitionId);
+      await deleteRequisition(data.requisitionId);
       setShowDeleteModal(false);
       onClose();
       location.reload();
@@ -110,6 +113,9 @@ export default function RequisitionDetailModal({
   };
 
   // Badge de prioridad
+   if (isLoading) {
+      return <Loading/>
+    }
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
@@ -149,7 +155,7 @@ export default function RequisitionDetailModal({
                     Proyecto:
                   </span>{" "}
                   <h2 className="text-lg font-bold text-[#01687d] leading-tight">
-                    {requisition.project}
+                    {data.project}
                   </h2>
                 </div>
 
@@ -158,14 +164,14 @@ export default function RequisitionDetailModal({
                     <span className="font-semibold text-base text-black">
                       Fecha de llegada:
                     </span>
-                    <span>{fmtDate(requisition.arrivalDate)}</span>
+                    <span>{fmtDate(data.arrivalDate)}</span>
                   </div>
 
                   <div className="flex flex-col justify-end sm:flex-row sm:items-center sm:gap-2">
-                    {Array.isArray((requisition as any).arrivalWindows) &&
-                      (requisition as any).arrivalWindows.length > 0 && (
+                    {Array.isArray((data as any).arrivalWindows) &&
+                      (data as any).arrivalWindows.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-2">
-                          {(requisition as any).arrivalWindows.map(
+                          {(data as any).arrivalWindows.map(
                             (w: any, i: number) => (
                               <span
                                 key={i}
@@ -185,7 +191,7 @@ export default function RequisitionDetailModal({
                 <span className="font-semibold text-base text-black">
                   Enviar a:
                 </span>{" "}
-                {requisition.sendTo?.map((s, i) => (
+                {data.sendTo?.map((s, i) => (
                   <span
                     key={i}
                     className="ml-1 text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-lg"
@@ -222,7 +228,7 @@ export default function RequisitionDetailModal({
                   </thead>
 
                   <tbody>
-                    {requisition.items?.map((it, i) => (
+                    {data.items?.map((it, i) => (
                       <tr
                         key={i}
                         className="border-t hover:bg-[#f7fcfd] transition"
@@ -252,7 +258,7 @@ export default function RequisitionDetailModal({
                   Solicitante
                 </p>
 
-                {!requisition.requester ? (
+                {!data.requester ? (
                   <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
                     ⛔ <span>No solicitada</span>
                   </p>
@@ -260,11 +266,11 @@ export default function RequisitionDetailModal({
                   <div className="mt-2">
                     <p className="text-sm text-green-700 flex items-center gap-1">
                       <Check />
-                      <strong>{requisition.requester.name}</strong>
+                      <strong>{data.requester.name}</strong>
                     </p>
                     <p className="text-xs text-gray-500">
                       {new Date(
-                        requisition.requester.timestamp
+                        data.requester.timestamp
                       ).toLocaleString()}
                     </p>
                   </div>
@@ -279,7 +285,7 @@ export default function RequisitionDetailModal({
                   Gerente de obra
                 </p>
 
-                {!requisition.validator ? (
+                {!data.validator ? (
                   <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
                     ⛔ <span>No validada</span>
                   </p>
@@ -287,11 +293,11 @@ export default function RequisitionDetailModal({
                   <div className="mt-2">
                     <p className="text-sm text-green-700 flex items-center gap-1">
                       <Check />
-                      <strong>{requisition.validator.name}</strong>
+                      <strong>{data.validator.name}</strong>
                     </p>
                     <p className="text-xs text-gray-500">
                       {new Date(
-                        requisition.validator.timestamp
+                        data.validator.timestamp
                       ).toLocaleString()}
                     </p>
                   </div>
@@ -308,7 +314,7 @@ export default function RequisitionDetailModal({
 
                 {(() => {
                   const signature = decodeSignature(
-                    requisition.requisitionSignature
+                    data.requisitionSignature
                   );
 
                   if (!signature) {
@@ -375,8 +381,8 @@ export default function RequisitionDetailModal({
 
               <p className="text-gray-700 mb-6 text-sm">
                 Estás por eliminar la requisición{" "}
-                <strong>#{requisition.requisitionId}</strong> del proyecto{" "}
-                <strong>{requisition.project}</strong>.
+                <strong>#{data.requisitionId}</strong> del proyecto{" "}
+                <strong>{data.project}</strong>.
                 <br />
                 Esta acción es permanente.
               </p>

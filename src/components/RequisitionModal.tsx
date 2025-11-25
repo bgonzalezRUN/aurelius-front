@@ -11,6 +11,7 @@ import PdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?worker";
 pdfjs.GlobalWorkerOptions.workerPort = new PdfWorker();
 
 import * as XLSX from "xlsx";
+import type { LineItem } from "../types";
 
 type Item = {
   material: string;
@@ -479,15 +480,14 @@ export default function RequisitionModal({
   open,
   onClose,
   onSave,
-  editingRequisition, // NUEVO: recibe la requisición a editar
+  requisitionId 
 }: {
   open: boolean;
   onClose: () => void;
   onSave?: (data: BackendPayload) => Promise<void> | void;
-  editingRequisition?: Requisition | null; // NUEVO
+  requisitionId: string
 }) {
-  const isEditing = !!editingRequisition; // NUEVO: determina si está editando
-
+  
   const [form, setForm] = useState({
     requisitionPriority: "media",
     requisitionComments: "",
@@ -642,7 +642,7 @@ export default function RequisitionModal({
 
   const handleItemChange = (i: number, field: keyof Item, val: string) => {
     const items = [...form.items];
-    (items[i] as any)[field] = val;
+    (items[i] as LineItem)[field] = val;
     setForm({ ...form, items });
 
     if (itemsErrors.includes(i)) {
