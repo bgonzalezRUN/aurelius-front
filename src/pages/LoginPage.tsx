@@ -1,13 +1,25 @@
-import React, { useState } from "react";
-import { login } from "../api/authService";
-import { Eye, EyeOff } from "lucide-react";
+import React, { useState } from 'react';
+import { login } from '../api/authService';
+import { Eye, EyeOff } from 'lucide-react';
+import { useAuthStore } from '../store/Auth';
+import { jwtDecode } from 'jwt-decode';
+import type { Roles } from '../types/roles';
+import { useNavigate } from 'react-router-dom';
+
+interface DecodedToken {
+  userName?: string;
+  userLastName?: string;
+  role: Roles;
+}
 
 export default function LoginPage() {
-  const [userEmail, setUserEmail] = useState("");
-  const [userPassword, setUserPassword] = useState("");
+  const [userEmail, setUserEmail] = useState('');
+  const [userPassword, setUserPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { setUser } = useAuthStore();
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,12 +27,13 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await login(userEmail, userPassword);
-      localStorage.setItem("token", res.data.token);
-
+      const decoded = jwtDecode<DecodedToken>(res.data.token);    
+      localStorage.setItem('token', res.data.token);
+      setUser(decoded);
       setLoading(false);
-      window.location.href = "/reqs";
+      navigate('/reqs');
     } catch (error) {
-      setError("Correo o contraseña incorrectos" + error);
+      setError('Correo o contraseña incorrectos' + error);
       setLoading(false);
     }
   };
@@ -52,7 +65,7 @@ export default function LoginPage() {
               Iniciar Sesión
             </button>
             <button
-              onClick={() => (window.location.href = "/register")}
+              onClick={() => (window.location.href = '/register')}
               className="rounded-lg py-2 text-slate-500 hover:text-[#01687d] font-medium"
             >
               Registrarse
@@ -81,7 +94,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 required
                 value={userEmail}
-                onChange={(e) => setUserEmail(e.target.value)}
+                onChange={e => setUserEmail(e.target.value)}
                 placeholder="example@example.com"
                 className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-[#01687d] focus:border-[#01687d]"
               />
@@ -99,12 +112,12 @@ export default function LoginPage() {
               <div className="relative">
                 <input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   required
                   placeholder="••••••••"
                   value={userPassword}
-                  onChange={(e) => setUserPassword(e.target.value)}
+                  onChange={e => setUserPassword(e.target.value)}
                   className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:ring-2 focus:ring-[#01687d] focus:border-[#01687d]"
                 />
                 <button
@@ -129,7 +142,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full rounded-xl py-2.5 font-medium bg-[#01687d] text-white hover:bg-[#027c94] disabled:opacity-60"
             >
-              {loading ? "Ingresando…" : "Iniciar Sesión"}
+              {loading ? 'Ingresando…' : 'Iniciar Sesión'}
             </button>
           </form>
         </div>

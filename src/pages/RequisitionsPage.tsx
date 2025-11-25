@@ -7,7 +7,6 @@ import {
   createRequisition,
   getRequisitionById,
   getRequisitions,
-  searchRequisitionsByProject,
   signRequisition,
   updateRequisition,
   updateStateRequisition,
@@ -16,7 +15,8 @@ import {
   type Requisition,
 } from '../api/requisitionService';
 import Restricted from '../components/Restricted';
-import { ChevronLeft, ChevronRight, PlusIcon, Search } from 'lucide-react';
+import { PlusIcon, Search } from 'lucide-react';
+import { useAuthStore } from '../store/Auth';
 
 export default function RequisitionsPage() {
   const [showModal, setShowModal] = useState(false);
@@ -45,22 +45,6 @@ export default function RequisitionsPage() {
   const indexOfLast = currentPage * itemsPerPage;
   const indexOfFirst = indexOfLast - itemsPerPage;
   const currentItems = requisitions.slice(indexOfFirst, indexOfLast);
-
-  const totalPages = Math.ceil(requisitions.length / itemsPerPage);
-
-  const handleSearch = async () => {
-    try {
-      if (!projectName.trim()) {
-        fetchAllRequisitions();
-        return;
-      }
-      const data = await searchRequisitionsByProject(projectName);
-      setRequisitions(data);
-      setCurrentPage(1);
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const handleSendStatus = async (reqId: string) => {
     try {
