@@ -209,7 +209,7 @@ export default function RequisitionList({
               <hr className="my-2" />
 
               {/* Footer */}
-              <div className="flex justify-between items-center mt-1">
+              <div className="flex justify-between flex-wrap items-center mt-1">
                 <div className="flex gap-1 text-[#01687d]">
                   {/* VER */}
                   <div
