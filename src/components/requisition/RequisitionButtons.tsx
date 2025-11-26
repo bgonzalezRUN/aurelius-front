@@ -86,14 +86,21 @@ export default function RequisitionButtons({
         className: 'text-green-primary',
       },
       {
-        key: 'reject',
+        key: 'reject_validated',
         icon: ThumbsDown,
         onClick: () => setActiveModal('REJECT'),
         isVisible:
-          (hasPermission('reject:requisition') &&
-            status === 'VALIDATED' &&
-            user?.role !== 'gerente de obra') ||
-          status === 'PENDING',
+          hasPermission('reject:requisition') &&
+          status === 'VALIDATED' &&
+          user?.role !== 'gerente de obra',
+        variant: 'icon',
+        className: 'text-red-primary',
+      },
+      {
+        key: 'reject_pending',
+        icon: ThumbsDown,
+        onClick: () => setActiveModal('REJECT'),
+        isVisible: hasPermission('reject:requisition') && status === 'PENDING',
         variant: 'icon',
         className: 'text-red-primary',
       },
