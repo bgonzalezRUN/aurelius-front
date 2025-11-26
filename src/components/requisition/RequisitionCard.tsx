@@ -1,25 +1,10 @@
-import { useState } from 'react';
 import type { Requisition } from '../../types';
 import { fmtTime } from '../../utils/time';
 import { PriorityBadge } from '../common/PriorityBadge';
 import { StatusBadge } from '../common/StatusBadge';
-import RequisitionModal from '../../components/RequisitionModal';
-import RequisitionDetailModal from '../../components/RequisitionDetailModal';
 import RequisitionButtons from './RequisitionButtons';
 
 export default function RequisitionCard({ r }: { r: Requisition }) {
-  const [showModal, setShowModal] = useState({
-    requisitionDetails: false,
-    editRequisition: false,
-  });
-
-  const showModalHandler = (
-    modalType: 'requisitionDetails' | 'editRequisition',
-    value: boolean
-  ) => {
-    setShowModal(prev => ({ ...prev, [modalType]: value }));
-  };
-
   return (
     <>
       <div className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition flex flex-col">
@@ -97,24 +82,8 @@ export default function RequisitionCard({ r }: { r: Requisition }) {
         <hr className="my-2" />
 
         {/* Footer */}
-       <RequisitionButtons requisitionId={r.requisitionId}/>
+        <RequisitionButtons requisitionId={r.requisitionId} />
       </div>
-
-      {showModal.requisitionDetails && (
-        <RequisitionDetailModal
-          open={showModal.requisitionDetails}
-          requisitionId={r.requisitionId}
-          onClose={() => showModalHandler('requisitionDetails', false)}
-        />
-      )}
-
-      {showModal.editRequisition && (
-        <RequisitionModal
-          open={showModal.editRequisition}
-          onClose={() => showModalHandler('requisitionDetails', false)}
-          editingRequisition={r}
-        />
-      )}
     </>
   );
 }

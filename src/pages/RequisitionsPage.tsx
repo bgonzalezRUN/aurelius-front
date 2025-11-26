@@ -12,7 +12,7 @@ import { PlusIcon, Search } from 'lucide-react';
 import type { BackendPayload, Requisition } from '../types';
 
 export default function RequisitionsPage() {
-  const [showModal, setShowModal] = useState(false);  
+  const [showModal, setShowModal] = useState(false);
   const [editingRequisition, setEditingRequisition] =
     useState<Requisition | null>(null);
   const [projectName, setProjectName] = useState('');
@@ -121,15 +121,14 @@ export default function RequisitionsPage() {
           </div>
         )} */}
       </div>
-
-      <RequisitionModal
-        open={showModal}
-        onClose={handleCloseModal}
-        onSave={handleSave}
-        editingRequisition={editingRequisition}
-      />
-
-      
+      {showModal && (
+        <RequisitionModal
+          open={showModal}
+          onClose={handleCloseModal}
+          onSave={handleSave}
+          editingRequisition={editingRequisition}
+        />
+      )}
     </div>
   );
 }

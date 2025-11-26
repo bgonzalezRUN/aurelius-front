@@ -18,7 +18,7 @@ interface ActionConfig {
   label?: string;
   onClick: () => void;
   isVisible: boolean;
-  variant?: 'icon' | 'button' | 'approve' | 'reject'; // Para saber cómo renderizar
+  variant?: 'icon' | 'button' | 'approve' | 'reject'; 
   className?: string;
 }
 
