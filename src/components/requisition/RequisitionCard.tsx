@@ -1,5 +1,6 @@
 import { useRequisitionById } from '../../api/queries/requisitionQueries';
 import type { Requisition } from '../../types';
+import { dateformatter } from '../../utils/dateformatter';
 import { fmtTime } from '../../utils/time';
 import { PriorityBadge } from '../common/PriorityBadge';
 import { StatusBadge } from '../common/StatusBadge';
@@ -21,26 +22,21 @@ export default function RequisitionCard({
           <h2 className="text-base font-semibold text-[#01687d] leading-tight">
             {data.project}
           </h2>
-          <span className="text-[12px] text-gray-600">
-            {fmtTime(data.arrivalDate)}
+          <span className="text-[12px] text-gray-600 font-semibold">
+            {data.requisitionCode}
           </span>
         </div>
 
         {/* Proveedor */}
 
         {/* Prioridad + Ventana */}
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs text-gray-600 mb-2 leading-tight">
-            <span className="font-medium">Proveedor:</span>{' '}
-            <div className="flex flex-wrap gap-1 mt-1">
-              {data.sendTo?.map(prov => (
-                <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-[10px]">
-                  {prov.name}
-                </span>
-              ))}
-            </div>
-          </p>
 
+        <div className="flex justify-between items-center mb-2">
+          <p className="text-[12px] text-gray-600">
+            {data.arrivalDate
+              ? dateformatter(new Date(data.arrivalDate))
+              : 'N/A'}
+          </p>
           {Array.isArray((data as Requisition).arrivalWindows) &&
             (data as Requisition).arrivalWindows.length > 0 && (
               <div className="text-[12px] border border-[#01687d] text-black px-2 py-0.5 rounded-md">
@@ -48,6 +44,17 @@ export default function RequisitionCard({
                 {fmtTime((data as Requisition).arrivalWindows[0].end)}
               </div>
             )}
+        </div>
+
+        <div className="text-xs text-gray-600 mb-2 leading-tight">
+          <span className="font-medium">Proveedor:</span>{' '}
+          <div className="flex flex-wrap gap-1 mt-1">
+            {data.sendTo?.map(prov => (
+              <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-[10px]">
+                {prov.name}
+              </span>
+            ))}
+          </div>
         </div>
 
         {/* Items (Items arriba, número abajo) */}

@@ -17,3 +17,10 @@ export const statusLabelsDocument: Record<StatusDocument, string> = {
   APPROVED: "Aprobada",
   REJECTED: "Rechazada",
 };
+
+export const statusLabelsHistory: Partial<Record<StatusDocument, string>> = {
+  PENDING: "Enviada a validación",
+  VALIDATED: "Enviada a aprobación",
+  APPROVED: "Aprobada",
+  REJECTED: "Rechazada",
+};

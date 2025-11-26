@@ -57,7 +57,7 @@ export default function RequisitionButtons({
       },
       {
         key: 'submit',
-        label: 'Enviar a aprobación',
+        label: 'Enviar a validación',
         onClick: () => submitReq.mutate(requisitionId),
         isVisible: status === 'DRAFT' && hasPermission('submit:requisition'),
         variant: 'button',
@@ -75,7 +75,11 @@ export default function RequisitionButtons({
       {
         key: 'approve',
         icon: ThumbsUp,
-        onClick: () => signReq.mutate({ requisitionId, user: `${user?.userName} ${user?.userLastName}`  }),
+        onClick: () =>
+          signReq.mutate({
+            requisitionId,
+            user: `${user?.userName} ${user?.userLastName}`,
+          }),
         isVisible:
           status === 'VALIDATED' && hasPermission('approve:requisition'),
         variant: 'icon',
@@ -86,13 +90,23 @@ export default function RequisitionButtons({
         icon: ThumbsDown,
         onClick: () => setActiveModal('REJECT'),
         isVisible:
-          (status === 'VALIDATED' && user?.role !== 'gerente de obra') || (status === 'PENDING') &&
-          hasPermission('reject:requisition') ,
+          (hasPermission('reject:requisition') &&
+            status === 'VALIDATED' &&
+            user?.role !== 'gerente de obra') ||
+          status === 'PENDING',
         variant: 'icon',
         className: 'text-red-primary',
       },
     ];
-  }, [changeReqState, data, hasPermission, requisitionId, signReq, submitReq, user]);
+  }, [
+    changeReqState,
+    data,
+    hasPermission,
+    requisitionId,
+    signReq,
+    submitReq,
+    user,
+  ]);
 
   if (!data) return null;
 
@@ -160,8 +174,8 @@ export default function RequisitionButtons({
       {activeModal === 'HISTORY' && (
         <OrderHistory
           isPopupOpen={true}
-          closePopup={closeModal}   
-          requisitionId={requisitionId}       
+          closePopup={closeModal}
+          requisitionId={requisitionId}
         />
       )}
     </>

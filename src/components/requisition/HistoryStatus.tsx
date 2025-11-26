@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { statusLabelsDocument, type Status } from '../../types';
+import { statusLabelsHistory, type Status } from '../../types';
 import { ThumbsUp, ThumbsDown, Clock5 } from 'lucide-react';
 
 const statusStyles: Partial<Record<Status, string>> = {
@@ -17,7 +17,7 @@ const statusIcons: Partial<Record<Status, ReactNode>> = {
 export default function HistoryStatus({ status }: { status: Status }) {
   const base = 'text-base font-normal inline-flex items-center gap-1';
   const styles = statusStyles[status] ?? 'text-orange-primary';
-  const label = statusLabelsDocument[status] ?? status;
+  const label = statusLabelsHistory[status] ?? status;
   const icon = statusIcons[status] ?? <Clock5 />;
 
   return (
