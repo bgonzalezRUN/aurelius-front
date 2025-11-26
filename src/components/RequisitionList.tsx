@@ -1,5 +1,4 @@
 import RequisitionCard from './requisition/RequisitionCard';
-import type { Requisition } from '../types';
 import { useRequisitions } from '../api/queries/requisitionQueries';
 import { Loading } from './common';
 import { Fragment } from 'react';
@@ -25,7 +24,7 @@ export default function RequisitionList() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {data.map(r => (
           <Fragment key={r.requisitionCode}>            
-            <RequisitionCard r={r as Requisition} />{' '}
+            <RequisitionCard requisitionId={r.requisitionId} />
           </Fragment>
         ))}
       </div>

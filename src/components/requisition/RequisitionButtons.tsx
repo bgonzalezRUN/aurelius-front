@@ -1,16 +1,17 @@
-import { Eye, Edit, ThumbsDown, ThumbsUp, type LucideIcon } from "lucide-react";
-import { useState, useMemo } from "react";
-import { useRequisitionById } from "../../api/queries/requisitionQueries";
-import { useRequisitionMutations } from "../../api/queries/requisitionMutations";
-import { usePermission } from "../../hooks/usePermission";
-import OptionButton from "../common/OptionButton";
-import { ButtonBase } from "../common";
-import RequisitionDetailModal from "../RequisitionDetailModal";
-import RequisitionModal from "../RequisitionModal";
-import RejectRequisition from "./RejectRequisition";
-import OrderHistory from "./OrderHistory";
+import { Eye, Edit, ThumbsDown, ThumbsUp, type LucideIcon } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { useRequisitionById } from '../../api/queries/requisitionQueries';
+import { useRequisitionMutations } from '../../api/queries/requisitionMutations';
+import { usePermission } from '../../hooks/usePermission';
+import OptionButton from '../common/OptionButton';
+import { ButtonBase } from '../common';
+import RequisitionDetailModal from '../RequisitionDetailModal';
+import RequisitionModal from '../RequisitionModal';
+import RejectRequisition from './RejectRequisition';
+import OrderHistory from './OrderHistory';
+import { useAuthStore } from '../../store/auth';
 
-type ModalType = "DETAILS" | "EDIT" | "REJECT" | "HISTORY" | null;
+type ModalType = 'DETAILS' | 'EDIT' | 'REJECT' | 'HISTORY' | null;
 
 interface ActionConfig {
   key: string;
@@ -18,7 +19,7 @@ interface ActionConfig {
   label?: string;
   onClick: () => void;
   isVisible: boolean;
-  variant?: "icon" | "button" | "approve" | "reject";
+  variant?: 'icon' | 'button' | 'approve' | 'reject';
   className?: string;
 }
 
@@ -29,6 +30,7 @@ export default function RequisitionButtons({
 }) {
   const { data } = useRequisitionById(requisitionId);
   const { submitReq, changeReqState, signReq } = useRequisitionMutations();
+  const { user } = useAuthStore();
   const hasPermission = usePermission();
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const closeModal = () => setActiveModal(null);
@@ -40,68 +42,68 @@ export default function RequisitionButtons({
 
     return [
       {
-        key: "view",
+        key: 'view',
         icon: Eye,
-        onClick: () => setActiveModal("DETAILS"),
+        onClick: () => setActiveModal('DETAILS'),
         isVisible: true,
-        variant: "icon",
+        variant: 'icon',
       },
       {
-        key: "edit",
+        key: 'edit',
         icon: Edit,
-        onClick: () => setActiveModal("EDIT"),
-        isVisible: status === "DRAFT" && hasPermission("update:requisition"),
-        variant: "icon",
+        onClick: () => setActiveModal('EDIT'),
+        isVisible: status !== 'APPROVED' && hasPermission('update:requisition'),
+        variant: 'icon',
       },
       {
-        key: "submit",
-        label: "Enviar a aprobación",
+        key: 'submit',
+        label: 'Enviar a aprobación',
         onClick: () => submitReq.mutate(requisitionId),
-        isVisible: status === "DRAFT" && hasPermission("submit:requisition"),
-        variant: "button",
+        isVisible: status === 'DRAFT' && hasPermission('submit:requisition'),
+        variant: 'button',
       },
       {
-        key: "validate",
+        key: 'validate',
         icon: ThumbsUp,
         onClick: () =>
-          changeReqState.mutate({ requisitionId, type: "validate" }),
+          changeReqState.mutate({ requisitionId, type: 'validate' }),
         isVisible:
-          status === "PENDING" && hasPermission("validate:requisition"),
-        variant: "icon",
-        className: "text-green-primary",
+          status === 'PENDING' && hasPermission('validate:requisition'),
+        variant: 'icon',
+        className: 'text-green-primary',
       },
       {
-        key: "approve",
+        key: 'approve',
         icon: ThumbsUp,
-        onClick: () => signReq.mutate({ requisitionId, user: "Julian Molina" }),
+        onClick: () => signReq.mutate({ requisitionId, user: `${user?.userName} ${user?.userLastName}`  }),
         isVisible:
-          status === "VALIDATED" && hasPermission("approve:requisition"),
-        variant: "icon",
-        className: "text-green-primary",
+          status === 'VALIDATED' && hasPermission('approve:requisition'),
+        variant: 'icon',
+        className: 'text-green-primary',
       },
       {
-        key: "reject",
+        key: 'reject',
         icon: ThumbsDown,
-        onClick: () => setActiveModal("REJECT"),
+        onClick: () => setActiveModal('REJECT'),
         isVisible:
-          status === "PENDING" ||
-          (status === "VALIDATED" && hasPermission("reject:requisition")),
-        variant: "icon",
-        className: "text-red-primary",
+          (status === 'VALIDATED' && user?.role !== 'gerente de obra') || (status === 'PENDING') &&
+          hasPermission('reject:requisition') ,
+        variant: 'icon',
+        className: 'text-red-primary',
       },
     ];
-  }, [changeReqState, data, hasPermission, requisitionId, signReq, submitReq]);
+  }, [changeReqState, data, hasPermission, requisitionId, signReq, submitReq, user]);
 
   if (!data) return null;
 
   const renderAction = (action: ActionConfig) => {
     if (!action.isVisible) return null;
 
-    if (action.variant === "button") {
+    if (action.variant === 'button') {
       return (
         <ButtonBase
           key={action.key}
-          label={action.label || ""}
+          label={action.label || ''}
           size="sm"
           onclick={action.onClick}
         />
@@ -121,17 +123,17 @@ export default function RequisitionButtons({
       <div className="flex flex-wrap gap-1 text-[#01687d] items-center">
         {actions.map(renderAction)}
 
-        {data.requisitionStatus === "APPROVED" && (
+        {data.requisitionStatus === 'APPROVED' && (
           <p className="text-xs text-gray-600">Requisición firmada</p>
         )}
 
         <ButtonBase
           label="Consultar Histórico"
-          onclick={() => setActiveModal("HISTORY")}
+          onclick={() => setActiveModal('HISTORY')}
         />
       </div>
 
-      {activeModal === "DETAILS" && (
+      {activeModal === 'DETAILS' && (
         <RequisitionDetailModal
           open={true}
           requisitionId={requisitionId}
@@ -139,7 +141,7 @@ export default function RequisitionButtons({
         />
       )}
 
-      {activeModal === "EDIT" && (
+      {activeModal === 'EDIT' && (
         <RequisitionModal
           open={true}
           onClose={closeModal}
@@ -147,7 +149,7 @@ export default function RequisitionButtons({
         />
       )}
 
-      {activeModal === "REJECT" && (
+      {activeModal === 'REJECT' && (
         <RejectRequisition
           isPopupOpen={true}
           closePopup={closeModal}
@@ -155,11 +157,11 @@ export default function RequisitionButtons({
         />
       )}
 
-      {activeModal === "HISTORY" && (
+      {activeModal === 'HISTORY' && (
         <OrderHistory
           isPopupOpen={true}
-          closePopup={closeModal}
-          requisitionInfo={data}
+          closePopup={closeModal}   
+          requisitionId={requisitionId}       
         />
       )}
     </>

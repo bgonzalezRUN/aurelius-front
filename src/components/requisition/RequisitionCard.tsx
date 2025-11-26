@@ -1,20 +1,28 @@
+import { useRequisitionById } from '../../api/queries/requisitionQueries';
 import type { Requisition } from '../../types';
 import { fmtTime } from '../../utils/time';
 import { PriorityBadge } from '../common/PriorityBadge';
 import { StatusBadge } from '../common/StatusBadge';
 import RequisitionButtons from './RequisitionButtons';
 
-export default function RequisitionCard({ r }: { r: Requisition }) {
+export default function RequisitionCard({
+  requisitionId,
+}: {
+  requisitionId: string;
+}) {
+  const { data } = useRequisitionById(requisitionId);
+  if (!data) return null;
+
   return (
     <>
       <div className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition flex flex-col">
         {/* Título + Fecha */}
         <div className="flex justify-between items-start mb-1">
           <h2 className="text-base font-semibold text-[#01687d] leading-tight">
-            {r.project}
+            {data.project}
           </h2>
           <span className="text-[12px] text-gray-600">
-            {fmtTime(r.arrivalDate)}
+            {fmtTime(data.arrivalDate)}
           </span>
         </div>
 
@@ -25,7 +33,7 @@ export default function RequisitionCard({ r }: { r: Requisition }) {
           <p className="text-xs text-gray-600 mb-2 leading-tight">
             <span className="font-medium">Proveedor:</span>{' '}
             <div className="flex flex-wrap gap-1 mt-1">
-              {r.sendTo?.map(prov => (
+              {data.sendTo?.map(prov => (
                 <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-[10px]">
                   {prov.name}
                 </span>
@@ -33,11 +41,11 @@ export default function RequisitionCard({ r }: { r: Requisition }) {
             </div>
           </p>
 
-          {Array.isArray((r as Requisition).arrivalWindows) &&
-            (r as Requisition).arrivalWindows.length > 0 && (
+          {Array.isArray((data as Requisition).arrivalWindows) &&
+            (data as Requisition).arrivalWindows.length > 0 && (
               <div className="text-[12px] border border-[#01687d] text-black px-2 py-0.5 rounded-md">
-                {fmtTime((r as Requisition).arrivalWindows[0].start)} –{' '}
-                {fmtTime((r as Requisition).arrivalWindows[0].end)}
+                {fmtTime((data as Requisition).arrivalWindows[0].start)} –{' '}
+                {fmtTime((data as Requisition).arrivalWindows[0].end)}
               </div>
             )}
         </div>
@@ -47,7 +55,7 @@ export default function RequisitionCard({ r }: { r: Requisition }) {
           {/* Prioridad */}
           <p className="text-xs text-gray-600 mb-2 leading-tight">
             <span className="font-medium">Prioridad:</span>{' '}
-            <PriorityBadge priority={r.requisitionPriority} />
+            <PriorityBadge priority={data.requisitionPriority} />
           </p>
 
           {/* Items + número juntos */}
@@ -56,7 +64,7 @@ export default function RequisitionCard({ r }: { r: Requisition }) {
               Items
             </span>
             <span className="text-sm text-gray-800 font-semibold">
-              {r.items?.length ?? 0}
+              {data.items?.length ?? 0}
             </span>
           </div>
         </div>
@@ -68,21 +76,21 @@ export default function RequisitionCard({ r }: { r: Requisition }) {
               Comentarios:
             </p>
             <p className="text-xs text-gray-600 mb-2 leading-snug">
-              {r.requisitionComments?.trim()
-                ? r.requisitionComments
+              {data.requisitionComments?.trim()
+                ? data.requisitionComments
                 : 'No hay comentarios'}
             </p>
           </div>
           <p className="text-xs text-gray-600 mb-2 leading-tight">
             <span className="font-medium">Estado:</span>{' '}
-            <StatusBadge status={r.requisitionStatus} />
+            <StatusBadge status={data.requisitionStatus} />
           </p>
         </div>
 
         <hr className="my-2" />
 
         {/* Footer */}
-        <RequisitionButtons requisitionId={r.requisitionId} />
+        <RequisitionButtons requisitionId={data.requisitionId} />
       </div>
     </>
   );

@@ -26,20 +26,35 @@ export function useRequisitionMutations() {
       requisitionId: string;
       data: LineItem[];
     }) => updateRequisition(requisitionId, data),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['requisitions'] }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['requisitionById', variables.requisitionId],
+      });
+    },
   });
 
   const submitReq = useMutation({
     mutationFn: updateSubmitRequisition,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['requisitions'] }),
+   onSuccess: (_, requisitionId) => {
+      queryClient.invalidateQueries({
+        queryKey: ['requisition-history', requisitionId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['requisitionById', requisitionId],
+      });
+    },
   });
 
   const changeReqState = useMutation({
     mutationFn: updateStateRequisition,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['requisitions'] }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['requisition-history', variables.requisitionId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['requisitionById', variables.requisitionId],
+      });
+    },
   });
 
   const deleteReq = useMutation({
@@ -56,8 +71,14 @@ export function useRequisitionMutations() {
       requisitionId: string;
       user: string;
     }) => signRequisition(requisitionId, user),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['requisitions'] }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['requisition-history', variables.requisitionId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['requisitionById', variables.requisitionId],
+      });
+    },
   });
 
   return {

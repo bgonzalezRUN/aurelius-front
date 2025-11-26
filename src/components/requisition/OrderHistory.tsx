@@ -1,43 +1,35 @@
 import {
-  useEffect,
-  useState,
-  useCallback,
   type FC,
   type ReactNode,
   Fragment,
 } from 'react';
-import { historyRequisition } from '../../api/requisitionService';
 import { Dialog } from '../common';
 import { capitalizeWords } from '../../utils';
 import type { HistoryRequisition, Requisition, Status } from '../../types';
 import { dateformatter } from '../../utils/dateformatter';
 import HistoryStatus from './HistoryStatus';
 import clsx from 'clsx';
+import {
+  useRequisitionHistory,
+  useRequisitionById,
+} from '../../api/queries/requisitionQueries';
 
 interface OrderHistoryProps {
   isPopupOpen: boolean;
   closePopup: () => void;
-  requisitionInfo: Requisition;
+  requisitionId: string;
 }
 
 const OrderHistory: FC<OrderHistoryProps> = ({
   isPopupOpen,
   closePopup,
-  requisitionInfo,
+  requisitionId,
 }) => {
-  const [historyData, sethistoryData] = useState<HistoryRequisition[]>([]);  
+  const { data: history } = useRequisitionHistory(requisitionId);
+  const { data } = useRequisitionById(requisitionId);
 
-  const getHIstoryData = useCallback(async () => {
-    const data = await historyRequisition(requisitionInfo.requisitionId);
+  const { project: projectName } = data || {} as Requisition;
 
-    sethistoryData(data);
-  }, [requisitionInfo]);
-
-  useEffect(() => {
-    getHIstoryData();
-  }, [getHIstoryData]);
-
-  const { project: projectName } = requisitionInfo;
   const tableHeaders = ['Fecha', 'Usuario', 'Acción'];
   const labels: (keyof HistoryRequisition)[] = [
     'createdAt',
@@ -73,12 +65,12 @@ const OrderHistory: FC<OrderHistoryProps> = ({
         {capitalizeWords(projectName)}
       </h3>
 
-      {historyData.length ? (
+      {history?.length ? (
         <>
           <div
             className={clsx(
               'h-9 bg-grey-200 rounded-[10px] p-2 flex items-center justify-around mb-2 w-[calc(100%-0.5rem)]',
-              historyData.length >= 3 && 'w-[calc(100%-1.5rem)]'
+              history.length >= 3 && 'w-[calc(100%-1.5rem)]'
             )}
           >
             {tableHeaders.map(header => (
@@ -92,7 +84,7 @@ const OrderHistory: FC<OrderHistoryProps> = ({
           </div>
           <div className="max-h-[305px] overflow-y-auto pr-2">
             <div className="flex flex-col gap-y-2">
-              {historyData.map((item, idx) => (
+              {history.map((item, idx) => (
                 <div
                   key={idx}
                   className="h-24 w-full border border-grey-primary rounded-[10px] py-2 px-9"
