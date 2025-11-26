@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { ChevronDown, CircleX, Plus, Trash2 } from "lucide-react";
 import {
   createRequisition,
   updateRequisition,
-  type BackendPayload,
+ 
 } from "../api/requisitionService";
 
 import * as pdfjs from "pdfjs-dist";
@@ -11,7 +12,7 @@ import PdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?worker";
 pdfjs.GlobalWorkerOptions.workerPort = new PdfWorker();
 
 import * as XLSX from "xlsx";
-import type { LineItem } from "../types";
+import type { BackendPayload, Requisition } from "../types";
 
 type Item = {
   material: string;
@@ -480,14 +481,15 @@ export default function RequisitionModal({
   open,
   onClose,
   onSave,
-  requisitionId 
+  editingRequisition, // NUEVO: recibe la requisición a editar
 }: {
   open: boolean;
   onClose: () => void;
   onSave?: (data: BackendPayload) => Promise<void> | void;
-  requisitionId: string
+  editingRequisition?: Requisition | null; // NUEVO
 }) {
-  
+  const isEditing = !!editingRequisition; // NUEVO: determina si está editando
+
   const [form, setForm] = useState({
     requisitionPriority: "media",
     requisitionComments: "",
@@ -642,7 +644,7 @@ export default function RequisitionModal({
 
   const handleItemChange = (i: number, field: keyof Item, val: string) => {
     const items = [...form.items];
-    (items[i] as LineItem)[field] = val;
+    (items[i] as any)[field] = val;
     setForm({ ...form, items });
 
     if (itemsErrors.includes(i)) {

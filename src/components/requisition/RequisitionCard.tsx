@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import type { Requisition } from '../../types';
 import { fmtTime } from '../../utils/time';
-import OptionButton from '../common/OptionButton';
 import { PriorityBadge } from '../common/PriorityBadge';
 import { StatusBadge } from '../common/StatusBadge';
-import { Eye, Edit } from 'lucide-react';
 import RequisitionModal from '../../components/RequisitionModal';
 import RequisitionDetailModal from '../../components/RequisitionDetailModal';
+import RequisitionButtons from './RequisitionButtons';
 
 export default function RequisitionCard({ r }: { r: Requisition }) {
   const [showModal, setShowModal] = useState({
@@ -49,13 +48,13 @@ export default function RequisitionCard({ r }: { r: Requisition }) {
             </div>
           </p>
 
-          {/* {Array.isArray((r as Requisition).arrivalWindows) &&
+          {Array.isArray((r as Requisition).arrivalWindows) &&
             (r as Requisition).arrivalWindows.length > 0 && (
               <div className="text-[12px] border border-[#01687d] text-black px-2 py-0.5 rounded-md">
                 {fmtTime((r as Requisition).arrivalWindows[0].start)} –{' '}
                 {fmtTime((r as Requisition).arrivalWindows[0].end)}
               </div>
-            )} */}
+            )}
         </div>
 
         {/* Items (Items arriba, número abajo) */}
@@ -98,24 +97,7 @@ export default function RequisitionCard({ r }: { r: Requisition }) {
         <hr className="my-2" />
 
         {/* Footer */}
-        <div className="flex justify-between items-center mt-1">
-          <div className="flex gap-1 text-[#01687d]">
-            {/* VER */}
-            <OptionButton
-              buttonHandler={() => showModalHandler('requisitionDetails', true)}
-            >
-              <Eye size={16} />
-            </OptionButton>
-
-            {r.requisitionStatus === 'APPROVED' ? null : (
-              <OptionButton
-                buttonHandler={() => showModalHandler('editRequisition', true)}
-              >
-                <Edit size={16} />
-              </OptionButton>
-            )}
-          </div>
-        </div>
+       <RequisitionButtons requisitionId={r.requisitionId}/>
       </div>
 
       {showModal.requisitionDetails && (
@@ -130,7 +112,7 @@ export default function RequisitionCard({ r }: { r: Requisition }) {
         <RequisitionModal
           open={showModal.editRequisition}
           onClose={() => showModalHandler('requisitionDetails', false)}
-          requisitionId={r.requisitionId}
+          editingRequisition={r}
         />
       )}
     </>

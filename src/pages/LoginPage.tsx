@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { login } from '../api/authService';
 import { Eye, EyeOff } from 'lucide-react';
-import { useAuthStore } from '../store/Auth';
+import { useAuthStore } from '../store/auth';
 import { jwtDecode } from 'jwt-decode';
-import type { Roles } from '../types/roles';
+import type { RoleName } from '../types/roles';
 import { useNavigate } from 'react-router-dom';
 
 interface DecodedToken {
   userName?: string;
   userLastName?: string;
-  role: Roles;
+  role: RoleName;
 }
 
 export default function LoginPage() {

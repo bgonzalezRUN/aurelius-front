@@ -1,15 +1,17 @@
 import { jwtDecode } from "jwt-decode";
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../store/auth";
 
 export default function Sidebar() {
   const navigate = useNavigate();
-
+const { logout } = useAuthStore();
   const token = localStorage.getItem("token");
   const user: any = token ? jwtDecode(token) : null;
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    logout();
     navigate("/");
   };
 

@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import DialogPrimary from '../common/DialogPrimary';
 import { ButtonBase } from '../common';
-import { updateStateRequisition } from '../../api/requisitionService';
+import { useRequisitionMutations } from '../../api/queries/requisitionMutations';
 
 type FormData = {
   observation: string;
@@ -16,18 +16,20 @@ export default function RejectRequisition({
   closePopup: () => void;
   requisitionId: string;
 }) {
+  const { changeReqState } = useRequisitionMutations();
   const {
     register,
     handleSubmit,
     formState: { errors, isValid },
   } = useForm<FormData>();
 
-  const onSubmit = async (data: FormData) => {
-    await updateStateRequisition({
+  const onSubmit = (data: FormData) => {
+    changeReqState.mutate({
       observation: data.observation,
       type: 'reject',
       requisitionId,
     });
+
     closePopup();
   };
 

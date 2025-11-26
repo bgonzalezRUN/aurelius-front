@@ -6,13 +6,10 @@ import {
   type ReactNode,
   Fragment,
 } from 'react';
-import {
-  historyRequisition,
-  type Requisition,
-} from '../../api/requisitionService';
+import { historyRequisition } from '../../api/requisitionService';
 import { Dialog } from '../common';
 import { capitalizeWords } from '../../utils';
-import type { HistoryRequisition, Status } from '../../types';
+import type { HistoryRequisition, Requisition, Status } from '../../types';
 import { dateformatter } from '../../utils/dateformatter';
 import HistoryStatus from './HistoryStatus';
 import clsx from 'clsx';
@@ -28,10 +25,7 @@ const OrderHistory: FC<OrderHistoryProps> = ({
   closePopup,
   requisitionInfo,
 }) => {
-  const [historyData, sethistoryData] = useState<HistoryRequisition[]>([]);
-
-  console.log(requisitionInfo);
-  
+  const [historyData, sethistoryData] = useState<HistoryRequisition[]>([]);  
 
   const getHIstoryData = useCallback(async () => {
     const data = await historyRequisition(requisitionInfo.requisitionId);
@@ -84,7 +78,7 @@ const OrderHistory: FC<OrderHistoryProps> = ({
           <div
             className={clsx(
               'h-9 bg-grey-200 rounded-[10px] p-2 flex items-center justify-around mb-2 w-[calc(100%-0.5rem)]',
-              historyData.length > 3 && 'w-[calc(100%-1.5rem)'
+              historyData.length >= 3 && 'w-[calc(100%-1.5rem)]'
             )}
           >
             {tableHeaders.map(header => (

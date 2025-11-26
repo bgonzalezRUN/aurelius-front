@@ -56,6 +56,7 @@ export type Requisition = {
   validator: IRequisitionValidator;
   requisitionSignature?: string;
   requisitionCode: string;
+  arrivalWindows: { start: string; end: string }[];
 };
 
 export type LineItem = {    
