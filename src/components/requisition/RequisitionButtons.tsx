@@ -10,6 +10,7 @@ import RequisitionModal from '../RequisitionModal';
 import RejectRequisition from './RejectRequisition';
 import OrderHistory from './OrderHistory';
 import { useAuthStore } from '../../store/auth';
+import { usePopupStore } from '../../store/popup';
 
 type ModalType = 'DETAILS' | 'EDIT' | 'REJECT' | 'HISTORY' | null;
 
@@ -37,6 +38,7 @@ export default function RequisitionButtons({
   const { submitReq, changeReqState, signReq } = useRequisitionMutations();
   const { user } = useAuthStore();
   const hasPermission = usePermission();
+  const { openPopup: openPopupValidate } = usePopupStore();
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const closeModal = () => setActiveModal(null);
 
@@ -44,6 +46,37 @@ export default function RequisitionButtons({
     if (!data) return { icons: [], buttons: [] };
 
     const status = data.requisitionStatus;
+
+    const submitHandler = () => {
+      openPopupValidate({
+        title: 'Enviar a validación',
+        message: `¿Estas seguro que quieres enviar a validación la requisición ${data.requisitionCode}?`,
+        onConfirm: () => {
+          submitReq.mutate(requisitionId);
+        },
+      });
+    };
+
+    const validateHandler = () => {
+      openPopupValidate({
+        title: 'Validar requisición',
+        message: `¿Estas seguro que quieres validar la requisición ${data.requisitionCode}?`,
+        onConfirm: () =>
+          changeReqState.mutate({ requisitionId, type: 'validate' }),
+      });
+    };
+
+    const approveHandler = () => {
+      openPopupValidate({
+        title: 'Validar requisición',
+        message: `¿Estas seguro que quieres aprobar la requisición ${data.requisitionCode}?`,
+        onConfirm: () =>
+          signReq.mutate({
+            requisitionId,
+            user: `${user?.userName} ${user?.userLastName}`,
+          }),
+      });
+    };
 
     return {
       icons: [
@@ -68,8 +101,7 @@ export default function RequisitionButtons({
         {
           key: 'validate',
           icon: ThumbsUp,
-          onClick: () =>
-            changeReqState.mutate({ requisitionId, type: 'validate' }),
+          onClick: validateHandler,
           isVisible:
             status === 'PENDING' && hasPermission('validate:requisition'),
 
@@ -80,11 +112,7 @@ export default function RequisitionButtons({
         {
           key: 'approve',
           icon: ThumbsUp,
-          onClick: () =>
-            signReq.mutate({
-              requisitionId,
-              user: `${user?.userName} ${user?.userLastName}`,
-            }),
+          onClick: approveHandler,
           isVisible:
             status === 'VALIDATED' && hasPermission('approve:requisition'),
 
@@ -121,9 +149,7 @@ export default function RequisitionButtons({
         {
           key: 'submit',
           label: 'Enviar a validación',
-          onClick: () => {
-            submitReq.mutate(requisitionId);
-          },
+          onClick: submitHandler,
           isVisible: status === 'DRAFT' && hasPermission('submit:requisition'),
           variant: 'button',
         },
@@ -144,6 +170,7 @@ export default function RequisitionButtons({
     signReq,
     user,
     submitReq,
+    openPopupValidate,
   ]);
 
   if (!data) return null;

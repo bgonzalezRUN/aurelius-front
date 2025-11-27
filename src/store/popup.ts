@@ -3,42 +3,54 @@ import { create } from 'zustand';
 const initialState = {
   open: false,
   title: '',
-  onConfirm: null,
+  onConfirm: () => {},
   message: '',
   cancelButtonText: 'Cancelar',
   confirmButtonText: 'Continuar',
 };
 
-interface PopupStore {
-  open: boolean;
-  openPopup: () => void;
-  closePopup: () => void;
-  setOnConfirm: (onConfirm: void) => void;
-  onConfirm: void | null;
+interface OpenPopup {
   title: string;
   message: string;
   cancelButtonText?: string;
   confirmButtonText?: string;
+  onConfirm?: () => void | null;
 }
 
-export const usePopupStore = create<PopupStore>(set => ({
+interface PopupStore {
+  open: boolean;
+  openPopup: (payload: OpenPopup) => void;
+  closePopup: () => void;
+  title: string;
+  message: string;
+  cancelButtonText?: string;
+  confirmButtonText?: string;
+  reset: () => void;
+  onConfirm?: (() => void) | null;
+}
+
+export const usePopupStore = create<PopupStore>((set, get) => ({
   ...initialState,
-  openPopup: () =>
+  openPopup: ({
+    title,
+    message,
+    cancelButtonText,
+    confirmButtonText,
+    onConfirm,
+  }) =>
     set(state => ({
       ...state,
       open: true,
+      title,
+      message,
+      ...(cancelButtonText && { cancelButtonText }),
+      ...(confirmButtonText && { confirmButtonText }),
+      onConfirm,
     })),
 
-  closePopup: () =>
-    set(state => ({
-      ...state,
-      open: false,
-    })),
+  closePopup: () => {
+    get().reset(); // 👈 Al cerrar resetea todo automáticamente
+  },
 
-  setOnConfirm: onConfirm =>
-    set(state => ({
-      ...state,
-      onConfirm: onConfirm,
-    })),
   reset: () => set(initialState),
 }));

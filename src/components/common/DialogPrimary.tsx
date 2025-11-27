@@ -8,7 +8,12 @@ interface PopupProps {
   title: string;
 }
 
-const DialogPrimary: FC<PopupProps> = ({ isOpen, onClose, children, title }) => {
+const DialogPrimary: FC<PopupProps> = ({
+  isOpen,
+  onClose,
+  children,
+  title,
+}) => {
   if (!isOpen) {
     return null;
   }
@@ -19,23 +24,17 @@ const DialogPrimary: FC<PopupProps> = ({ isOpen, onClose, children, title }) => 
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-[10px] shadow-2xl max-w-96 w-full border border-solid border-grayPrimary transform transition-all duration-300 scale-100 opacity-100"
+        className="rounded-[10px] border border-solid border-grayPrimary shadow-2xl max-w-96 w-full bg-white transform transition-all duration-300"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center h-12 bg-primary-primary rounded-t-[10px] border border-solid border-grayPrimary text-white px-3">
-          <h2 className="text-xl font-extrabold ">{title}</h2>
-          <button
-            onClick={onClose}        
-            aria-label="Cerrar"
-          >
+        <div className="flex justify-between items-center h-12 bg-primary-primary rounded-t-[10px] text-white px-3">
+          <h2 className="text-xl font-extrabold">{title}</h2>
+          <button onClick={onClose} aria-label="Cerrar">
             <CircleX size={24} />
           </button>
         </div>
-        <div className="p-4">
-        {children}
 
-        </div>
-
+        <div className="p-4">{children}</div>
       </div>
     </div>
   );

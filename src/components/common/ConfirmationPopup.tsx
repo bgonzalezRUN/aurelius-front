@@ -14,12 +14,19 @@ const ConfirmationPopup: FC = () => {
     onConfirm,
   } = usePopupStore();
 
+  const confirmationHandler = () => {
+    if (onConfirm) {
+      onConfirm();
+    }
+    closePopup();
+  };
+
   if (!open) {
     return null;
   }
 
   return (
-    <DialogPrimary isOpen={open} onClose={closePopup} title={title}>
+    <DialogPrimary isOpen onClose={closePopup} title={title}>
       <p className="text-grey-100 text-base font-semibold">{message}</p>
 
       <div className="flex justify-end gap-2 mt-2">
@@ -32,7 +39,7 @@ const ConfirmationPopup: FC = () => {
         <ButtonBase
           label={confirmButtonText}
           size="md"
-          onclick={onConfirm || closePopup}
+          onclick={confirmationHandler || closePopup}
         />
       </div>
     </DialogPrimary>

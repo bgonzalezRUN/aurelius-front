@@ -8,9 +8,11 @@ import {
   signRequisition,
 } from '../services/requisition';
 import type { LineItem } from '../../types';
+import { usePopupStore } from '../../store/popup';
 
 export function useRequisitionMutations() {
   const queryClient = useQueryClient();
+  const { openPopup: openPopupValidate } = usePopupStore();
 
   const createReq = useMutation({
     mutationFn: createRequisition,
@@ -35,7 +37,12 @@ export function useRequisitionMutations() {
 
   const submitReq = useMutation({
     mutationFn: updateSubmitRequisition,
-   onSuccess: (_, requisitionId) => {
+    onSuccess: (_, requisitionId) => {
+      openPopupValidate({
+        title: 'Solicitud de validación',
+        message: 'La requisición ha sido enviada para ser validada.',
+        confirmButtonText: 'Aceptar',
+      });
       queryClient.invalidateQueries({
         queryKey: ['requisition-history', requisitionId],
       });
@@ -48,6 +55,12 @@ export function useRequisitionMutations() {
   const changeReqState = useMutation({
     mutationFn: updateStateRequisition,
     onSuccess: (_, variables) => {
+      openPopupValidate({
+        title: 'Validar requisición',
+        message:
+          'La requisición ha sido validada correctamente. Podrás consultarlo en el historial.',
+        confirmButtonText: 'Aceptar',
+      });
       queryClient.invalidateQueries({
         queryKey: ['requisition-history', variables.requisitionId],
       });
@@ -72,6 +85,12 @@ export function useRequisitionMutations() {
       user: string;
     }) => signRequisition(requisitionId, user),
     onSuccess: (_, variables) => {
+      openPopupValidate({
+        title: 'Requisición aprobada',
+        message:
+          'La requisición ha sido aprobada correctamente. Podrás consultarlo en el historial.',
+        confirmButtonText: 'Aceptar',
+      });
       queryClient.invalidateQueries({
         queryKey: ['requisition-history', variables.requisitionId],
       });
