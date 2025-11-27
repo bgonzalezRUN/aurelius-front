@@ -314,7 +314,7 @@ export default function RequisitionDetailModal({
 
                 {(() => {
                   const signature = decodeSignature(
-                    data.requisitionSignature
+                    data.approver
                   );
 
                   if (!signature) {

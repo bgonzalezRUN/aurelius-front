@@ -54,7 +54,7 @@ export type Requisition = {
   arrivalDate?: string;
   requester: IRequisitionRequester;
   validator: IRequisitionValidator;
-  requisitionSignature?: string;
+  approver?: string;
   requisitionCode: string;
   arrivalWindows: { start: string; end: string }[];
 };
