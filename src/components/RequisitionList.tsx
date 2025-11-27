@@ -1,7 +1,6 @@
 import RequisitionCard from './requisition/RequisitionCard';
 import { useRequisitions } from '../api/queries/requisitionQueries';
 import { Loading } from './common';
-import { Fragment } from 'react';
 
 export default function RequisitionList() {
   const { data, isLoading } = useRequisitions();
@@ -21,11 +20,12 @@ export default function RequisitionList() {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="flex flex-wrap gap-6">
         {data.map(r => (
-          <Fragment key={r.requisitionCode}>            
-            <RequisitionCard requisitionId={r.requisitionId} />
-          </Fragment>
+          <RequisitionCard
+            requisitionId={r.requisitionId}
+            key={r.requisitionCode}
+          />
         ))}
       </div>
     </>

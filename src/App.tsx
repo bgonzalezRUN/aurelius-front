@@ -5,6 +5,8 @@ import { RegisterPage } from './pages/RegisterPage';
 import { RecoveryLink } from './pages/RecoveryLink';
 import RecoveryPassword from './pages/RecoveryPassword';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ConfirmationPopup } from './components/common';
+
 
 export default function App() {
   const queryClient = new QueryClient();
@@ -18,6 +20,7 @@ export default function App() {
           <Route path="/recovery-link" element={<RecoveryLink />} />
           <Route path="/recovery-password/:id" element={<RecoveryPassword />} />
         </Routes>
+        <ConfirmationPopup />
       </BrowserRouter>
     </QueryClientProvider>
   );

@@ -6,11 +6,3 @@ export const PRIORITY = {
 
 export type Priority = typeof PRIORITY[keyof typeof PRIORITY];
 
-const priorityLabels: Record<Priority, string> = {
-  alta: "Alta",
-  media: "Media",
-  baja: "Baja",
-};
-export const getPriorityLabel = (priority: Priority): string => {
-  return priorityLabels[priority] || "Prioridad desconocida";
-}

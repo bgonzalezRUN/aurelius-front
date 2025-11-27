@@ -19,8 +19,13 @@ interface ActionConfig {
   label?: string;
   onClick: () => void;
   isVisible: boolean;
-  variant?: 'icon' | 'button' | 'approve' | 'reject';
   className?: string;
+  variant: 'icon' | 'button';
+}
+
+interface Actions {
+  icons: ActionConfig[];
+  buttons: ActionConfig[];
 }
 
 export default function RequisitionButtons({
@@ -35,84 +40,110 @@ export default function RequisitionButtons({
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const closeModal = () => setActiveModal(null);
 
-  const actions: ActionConfig[] = useMemo(() => {
-    if (!data) return [];
+  const actions: Actions = useMemo((): Actions => {
+    if (!data) return { icons: [], buttons: [] };
 
     const status = data.requisitionStatus;
 
-    return [
-      {
-        key: 'view',
-        icon: Eye,
-        onClick: () => setActiveModal('DETAILS'),
-        isVisible: true,
-        variant: 'icon',
-      },
-      {
-        key: 'edit',
-        icon: Edit,
-        onClick: () => setActiveModal('EDIT'),
-        isVisible: status !== 'APPROVED' && hasPermission('update:requisition'),
-        variant: 'icon',
-      },
-      {
-        key: 'submit',
-        label: 'Enviar a validación',
-        onClick: () => submitReq.mutate(requisitionId),
-        isVisible: status === 'DRAFT' && hasPermission('submit:requisition'),
-        variant: 'button',
-      },
-      {
-        key: 'validate',
-        icon: ThumbsUp,
-        onClick: () =>
-          changeReqState.mutate({ requisitionId, type: 'validate' }),
-        isVisible:
-          status === 'PENDING' && hasPermission('validate:requisition'),
-        variant: 'icon',
-        className: 'text-green-primary',
-      },
-      {
-        key: 'approve',
-        icon: ThumbsUp,
-        onClick: () =>
-          signReq.mutate({
-            requisitionId,
-            user: `${user?.userName} ${user?.userLastName}`,
-          }),
-        isVisible:
-          status === 'VALIDATED' && hasPermission('approve:requisition'),
-        variant: 'icon',
-        className: 'text-green-primary',
-      },
-      {
-        key: 'reject_validated',
-        icon: ThumbsDown,
-        onClick: () => setActiveModal('REJECT'),
-        isVisible:
-          hasPermission('reject:requisition') &&
-          status === 'VALIDATED' &&
-          user?.role !== 'gerente de obra',
-        variant: 'icon',
-        className: 'text-red-primary',
-      },
-      {
-        key: 'reject_pending',
-        icon: ThumbsDown,
-        onClick: () => setActiveModal('REJECT'),
-        isVisible: hasPermission('reject:requisition') && status === 'PENDING',
-        variant: 'icon',
-        className: 'text-red-primary',
-      },
-    ];
+    return {
+      icons: [
+        {
+          key: 'view',
+          icon: Eye,
+          onClick: () => setActiveModal('DETAILS'),
+          isVisible: true,
+          variant: 'icon',
+          label: 'Ver detalles',
+        },
+        {
+          key: 'edit',
+          icon: Edit,
+          onClick: () => setActiveModal('EDIT'),
+          isVisible:
+            status !== 'APPROVED' && hasPermission('update:requisition'),
+          variant: 'icon',
+          label: 'Editar',
+        },
+
+        {
+          key: 'validate',
+          icon: ThumbsUp,
+          onClick: () =>
+            changeReqState.mutate({ requisitionId, type: 'validate' }),
+          isVisible:
+            status === 'PENDING' && hasPermission('validate:requisition'),
+
+          className: 'text-green-primary',
+          variant: 'icon',
+          label: 'Validar',
+        },
+        {
+          key: 'approve',
+          icon: ThumbsUp,
+          onClick: () =>
+            signReq.mutate({
+              requisitionId,
+              user: `${user?.userName} ${user?.userLastName}`,
+            }),
+          isVisible:
+            status === 'VALIDATED' && hasPermission('approve:requisition'),
+
+          className: 'text-green-primary',
+          variant: 'icon',
+          label: 'Aprobar',
+        },
+        {
+          key: 'reject_validated',
+          icon: ThumbsDown,
+          onClick: () => setActiveModal('REJECT'),
+          isVisible:
+            hasPermission('reject:requisition') &&
+            status === 'VALIDATED' &&
+            user?.role !== 'gerente de obra',
+
+          className: 'text-red-primary',
+          variant: 'icon',
+          label: 'Rechazar',
+        },
+        {
+          key: 'reject_pending',
+          icon: ThumbsDown,
+          onClick: () => setActiveModal('REJECT'),
+          isVisible:
+            hasPermission('reject:requisition') && status === 'PENDING',
+
+          className: 'text-red-primary',
+          variant: 'icon',
+          label: 'Rechazar',
+        },
+      ],
+      buttons: [
+        {
+          key: 'submit',
+          label: 'Enviar a validación',
+          onClick: () => {
+            submitReq.mutate(requisitionId);
+          },
+          isVisible: status === 'DRAFT' && hasPermission('submit:requisition'),
+          variant: 'button',
+        },
+        {
+          key: 'history',
+          label: 'Consultar Histórico',
+          onClick: () => setActiveModal('HISTORY'),
+          isVisible: true,
+          variant: 'button',
+        },
+      ],
+    };
   }, [
     changeReqState,
     data,
     hasPermission,
     requisitionId,
     signReq,
-    submitReq,
     user,
+    submitReq,
   ]);
 
   if (!data) return null;
@@ -133,7 +164,11 @@ export default function RequisitionButtons({
 
     const Icon = action.icon!;
     return (
-      <OptionButton key={action.key} buttonHandler={action.onClick}>
+      <OptionButton
+        key={action.key}
+        buttonHandler={action.onClick}
+        title={action.label || ''}
+      >
         <Icon size={16} className={action.className} />
       </OptionButton>
     );
@@ -141,17 +176,14 @@ export default function RequisitionButtons({
 
   return (
     <>
-      <div className="flex flex-wrap gap-1 text-[#01687d] items-center">
-        {actions.map(renderAction)}
+      <div className="flex flex-wrap justify-between items-center text-primaryDark">
+        <div className="flex">{actions.icons.map(renderAction)}</div>
 
         {data.requisitionStatus === 'APPROVED' && (
-          <p className="text-xs text-gray-600">Requisición firmada</p>
+          <p className="text-xs">Requisición firmada</p>
         )}
 
-        <ButtonBase
-          label="Consultar Histórico"
-          onclick={() => setActiveModal('HISTORY')}
-        />
+        <div className="flex gap-2">{actions.buttons.map(renderAction)}</div>
       </div>
 
       {activeModal === 'DETAILS' && (

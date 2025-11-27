@@ -1,5 +1,6 @@
 import { useRequisitionById } from '../../api/queries/requisitionQueries';
 import type { Requisition } from '../../types';
+import { capitalizeWords } from '../../utils';
 import { dateformatter } from '../../utils/dateformatter';
 import { fmtTime } from '../../utils/time';
 import { PriorityBadge } from '../common/PriorityBadge';
@@ -16,20 +17,16 @@ export default function RequisitionCard({
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition flex flex-col">
+      <div className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition flex flex-col w-[400px]">
         {/* Título + Fecha */}
         <div className="flex justify-between items-start mb-1">
           <h2 className="text-base font-semibold text-[#01687d] leading-tight">
-            {data.project}
+            {capitalizeWords(data.project)}
           </h2>
           <span className="text-[12px] text-gray-600 font-semibold">
             {data.requisitionCode}
           </span>
         </div>
-
-        {/* Proveedor */}
-
-        {/* Prioridad + Ventana */}
 
         <div className="flex justify-between items-center mb-2">
           <p className="text-[12px] text-gray-600">
@@ -47,11 +44,15 @@ export default function RequisitionCard({
         </div>
 
         <div className="text-xs text-gray-600 mb-2 leading-tight">
-          <span className="font-medium">Proveedor:</span>{' '}
+          <span className="font-medium">
+            {data.sendTo.length > 1
+              ? 'Proveedores sugeridos:'
+              : 'Proveedor sugerido:'}
+          </span>{' '}
           <div className="flex flex-wrap gap-1 mt-1">
             {data.sendTo?.map(prov => (
-              <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-[10px]">
-                {prov.name}
+              <span className="text-grey-primary text-[10px]">
+                {capitalizeWords(prov.name)}
               </span>
             ))}
           </div>
@@ -60,10 +61,7 @@ export default function RequisitionCard({
         {/* Items (Items arriba, número abajo) */}
         <div className="flex justify-between items-center mb-2">
           {/* Prioridad */}
-          <p className="text-xs text-gray-600 mb-2 leading-tight">
-            <span className="font-medium">Prioridad:</span>{' '}
-            <PriorityBadge priority={data.requisitionPriority} />
-          </p>
+           <PriorityBadge priority={data.requisitionPriority} />
 
           {/* Items + número juntos */}
           <div className="flex flex-col text-right leading-none">
