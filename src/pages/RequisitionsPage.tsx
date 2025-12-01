@@ -3,30 +3,15 @@ import Sidebar from '../components/Sidebar';
 import RequisitionList from '../components/RequisitionList';
 import RequisitionModal from '../components/RequisitionModal';
 
-import {
-  createRequisition,
-  updateRequisition,
-} from '../api/requisitionService';
 import Restricted from '../components/Restricted';
 import { PlusIcon, Search } from 'lucide-react';
-import type { BackendPayload, Requisition } from '../types';
+import type { Requisition } from '../types';
 
 export default function RequisitionsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingRequisition, setEditingRequisition] =
     useState<Requisition | null>(null);
   const [projectName, setProjectName] = useState('');
-
-  const handleSave = async (data: BackendPayload) => {
-    if (editingRequisition) {
-      await updateRequisition(editingRequisition.requisitionId, data);
-    } else {
-      await createRequisition(data);
-    }
-
-    setShowModal(false);
-    setEditingRequisition(null);
-  };
 
   const handleCloseModal = () => {
     setShowModal(false);
@@ -125,7 +110,6 @@ export default function RequisitionsPage() {
         <RequisitionModal
           open={showModal}
           onClose={handleCloseModal}
-          onSave={handleSave}
           editingRequisition={editingRequisition}
         />
       )}

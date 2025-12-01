@@ -1,6 +1,6 @@
 import { type FC } from 'react';
 import DialogPrimary from './DialogPrimary';
-import ButtonBase from './BaseButton';
+import BaseButton from './BaseButton';
 import { usePopupStore } from '../../store/popup';
 
 const ConfirmationPopup: FC = () => {
@@ -27,16 +27,16 @@ const ConfirmationPopup: FC = () => {
 
   return (
     <DialogPrimary isOpen onClose={closePopup} title={title}>
-      <p className="text-grey-100 text-base font-semibold">{message}</p>
+      <p className="text-grey-100 text-base font-semibold text-pretty text-center">{message}</p>
 
       <div className="flex justify-end gap-2 mt-2">
-        <ButtonBase
+        <BaseButton
           label={cancelButtonText}
           onclick={closePopup}
           size="md"
           variant="secondary"
         />
-        <ButtonBase
+        <BaseButton
           label={confirmButtonText}
           size="md"
           onclick={confirmationHandler || closePopup}

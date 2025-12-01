@@ -15,14 +15,14 @@ const Dialog: FC<PopupProps> = ({ isOpen, onClose, children, title }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 transition-opacity duration-300"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 transition-opacity duration-300 "
       onClick={onClose}
     >
       <div
-        className="bg-white p-6 rounded-[10px] shadow-2xl max-w-2xl w-full border border-solid border-grayPrimary transform transition-all duration-300 scale-100 opacity-100"
+        className="bg-white p-6 rounded-[10px] shadow-2xl max-w-3xl w-full border border-solid border-grayPrimary transform transition-all duration-300 scale-100 opacity-100 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-3">
+        <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-extrabold text-grey-100">{title}</h2>
           <button
             onClick={onClose}

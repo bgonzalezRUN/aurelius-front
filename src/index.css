@@ -19,3 +19,19 @@
 .custom-scroll::-webkit-scrollbar-thumb:hover {
   background: #8dc3cc;
 }
+
+
+.custom-select option {
+  border: 2px solid #e5e7eb;
+  background-color: white;
+}
+
+.custom-select option:checked {
+  background-color: #5bb4cf;
+  color: white;
+}
+
+.custom-select option:hover {
+  background-color: #5bb4cf !important;
+  color: white;
+}

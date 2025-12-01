@@ -1,34 +1,34 @@
-import {type  ReactNode } from "react";
+import { type ReactNode } from 'react';
 
-type ButtonVariant = "primary" | "secondary";
-type ButtonSize = "sm" | "md";
-
+type ButtonVariant = 'primary' | 'secondary';
+type ButtonSize = 'sm' | 'md';
 
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: "bg-primaryDark text-white hover:bg-primaryHover",
-  secondary: "bg-grey-300 text-white hover:bg-gray-300",
+  primary: 'bg-primaryDark text-white hover:bg-primaryHover',
+  secondary: 'bg-grey-300 text-white hover:bg-gray-300',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: "text-xs px-2 py-1",
-  md: "text-sm px-3 py-1",
+  sm: 'text-xs px-2 py-1',
+  md: 'text-sm px-3 py-1',
 };
-
 
 export default function ButtonBase({
   label,
   onclick,
   disabled = false,
-  type = "button",
-  variant = "primary",
-  size = "sm",
+  type = 'button',
+  variant = 'primary',
+  size = 'sm',
+  isLoading = false,
 }: {
   label: string | ReactNode;
   onclick?: () => void;
   disabled?: boolean;
-  type?: "button" | "submit" | "reset";
-  variant?: "primary" | "secondary";
-  size?: "sm" | "md";
+  type?: 'button' | 'submit' | 'reset';
+  variant?: 'primary' | 'secondary';
+  size?: 'sm' | 'md';
+  isLoading?: boolean;
 }) {
   const variantClasses = variantStyles[variant];
   const sizeClasses = sizeStyles[size];
@@ -40,7 +40,7 @@ export default function ButtonBase({
       disabled={disabled}
       type={type}
     >
-      {label}
+      {`${label} ${isLoading ? '...': ''}`}
     </button>
   );
 }

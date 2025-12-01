@@ -1,6 +1,7 @@
-import ButtonBase from './BaseButton';
+import BaseButton from './BaseButton';
 import Dialog from './Dialog';
 import Loading from './Loading';
 import ConfirmationPopup from './ConfirmationPopup';
+import OptionButton from './OptionButton';
 
-export { ButtonBase, Dialog, Loading, ConfirmationPopup };
+export { BaseButton, Dialog, Loading, ConfirmationPopup, OptionButton };

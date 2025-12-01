@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import DialogPrimary from '../common/DialogPrimary';
-import { ButtonBase } from '../common';
+import { BaseButton } from '../common';
 import { useRequisitionMutations } from '../../api/queries/requisitionMutations';
 
 type FormData = {
@@ -64,13 +64,13 @@ export default function RejectRequisition({
         )}
 
         <div className="flex justify-end gap-2 mt-2">
-          <ButtonBase
+          <BaseButton
             label="Cancelar"
             onclick={closePopup}
             size="md"
             variant="secondary"
           />
-          <ButtonBase
+          <BaseButton
             label="Desaprobar"
             type="submit"
             size="md"

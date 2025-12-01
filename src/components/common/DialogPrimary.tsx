@@ -34,7 +34,7 @@ const DialogPrimary: FC<PopupProps> = ({
           </button>
         </div>
 
-        <div className="p-4">{children}</div>
+        <div className="flex flex-col gap-y-3 p-4 ">{children}</div>
       </div>
     </div>
   );

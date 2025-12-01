@@ -28,7 +28,7 @@ export type HistoryRequisition = {
   createdAt: string;
 };
 
-export type BackendSendTo = { name: string };
+export type SendTo = { name: string };
 export type IRequisitionRequester = { name: string; timestamp: string };
 export type IRequisitionValidator = { name: string; timestamp: string };
 export type IRequisitionStatus = { status: string };
@@ -38,7 +38,7 @@ export type BackendPayload = {
   requisitionPriority: string;
   project: string;
   requisitionComments: string;
-  sendTo: BackendSendTo[];
+  sendTo: SendTo[];
   items: LineItem[];
   arrivalDate: string;
 };
@@ -49,7 +49,7 @@ export type Requisition = {
   project: string;
   requisitionComments: string;
   requisitionStatus: StatusDocument;
-  sendTo: BackendSendTo[];
+  sendTo: SendTo[];
   items: LineItem[];
   arrivalDate?: string;
   requester: IRequisitionRequester;
@@ -62,7 +62,23 @@ export type Requisition = {
 export type LineItem = {    
   material: string;
   metricUnit: string;
-  quantity: string;
+  quantity: number;
   part: string;
   subpart: string;
+};
+
+export const lineItemKeys: (keyof LineItem)[] = [
+  "material",
+  "metricUnit",
+  "quantity",
+  "part",
+  "subpart"
+];
+
+export const lineItemLabels: Record<keyof LineItem, string> = {
+  material: "Material",
+  metricUnit: "Unidad",
+  quantity: "Cantidad",
+  part: "Partida",
+  subpart: "Subpartida",
 };

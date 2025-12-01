@@ -4,7 +4,7 @@ import { useRequisitionById } from '../../api/queries/requisitionQueries';
 import { useRequisitionMutations } from '../../api/queries/requisitionMutations';
 import { usePermission } from '../../hooks/usePermission';
 import OptionButton from '../common/OptionButton';
-import { ButtonBase } from '../common';
+import { BaseButton } from '../common';
 import RequisitionDetailModal from '../RequisitionDetailModal';
 import RequisitionModal from '../RequisitionModal';
 import RejectRequisition from './RejectRequisition';
@@ -69,7 +69,7 @@ export default function RequisitionButtons({
     const approveHandler = () => {
       openPopupValidate({
         title: 'Validar requisición',
-        message: `¿Estas seguro que quieres aprobar la requisición ${data.requisitionCode}?`,
+        message: `¿Estas seguro que quieres validar la requisición ${data.requisitionCode}?`,
         onConfirm: () =>
           signReq.mutate({
             requisitionId,
@@ -180,7 +180,7 @@ export default function RequisitionButtons({
 
     if (action.variant === 'button') {
       return (
-        <ButtonBase
+        <BaseButton
           key={action.key}
           label={action.label || ''}
           size="sm"
