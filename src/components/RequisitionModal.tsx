@@ -70,7 +70,7 @@ export default function RequisitionModal({
     control,
     setValue,
     watch,
-    formState: { errors, isValid },
+    formState: { errors, isValid, dirtyFields },
   } = useForm<FormData>({
     defaultValues: isEditing
       ? {
@@ -424,7 +424,11 @@ export default function RequisitionModal({
             label={isEditing ? 'Actualizar requisición' : 'Crear requisición'}
             size="md"
             type="submit"
-            disabled={!isValid}
+            disabled={
+              isEditing
+                ? !isValid || !Object.keys(dirtyFields).length
+                : !isValid
+            }
           />
         </div>
       </form>
