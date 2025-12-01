@@ -1,3 +1,4 @@
+import type { Category } from "./category";
 import type { Priority } from "./priority";
 import type { StatusDocument } from "./statusDocument";
 
@@ -57,12 +58,13 @@ export type Requisition = {
   approver?: string;
   requisitionCode: string;
   arrivalWindows: { start: string; end: string }[];
+  categories: Partial<Category>[]
 };
 
 export type LineItem = {    
   material: string;
   metricUnit: string;
-  quantity: number;
+  quantity: string;
   part: string;
   subpart: string;
 };

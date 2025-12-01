@@ -1,11 +1,21 @@
-// requisitionService.ts
-import type { BackendPayload, HistoryRequisition, LineItem, Requisition } from "../../types";
-import api from "../http";
+import type {
+  BackendPayload,
+  HistoryRequisition,
+  Requisition,
+  Status,
+} from '../../types';
+import type { Category } from '../../types/category';
+import api from '../http';
 
+const REQUISITIONS_BASE = '/requisitions';
 
-
-
-const REQUISITIONS_BASE = "/requisitions";
+interface ApiRequisitionResponse {
+  totalItems: number;
+  itemsPerPage: number;
+  currentPage: number;
+  totalPages: number;
+  data: Partial<Requisition>[];
+}
 
 // Crear requisición
 export const createRequisition = async (
@@ -16,12 +26,12 @@ export const createRequisition = async (
 };
 
 // Obtener todas las requisiciones
-export const getRequisitions = async (): Promise<Requisition[]> => {
-  const res = await api.get<Record<string, Requisition[]>>(
+export const getRequisitions = async (): Promise<Partial<Requisition>[]> => {
+  const res = await api.get<Record<Status, ApiRequisitionResponse>>(
     `${REQUISITIONS_BASE}/`
   );
-  // Unificar todas las requisiciones en un solo array
-  const flat = Object.values(res.data).flat();
+  const flat = Object.values(res.data).flatMap(statusBlock => statusBlock.data);
+
   return flat;
 };
 
@@ -47,7 +57,7 @@ export const searchRequisitionsByProject = async (
 
 export const updateRequisition = async (
   requisitionId: string,
-  data: LineItem[]
+  data: Partial<Requisition>
 ): Promise<Requisition> => {
   const res = await api.patch<Requisition>(
     `${REQUISITIONS_BASE}/${requisitionId}`,
@@ -113,5 +123,11 @@ export const historyRequisition = async (
   requisitionId: string
 ): Promise<HistoryRequisition[]> => {
   const res = await api.get(`requisition-history/${requisitionId}`);
+  return res.data;
+};
+
+export const getCategories = async (): Promise<Category[]> => {
+  const res = await api.get(`/requisition-category/`);
+
   return res.data;
 };

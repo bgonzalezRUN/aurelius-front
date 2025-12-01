@@ -178,7 +178,7 @@ async function extractItemsFromExcel(file: File): Promise<LineItem[]> {
         .toString()
         .trim(),
       metricUnit: umRaw,
-      quantity: Number(qtyVal),
+      quantity: (qtyVal),
       part: String(row[idxPart] ?? '')
         .toString()
         .trim(),
@@ -410,8 +410,7 @@ async function extractItemsFromPdf(file: File): Promise<LineItem[]> {
       const item: LineItem = {
         material: (materialFrag || '').replace(/\s+/g, ' ').trim(),
         metricUnit: (unit || '').trim(),
-        quantity: Number(qty),
-
+        quantity: (qty),
         part: textInBand(ln.cells, bounds.partida),
         subpart: textInBand(ln.cells, bounds.subpart),
       };

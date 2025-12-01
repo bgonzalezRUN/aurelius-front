@@ -225,7 +225,7 @@ export default function RequisitionButtons({
         <RequisitionModal
           open={true}
           onClose={closeModal}
-          editingRequisition={data}
+          isEditing={requisitionId}
         />
       )}
 

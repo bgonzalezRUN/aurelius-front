@@ -1,5 +1,5 @@
 import { useRequisitionById } from '../../api/queries/requisitionQueries';
-import type { Requisition } from '../../types';
+import type { Requisition, SendTo } from '../../types';
 import { capitalizeWords } from '../../utils';
 import { dateformatter } from '../../utils/dateformatter';
 import { fmtTime } from '../../utils/time';
@@ -43,25 +43,27 @@ export default function RequisitionCard({
             )}
         </div>
 
-        <div className="text-xs text-gray-600 mb-2 leading-tight">
-          <span className="font-medium">
-            {data.sendTo.length > 1
-              ? 'Proveedores sugeridos:'
-              : 'Proveedor sugerido:'}
-          </span>{' '}
-          <div className="flex flex-wrap gap-1 mt-1">
-            {data.sendTo?.map(prov => (
-              <span className="text-grey-primary text-[10px]">
-                {capitalizeWords(prov.name)}
-              </span>
-            ))}
+        {data.sendTo.length ? (
+          <div className="text-xs text-gray-600 mb-2 flex justify-between">
+            <span className="font-medium">
+              {data.sendTo.length > 1
+                ? 'Proveedores sugeridos:'
+                : 'Proveedor sugerido:'}
+            </span>
+            <div className="flex flex-wrap gap-1">
+              {data.sendTo?.map((prov: SendTo) => (
+                <span className="text-grey-primary text-xs">
+                  {capitalizeWords(prov.name)}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : null}
 
         {/* Items (Items arriba, número abajo) */}
         <div className="flex justify-between items-center mb-2">
           {/* Prioridad */}
-           <PriorityBadge priority={data.requisitionPriority} />
+          <PriorityBadge priority={data.requisitionPriority} />
 
           {/* Items + número juntos */}
           <div className="flex flex-col text-right leading-none">

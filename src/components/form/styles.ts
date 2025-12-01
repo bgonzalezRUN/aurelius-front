@@ -1,5 +1,10 @@
-export const baseClasses =
-  'block w-full px-2 py-1 border rounded-lg focus:outline-none transition duration-150 ease-in-out';
+import clsx from 'clsx';
+export const baseClasses = (isItBig) => {
+  return clsx(
+    'block w-full  px-2 py-1 border rounded-lg focus:outline-none transition duration-150 ease-in-out',
+    { 'text-xs': isItBig  }
+  );
+};
 
 export const errorClasses = (errorMessage: string) => {
   return errorMessage
@@ -8,9 +13,7 @@ export const errorClasses = (errorMessage: string) => {
 };
 
 export const disabledClasses = (disabled: boolean) => {
-  return disabled
-     ? 'bg-gray-100 cursor-not-allowed opacity-75'
-  : 'bg-white';
+  return disabled ? 'bg-gray-100 cursor-not-allowed opacity-75' : 'bg-white';
 };
 
-export const labelClasses = "block text-sm font-bold text-grey-100 mb-1"
+export const labelClasses = 'block text-sm font-bold text-grey-100 mb-1';

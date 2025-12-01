@@ -4,6 +4,7 @@ import {
   getRequisitionById,
   searchRequisitionsByProject,
   historyRequisition,
+  getCategories,
 } from '../services/requisition';
 
 export function useRequisitions() {
@@ -34,5 +35,12 @@ export function useRequisitionHistory(id: string) {
     queryKey: ['requisition-history', id],
     queryFn: () => historyRequisition(id!),
     enabled: !!id,
+  });
+}
+
+export function useCategories() {
+  return useQuery({
+    queryKey: ['categories'],
+    queryFn: getCategories,
   });
 }

@@ -7,7 +7,7 @@ import {
   deleteRequisition,
   signRequisition,
 } from '../services/requisition';
-import type { LineItem } from '../../types';
+import type { Requisition } from '../../types';
 import { usePopupStore } from '../../store/popup';
 
 export function useRequisitionMutations() {
@@ -16,8 +16,14 @@ export function useRequisitionMutations() {
 
   const createReq = useMutation({
     mutationFn: createRequisition,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['requisitions'] }),
+    onSuccess: () => {
+      openPopupValidate({
+        title: 'Requisición creada',
+        message: 'La requisición ha sido creada correctamente',
+        confirmButtonText: 'Aceptar',
+      });
+      queryClient.invalidateQueries({ queryKey: ['requisitions'] });
+    },
   });
 
   const updateReq = useMutation({
@@ -26,9 +32,16 @@ export function useRequisitionMutations() {
       data,
     }: {
       requisitionId: string;
-      data: LineItem[];
+      data: Partial<Requisition>;
     }) => updateRequisition(requisitionId, data),
     onSuccess: (_, variables) => {
+      openPopupValidate({
+        title: 'Requisición actualizada',
+        message: 'La requisición ha sido actualizada correctamente',
+        confirmButtonText: 'Aceptar',
+      });
+      queryClient.invalidateQueries({ queryKey: ['requisitions'] });
+
       queryClient.invalidateQueries({
         queryKey: ['requisitionById', variables.requisitionId],
       });

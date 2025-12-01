@@ -1,4 +1,4 @@
-import React, { type InputHTMLAttributes } from 'react';
+import { forwardRef, type InputHTMLAttributes } from 'react';
 import type { UseFormRegisterReturn } from 'react-hook-form';
 import {
   baseClasses,
@@ -14,10 +14,11 @@ export interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
   registration?: UseFormRegisterReturn;
   errorMessage?: string;
   containerClassName?: string;
-  inputClassName?: string;
+  inputClassName?: string; 
+   isItBig?: boolean
 }
 
-export const Input = React.forwardRef<HTMLInputElement, FormInputProps>(
+export const Input = forwardRef<HTMLInputElement, FormInputProps>(
   (
     {
       label,
@@ -28,6 +29,7 @@ export const Input = React.forwardRef<HTMLInputElement, FormInputProps>(
       inputClassName = '',
       type = 'text',
       disabled = false,
+      isItBig=false,
       ...rest
     },
    
@@ -44,7 +46,7 @@ export const Input = React.forwardRef<HTMLInputElement, FormInputProps>(
           disabled={disabled}
           aria-invalid={!!errorMessage}
           aria-describedby={errorMessage ? `${name}-error` : undefined}
-          className={`${baseClasses} ${errorClasses(
+          className={`${baseClasses(isItBig)} ${errorClasses(
             errorMessage || ''
           )} ${disabledClasses(disabled)} ${inputClassName}`}
           {...rest}

@@ -1,37 +1,49 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { Plus, Trash2 } from 'lucide-react';
-// import {
-//   createRequisition,
-//   updateRequisition,
-// } from '../api/requisitionService';
-
 import {
   lineItemKeys,
   lineItemLabels,
   PRIORITY,
   type BackendPayload,
   type LineItem,
-  type Requisition,
+  type Priority,
   type SendTo,
 } from '../types';
 import { BaseButton, Dialog, OptionButton } from './common';
 import { MultiSelect, FileInput, Input, Select, Textarea } from './form';
-import { useForm, useFieldArray } from 'react-hook-form';
+
 import { capitalizeWords } from '../utils';
 import useExtractItemsFromFile from '../hooks/useExtractItemsFromFile';
 import { labelClasses } from './form/styles';
 import ErrorMessage from './common/ErrorMessage';
 import { useRequisitionMutations } from '../api/queries/requisitionMutations';
+import { toInputDate, toISOFromDateAndTime } from '../utils/dateformatter';
+import {
+  useCategories,
+  useRequisitionById,
+} from '../api/queries/requisitionQueries';
+import { toInputTime } from '../utils/time';
+import { CATEGORYITEM } from '../types/category';
+import { getLeadingNumber } from '../utils/number';
 
 type TimeWindow = { start: string; end: string };
+const emptyLineItem: LineItem = {
+  material: '',
+  metricUnit: '',
+  quantity: '0',
+  part: '',
+  subpart: '',
+};
 interface FormData {
   project: string;
-  requisitionPriority: string;
+  requisitionPriority: Priority;
   requisitionComments: string;
   arrivalDate: string;
-  sendTo: SendTo[];
+  sendTo: string[];
   items: LineItem[];
   arrivalWindows: TimeWindow[];
+  categories: string[];
 }
 
 const VENDORS = ['proveedor 1', 'proveedor 2', 'proveedor 3'];
@@ -39,16 +51,16 @@ const VENDORS = ['proveedor 1', 'proveedor 2', 'proveedor 3'];
 export default function RequisitionModal({
   open,
   onClose,
-
-  editingRequisition, // NUEVO: recibe la requisición a editar
+  isEditing,
 }: {
   open: boolean;
   onClose: () => void;
   onSave?: (data: BackendPayload) => Promise<void> | void;
-  editingRequisition?: Requisition | null; // NUEVO
+  isEditing?: string | null;
 }) {
-  const { createReq } = useRequisitionMutations();
-  const isEditing = !!editingRequisition; // NUEVO: determina si está editando
+  const { data } = useRequisitionById(isEditing ?? '');
+  const { data: categoriesData } = useCategories();
+  const { createReq, updateReq } = useRequisitionMutations();
   const { parseAndFill, extractData } = useExtractItemsFromFile();
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
 
@@ -60,12 +72,27 @@ export default function RequisitionModal({
     watch,
     formState: { errors, isValid },
   } = useForm<FormData>({
-    defaultValues: {
-      arrivalWindows: [{ start: '', end: '' }],
-    },
+    defaultValues: isEditing
+      ? {
+          ...data,
+          arrivalDate: toInputDate(data?.arrivalDate || ''),
+          arrivalWindows: data?.arrivalWindows.map((arrival: TimeWindow) => ({
+            start: toInputTime(arrival.start),
+            end: toInputTime(arrival.end),
+          })),
+          sendTo: data?.sendTo.map((item: SendTo) => item.name),
+          categories: data?.categories.map(
+            category => `${category.categoryId}${category.categoryName}`
+          ),
+        }
+      : {
+          arrivalWindows: [{ start: '', end: '' }],
+          sendTo: [],
+          categories: [],
+        },
   });
 
-  const { items, sendTo, requisitionPriority } = watch();
+  const { items, sendTo, requisitionPriority, categories } = watch();
 
   useEffect(() => {
     if (extractData) setValue('items', extractData);
@@ -97,19 +124,52 @@ export default function RequisitionModal({
     name: 'items',
   });
 
-  const emptyLineItem: LineItem = {
-    material: '',
-    metricUnit: '',
-    quantity: 0,
-    part: '',
-    subpart: '',
-  };
-
   const onSubmit = (data: FormData) => {
-    if (!editingRequisition) createReq.mutate(data);
+    const dataFormated = {
+      ...data,
+      arrivalDate: toISOFromDateAndTime(data.arrivalDate, '00:00'),
+      arrivalWindows: data.arrivalWindows.map(w => ({
+        start: toISOFromDateAndTime(data.arrivalDate, w.start),
+        end: toISOFromDateAndTime(data.arrivalDate, w.end),
+      })),
+      sendTo: data?.sendTo?.map(item => ({ name: item })),
+      items: data.items.map(item => ({
+        ...item,
+        quantity: String(item.quantity),
+      })),
+      categories: data?.categories?.map(category => ({
+        categoryId: getLeadingNumber(category),
+      })),
+    };
+
+    const dataFormatedEdit = {
+      project: data.project,
+      requisitionPriority: data.requisitionPriority,
+      requisitionComments: data.requisitionComments,
+      arrivalDate: toISOFromDateAndTime(data.arrivalDate, '00:00'),
+      arrivalWindows: data.arrivalWindows.map(w => ({
+        start: toISOFromDateAndTime(data.arrivalDate, w.start),
+        end: toISOFromDateAndTime(data.arrivalDate, w.end),
+      })),
+      sendTo: data.sendTo.map(item => ({ name: item })),
+      items: data.items.map(item => ({
+        ...item,
+        quantity: String(item.quantity),
+      })),
+      categories: data?.categories?.map(category => ({
+        categoryId: getLeadingNumber(category) as number,
+      })),
+    };
+    if (!isEditing) {
+      createReq.mutate(dataFormated);
+      onClose();
+      return;
+    }
+
+    updateReq.mutate({ requisitionId: isEditing, data: dataFormatedEdit });
+    onClose();
   };
 
-  console.log(errors);
   return (
     <Dialog
       isOpen={open}
@@ -117,6 +177,19 @@ export default function RequisitionModal({
       onClose={onClose}
     >
       <form onSubmit={handleSubmit(onSubmit)}>
+        <input
+          type="hidden"
+          {...register('items', {
+            required: 'Debes agregar materiales',
+          })}
+        />
+        <input
+          type="hidden"
+          {...register('arrivalWindows', {
+            required: 'Debes seleccionar al menos un horario de recepción',
+          })}
+        />
+
         <div className="flex gap-x-2 [&>div]:w-2/4">
           <Input
             label="Proyecto"
@@ -133,7 +206,7 @@ export default function RequisitionModal({
               required: 'Selecciona la prioridad',
             })}
             errorMessage={errors.requisitionPriority?.message}
-            options={Object.entries(PRIORITY).map(([key, value]) => ({
+            options={Object.entries(PRIORITY)?.map(([key, value]) => ({
               value: PRIORITY[key as keyof typeof PRIORITY],
               label: capitalizeWords(value),
             }))}
@@ -163,20 +236,33 @@ export default function RequisitionModal({
           />
           <div>
             <MultiSelect
-              label="Proveedores recomendados"
-              name="sendTo"
-              options={VENDORS.map(vendor => ({
-                value: vendor,
-                label: vendor,
-              }))}
+              label="Categorias"
+              name="categories"
+              options={
+                categoriesData?.map(({ categoryName, categoryId }) => ({
+                  value: `${categoryId}${categoryName}`,
+                  label: capitalizeWords(CATEGORYITEM[Number(categoryId)]),
+                })) ?? []
+              }
               setValue={setValue}
-              currentValues={sendTo.map(item => item.name)}
-              registration={register('sendTo')}
+              currentValues={categories}
+              registration={register('categories')}
             />
           </div>
         </div>
+        <MultiSelect
+          label="Proveedores recomendados"
+          name="sendTo"
+          options={VENDORS.map(vendor => ({
+            value: vendor,
+            label: vendor,
+          }))}
+          setValue={setValue}
+          currentValues={sendTo}
+          registration={register('sendTo')}
+        />
 
-        <div className="border-y border-gray-200 py-4 my-4">
+        <div className="border-y border-gray-200 py-4 mb-4 mt-6">
           <div className="flex justify-between items-start mb-3">
             <h3 className={labelClasses}>Horarios de recepción</h3>
             <button
@@ -188,8 +274,8 @@ export default function RequisitionModal({
             </button>
           </div>
 
-          {fields.map((field, index) => (
-            <div key={field.id}>
+          {fields.map((field: TimeWindow, index: number) => (
+            <div key={`${field.start}-${field.end}`}>
               <h5 className="text-sm font-semibold text-primaryDark mb-1">
                 Rango {index + 1}
               </h5>
@@ -221,7 +307,7 @@ export default function RequisitionModal({
                     `arrivalWindows.${index}.end` as const,
                     {
                       required: 'La fecha de finalización es requerida.',
-                      validate: (value, formValues) => {
+                      validate: (value: string, formValues: FormData) => {
                         const startDate =
                           formValues.arrivalWindows[index]?.start;
                         if (startDate && value < startDate) {
@@ -250,10 +336,9 @@ export default function RequisitionModal({
           name="items"
           accept="application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,.xls,.xlsx,.csv"
           onFilesSelected={handleFilesSelected}
-          errorMessage={errors.items?.message}
         />
 
-        <div className="border-b border-gray-200 pt-4 mt-4">
+        <div className="pt-4 mt-4">
           <div className="flex justify-between items-center mb-3">
             <h3 className={labelClasses}>
               Materiales {items?.length > 0 && `(${items?.length})`}
@@ -268,13 +353,13 @@ export default function RequisitionModal({
             </button>
           </div>
           <div className="space-y-2">
-            {fieldMaterials?.map((field, index) => {
+            {fieldMaterials?.map((field: LineItem, index: number) => {
               return (
                 <div
-                  key={field.id}
-                  className="flex gap-1 px-1 py-2 rounded bg-gray-50 border"
+                  key={`${field.material}-${index}`}
+                  className="flex items-center gap-1 px-1 py-2 rounded bg-gray-50 border"
                 >
-                  {lineItemKeys.map(key => {
+                  {lineItemKeys?.map(key => {
                     const fieldName = `items.${index}.${key}` as const;
                     let rules = {};
 
@@ -312,6 +397,7 @@ export default function RequisitionModal({
                           errorMessage={errors.items?.[index]?.[key]?.message}
                           type={key === 'quantity' ? 'number' : 'text'}
                           step="0.0000001"
+                          isItBig
                         />
                       </div>
                     );
@@ -327,6 +413,10 @@ export default function RequisitionModal({
               );
             })}
           </div>
+          <ErrorMessage
+            errorMessage={errors?.items?.root?.message}
+            name="items"
+          />
         </div>
 
         <div className="flex justify-end mt-4 pt-4 border-t border-gray-200">

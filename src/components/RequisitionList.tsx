@@ -23,7 +23,7 @@ export default function RequisitionList() {
       <div className="flex flex-wrap gap-6">
         {data.map(r => (
           <RequisitionCard
-            requisitionId={r.requisitionId}
+            requisitionId={r.requisitionId || ''}
             key={r.requisitionCode}
           />
         ))}

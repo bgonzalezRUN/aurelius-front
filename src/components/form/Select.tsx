@@ -11,7 +11,7 @@ import type {
   FieldValues,
   Path,
 } from 'react-hook-form';
-import clsx from 'clsx'; // Asegúrate de tener clsx instalado
+import clsx from 'clsx'; 
 import { labelClasses } from './styles';
 import ErrorMessage from '../common/ErrorMessage';
 

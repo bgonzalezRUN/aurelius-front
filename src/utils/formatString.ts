@@ -1,0 +1,1 @@
+export const normalize = (s: string) => (s ?? "").toString().trim();

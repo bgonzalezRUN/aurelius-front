@@ -13,3 +13,15 @@ export const toISOFromDateAndTime = (dateStr: string, timeStr: string) => {
   const dt = new Date(y, m - 1, d, hh, mm, 0);
   return dt.toISOString();
 };
+
+export function toInputDate(isoString: string) {
+  const d = new Date(isoString);
+
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+
