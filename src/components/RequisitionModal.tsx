@@ -427,7 +427,7 @@ export default function RequisitionModal({
             disabled={
               isEditing
                 ? !isValid || !Object.keys(dirtyFields).length
-                : !isValid
+                : false
             }
           />
         </div>

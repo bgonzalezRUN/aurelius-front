@@ -36,7 +36,7 @@ export default function RequisitionButtons({
 }) {
   const { data } = useRequisitionById(requisitionId);
   const { submitReq, changeReqState, signReq } = useRequisitionMutations();
-  const { user } = useAuthStore();
+  const {user}= useAuthStore();
   const hasPermission = usePermission();
   const { openPopup: openPopupValidate } = usePopupStore();
   const [activeModal, setActiveModal] = useState<ModalType>(null);

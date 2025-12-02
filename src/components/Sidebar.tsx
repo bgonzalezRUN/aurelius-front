@@ -2,6 +2,7 @@ import { LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
 import { capitalizeWords } from '../utils';
+import { paths } from '../paths';
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ export default function Sidebar() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     logout();
-    navigate('/');
+    navigate(paths.LOGIN);
   };
 
   return (

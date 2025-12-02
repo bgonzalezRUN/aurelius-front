@@ -2,16 +2,10 @@ import React, { useState } from 'react';
 import { login } from '../api/authService';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
-import { jwtDecode } from 'jwt-decode';
-import type { RoleName } from '../types/roles';
 import { useNavigate } from 'react-router-dom';
 import { paths } from '../paths';
 
-interface DecodedToken {
-  userName?: string;
-  userLastName?: string;
-  role: RoleName;
-}
+
 
 export default function LoginPage() {
   const [userEmail, setUserEmail] = useState('');
@@ -20,17 +14,15 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { setUser } = useAuthStore();
+  const { login: loginStatus } = useAuthStore();
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const res = await login(userEmail, userPassword);
-      const decoded = jwtDecode<DecodedToken>(res.data.token);
-      localStorage.setItem('token', res.data.token);
-      setUser(decoded);
+      const res = await login(userEmail, userPassword);    
+      loginStatus(res.data.token);
       setLoading(false);
       navigate(paths.REQUISITIONS);
     } catch (error) {

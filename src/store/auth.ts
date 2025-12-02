@@ -1,32 +1,63 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { jwtDecode } from 'jwt-decode';
 import type { Permission, RoleName } from '../types/roles';
 
 interface User {
   userName?: string;
   userLastName?: string;
   role: RoleName;
-  permissions: Permission
+  permissions: Permission;
 }
 
 interface AuthState {
-  user: User | null;
-  setUser: (u: User | null) => void;
   logout: () => void;
+  token: string | null;
+  login: (u: string) => void;
+  user: User | null;
+  rehydrateUser: (token: string) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     set => ({
       user: null,
-      setUser: user => set({ user }),
-      logout: () => {
-        useAuthStore.persist.clearStorage();
-        set({ user: null });
+      logout: () => set({ token: null, user: null }),
+      token: null,
+      login: newToken => {
+        set({ token: newToken });
+        try {
+          const decodedUser = jwtDecode(newToken) as User;
+          set({ user: decodedUser });
+        } catch {
+          set({ user: null });
+        }
+      },
+      rehydrateUser: (token: string) => {
+        try {
+          const decodedUser = jwtDecode(token) as User;
+          set({ user: decodedUser });
+        } catch {
+          set({ token: null, user: null });
+        }
       },
     }),
     {
-      name: 'auth-storage', // clave en localStorage
+      name: 'auth-storage',
+      partialize: state => ({ token: state.token }),
+
+      onRehydrateStorage: () => {
+        return (state, error) => {
+          if (error) {
+            console.error('Error al rehidratar:', error);
+            return;
+          }
+
+          if (state?.token) {
+            state.rehydrateUser(state.token);
+          }
+        };
+      },
     }
   )
 );
