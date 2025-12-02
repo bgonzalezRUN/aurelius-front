@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { recoveryPassword } from "../api/authService";
 import { Eye, EyeOff } from "lucide-react";
+import { paths } from "../paths";
 
 export default function RecoveryPassword() {
   const { id } = useParams<{ id: string }>();
@@ -34,7 +35,7 @@ export default function RecoveryPassword() {
       await recoveryPassword(id, password);
       setOk(true);
       // opcional: redirigir al login después de 1–2 s
-      setTimeout(() => navigate("/"), 1200);
+      setTimeout(() => navigate(paths.LOGIN), 1200);
     } catch (err) {
       console.error(err);
       setError("No se pudo actualizar la contraseña");
@@ -44,7 +45,7 @@ export default function RecoveryPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-white to-blue-50 flex items-start sm:items-center justify-center p-4">
+    <div className="h-screen bg-linear-to-br from-white to-blue-50 flex items-start sm:items-center justify-center p-4">
       <main className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-lg ring-1 ring-black/5 p-5 sm:p-6">
           <h2 className="text-xl font-semibold text-slate-800">
@@ -131,7 +132,7 @@ export default function RecoveryPassword() {
             </button>
 
             <div className="text-center">
-              <Link to="/" className="text-sm text-blue-600 hover:underline">
+              <Link to={paths.LOGIN} className="text-sm text-blue-600 hover:underline">
                 Volver al login
               </Link>
             </div>

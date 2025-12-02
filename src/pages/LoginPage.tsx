@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/auth';
 import { jwtDecode } from 'jwt-decode';
 import type { RoleName } from '../types/roles';
 import { useNavigate } from 'react-router-dom';
+import { paths } from '../paths';
 
 interface DecodedToken {
   userName?: string;
@@ -27,11 +28,11 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await login(userEmail, userPassword);
-      const decoded = jwtDecode<DecodedToken>(res.data.token);    
+      const decoded = jwtDecode<DecodedToken>(res.data.token);
       localStorage.setItem('token', res.data.token);
       setUser(decoded);
       setLoading(false);
-      navigate('/reqs');
+      navigate(paths.REQUISITIONS);
     } catch (error) {
       setError('Correo o contraseña incorrectos' + error);
       setLoading(false);
@@ -39,7 +40,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-white to-blue-50 flex items-start sm:items-center justify-center p-4">
+    <div className="h-screen bg-linear-to-br from-white to-blue-50 flex items-start sm:items-center justify-center p-4">
       <main className="w-full max-w-md">
         <div className="flex flex-col justify-center items-center mb-4 select-none gap-6">
           <div className="bg-[#01687d] rounded-full p-2">
@@ -65,7 +66,7 @@ export default function LoginPage() {
               Iniciar Sesión
             </button>
             <button
-              onClick={() => (window.location.href = '/register')}
+              onClick={() => navigate(paths.REGISTER)}
               className="rounded-lg py-2 text-slate-500 hover:text-[#01687d] font-medium"
             >
               Registrarse
@@ -150,7 +151,7 @@ export default function LoginPage() {
         {/* enlaces auxiliares */}
         <div className="mt-4 text-center text-sm text-slate-500">
           <a
-            href="/recovery-link"
+            href={paths.RECOVER_PASSWORD}
             className="hover:text-blue-600 hover:underline"
           >
             ¿Olvidaste tu contraseña?

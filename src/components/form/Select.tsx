@@ -33,10 +33,7 @@ export interface FormSingleSelectDropdownProps<TFieldValues extends FieldValues>
   placeholder?: string;
 }
 
-/**
- * Componente Select que simula un dropdown (Listbox) para selección simple,
- * permitiendo estilos personalizados de hover/selected.
- */
+
 export const Select = <TFieldValues extends FieldValues>({
   label,
   name,
@@ -51,18 +48,18 @@ export const Select = <TFieldValues extends FieldValues>({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Muestra la etiqueta de la opción seleccionada
+ 
   const selectedLabel =
     options.find(o => o.value === currentValue)?.label || placeholder;
 
-  // ⚙️ Handler para seleccionar una opción
+  
   const handleSelectOption = (value: string) => {
-    // 🎯 Actualizar el valor en React Hook Form
+   
     setValue(name, value as any, { shouldValidate: true, shouldDirty: true });
     setIsOpen(false); // Cerrar el dropdown
   };
 
-  // 🖱️ Hook para cerrar el dropdown al hacer clic fuera
+ 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -149,9 +146,9 @@ export const Select = <TFieldValues extends FieldValues>({
 
             const optionClasses = clsx(
               'p-2 text-sm cursor-pointer transition duration-100',
-              'hover:bg-primaryDark hover:text-white',
+              'hover:bg-primary-primary hover:text-white',
               {
-                'bg-primaryDark text-white hover:bg-primaryDark': isSelected,
+                'bg-primary-primary text-white hover:bg-primary-primary': isSelected,
                 'text-gray-900': !isSelected,
               }
             );

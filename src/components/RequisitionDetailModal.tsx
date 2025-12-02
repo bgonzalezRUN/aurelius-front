@@ -214,7 +214,7 @@ export default function RequisitionDetailModal({
 
             <div className="border rounded-lg shadow-sm overflow-hidden">
               {/* Scroll SOLO en la tabla */}
-              <div className="max-h-[calc(100vh-518px)] overflow-y-auto custom-scroll">
+              <div className="max-h-[calc(100vh-518px)] overflow-y-auto">
                 <table className="w-full text-sm">
                   {/* Encabezado fijo */}
                   <thead className="bg-[#b3b3b3] text-black border-b sticky top-0 z-10">

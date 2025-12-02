@@ -1,10 +1,5 @@
-import { jwtDecode } from "jwt-decode";
-import React, { type ReactNode } from "react";
-
-interface DecodedToken {
-  permissions?: Array<string>;
-  role?: string;
-}
+import React, { type ReactNode } from 'react';
+import { useAuthStore } from '../store/auth';
 
 export interface IRestrictedProps {
   permission?: string;
@@ -12,20 +7,14 @@ export interface IRestrictedProps {
 }
 
 const Restricted: React.FC<IRestrictedProps> = ({ permission, children }) => {
-  const token = localStorage.getItem("token");
+  const { user } = useAuthStore();
   let canShow = false;
 
-  if (token) {
-    try {
-      const decoded: DecodedToken = jwtDecode(token);
+  if (user) {
+    const userPermissions = user?.permissions || [];
+    const isDev = userPermissions.includes('unlock:all');
 
-      const userPermissions = decoded?.permissions || [];
-      const isDev = userPermissions.includes("unlock:all");
-
-      canShow = !permission || isDev || userPermissions.includes(permission);
-    } catch (error) {
-      console.error("Error al decodificar el token:", error);
-    }
+    canShow = !permission || isDev || userPermissions.includes(permission);
   }
 
   return canShow ? <>{children}</> : null;

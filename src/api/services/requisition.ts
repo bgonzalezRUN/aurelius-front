@@ -26,10 +26,15 @@ export const createRequisition = async (
 };
 
 // Obtener todas las requisiciones
-export const getRequisitions = async (): Promise<Partial<Requisition>[]> => {
+export const getRequisitions = async (
+  params?: Record<string, unknown>
+): Promise<Partial<Requisition>[]> => {
   const res = await api.get<Record<Status, ApiRequisitionResponse>>(
-    `${REQUISITIONS_BASE}/`
+    `${REQUISITIONS_BASE}`,
+    { params }
   );
+
+  // aplanar la respuesta
   const flat = Object.values(res.data).flatMap(statusBlock => statusBlock.data);
 
   return flat;

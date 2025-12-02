@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { register } from "../api/authService";
 import { Eye, EyeOff } from "lucide-react";
+import { paths } from "../paths";
+import { useNavigate } from "react-router-dom";
 
 export const RegisterPage = () => {
   const [userName, setUserName] = useState("");
@@ -12,6 +14,7 @@ export const RegisterPage = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +28,7 @@ export const RegisterPage = () => {
     try {
       await register(userName, userLastName, userEmail, userPassword);
       setLoading(false);
-      window.location.href = "/";
+      navigate(paths.LOGIN)
     } catch (error) {
       setError("Error al registrar" + error);
       setLoading(false);
@@ -33,7 +36,7 @@ export const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-white to-blue-50 flex items-start sm:items-center justify-center p-4">
+    <div className="bg-linear-to-br from-white to-blue-50 flex items-start sm:items-center justify-center p-4">
       <main className="w-full max-w-md">
         <div className="flex flex-col justify-center items-center mb-4 select-none gap-6">
           <div className="bg-[#01687d] rounded-full p-2">
@@ -56,13 +59,13 @@ export const RegisterPage = () => {
         <div className="bg-white rounded-2xl shadow-lg ring-1 ring-black/5 p-5 sm:p-6">
           <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl text-sm mb-4">
             <button
-              onClick={() => (window.location.href = "/")}
+              onClick={() => navigate(paths.LOGIN)}
               className="rounded-lg py-2 text-slate-500 hover:text-[#01687d] font-medium"
             >
               Iniciar Sesión
             </button>
             <button
-              onClick={() => (window.location.href = "/register")}
+              onClick={() => navigate(paths.REGISTER)}
               className="rounded-lg py-2 bg-white shadow-sm font-medium "
             >
               Registrarse

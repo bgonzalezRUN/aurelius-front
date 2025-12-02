@@ -1,9 +1,22 @@
+import { useState } from 'react';
 import RequisitionCard from './requisition/RequisitionCard';
-import { useRequisitions } from '../api/queries/requisitionQueries';
+import {
+  useCategories,
+  useRequisitions,
+} from '../api/queries/requisitionQueries';
 import { Loading } from './common';
+import { capitalizeWords } from '../utils';
+import { CATEGORYITEM } from '../types/category';
+import { MultiSelectFilter } from './common/MultiSelectFilter';
+import { getLeadingNumber } from '../utils/number';
 
 export default function RequisitionList() {
-  const { data, isLoading } = useRequisitions();
+  const { data: categoriesData } = useCategories();
+  const [filters, setFilters] = useState<string[]>([]);
+  const { data, isLoading } = useRequisitions({
+    categories: filters.map(filter => getLeadingNumber(filter)).join(','),
+    
+  });
 
   if (isLoading) {
     return <Loading />;
@@ -20,6 +33,20 @@ export default function RequisitionList() {
 
   return (
     <>
+    <div className='w-2/5 ml-auto mb-10'>
+       <MultiSelectFilter
+        label="Filtrar por categorias"
+        options={
+          categoriesData?.map(({ categoryName, categoryId }) => ({
+            value: `${categoryId}${categoryName}`,
+            label: capitalizeWords(CATEGORYITEM[Number(categoryId)]),
+          })) ?? []
+        }
+        onValuesChange={setFilters}
+        selectedValues={filters}
+      />
+    </div>
+     
       <div className="flex flex-wrap gap-6">
         {data.map(r => (
           <RequisitionCard

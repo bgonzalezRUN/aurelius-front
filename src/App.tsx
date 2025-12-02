@@ -6,7 +6,9 @@ import { RecoveryLink } from './pages/RecoveryLink';
 import RecoveryPassword from './pages/RecoveryPassword';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ConfirmationPopup } from './components/common';
-
+import ProtectedRoute from './components/ProtectedRoute';
+import Layout from './components/Layout';
+import { paths } from './paths';
 
 export default function App() {
   const queryClient = new QueryClient();
@@ -14,11 +16,16 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/reqs" element={<RequisitionsPage />} />
-          <Route path="/recovery-link" element={<RecoveryLink />} />
-          <Route path="/recovery-password/:id" element={<RecoveryPassword />} />
+          <Route path={paths.LOGIN} element={<LoginPage />} />
+          <Route path={paths.REGISTER} element={<RegisterPage />} />
+          <Route path={paths.RECOVER_PASSWORD} element={<RecoveryLink />} />
+          <Route path={paths.NEW_PASSWORD} element={<RecoveryPassword />} />
+
+          <Route element={<ProtectedRoute />}>
+            <Route path={paths.BASE} element={<Layout />}>
+              <Route path={paths.REQUISITIONS} element={<RequisitionsPage />} />
+            </Route>
+          </Route>
         </Routes>
         <ConfirmationPopup />
       </BrowserRouter>

@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 
 type ButtonVariant = 'primary' | 'secondary';
-type ButtonSize = 'sm' | 'md';
+type ButtonSize = 'xs' | 'sm' | 'md';
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary: 'bg-primaryDark text-white hover:bg-primaryHover',
@@ -9,8 +9,9 @@ const variantStyles: Record<ButtonVariant, string> = {
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'text-xs px-2 py-1',
-  md: 'text-sm px-3 py-1',
+  xs: 'text-xs px-2 py-1',
+  sm: 'text-sm px-3 py-1',
+  md: 'text-md px-4 py-1',
 };
 
 export default function ButtonBase({
@@ -19,7 +20,7 @@ export default function ButtonBase({
   disabled = false,
   type = 'button',
   variant = 'primary',
-  size = 'sm',
+  size = 'xs',
   isLoading = false,
 }: {
   label: string | ReactNode;
@@ -27,7 +28,7 @@ export default function ButtonBase({
   disabled?: boolean;
   type?: 'button' | 'submit' | 'reset';
   variant?: 'primary' | 'secondary';
-  size?: 'sm' | 'md';
+  size?: ButtonSize;
   isLoading?: boolean;
 }) {
   const variantClasses = variantStyles[variant];

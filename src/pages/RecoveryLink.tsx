@@ -22,7 +22,7 @@ export const RecoveryLink = () => {
     }
   };
   return (
-    <div className="min-h-screen bg-linear-to-br from-white to-blue-50 flex items-start sm:items-center justify-center p-4">
+    <div className="h-screen bg-linear-to-br from-white to-blue-50 flex items-start sm:items-center justify-center p-4">
       <main className="w-full max-w-md">
         <div className="flex flex-col justify-center items-center mb-4 select-none gap-6">
           <div className="bg-[#01687d] rounded-full p-2">

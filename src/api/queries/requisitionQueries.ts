@@ -7,10 +7,10 @@ import {
   getCategories,
 } from '../services/requisition';
 
-export function useRequisitions() {
+export function useRequisitions(filters?: Record<string, unknown>) {
   return useQuery({
-    queryKey: ['requisitions'],
-    queryFn: getRequisitions,
+    queryKey: ['requisitions', filters],  
+    queryFn: () => getRequisitions(filters),
   });
 }
 

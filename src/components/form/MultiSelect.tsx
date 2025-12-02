@@ -167,7 +167,7 @@ export const MultiSelect = <TFieldValues extends FieldValues>({
               <div
                 key={option.value}
                 className={clsx(
-                  'flex items-center p-2 hover:bg-primaryDark hover:text-white text-gray-700 transition',
+                  'flex items-center p-2 hover:bg-primary-primary hover:text-white text-gray-700 transition',
                   { 'opacity-50': isDisabled }
                 )}
                 role="option"

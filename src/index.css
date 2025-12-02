@@ -3,35 +3,21 @@
 @tailwind utilities;
 
 
-.custom-scroll::-webkit-scrollbar {
+/* Se aplicará a todos los elementos con scroll en navegadores WebKit */
+::-webkit-scrollbar {
   width: 6px;
 }
 
-.custom-scroll::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.custom-scroll::-webkit-scrollbar-thumb {
-  background: #01687d; 
+::-webkit-scrollbar-thumb {
+  background: #01687d; /* El color de tu barra */
   border-radius: 10px;
 }
 
-.custom-scroll::-webkit-scrollbar-thumb:hover {
-  background: #8dc3cc;
+::-webkit-scrollbar-thumb:hover {
+  background: #8dc3cc; /* Color al pasar el ratón */
 }
 
-
-.custom-select option {
-  border: 2px solid #e5e7eb;
-  background-color: white;
-}
-
-.custom-select option:checked {
-  background-color: #5bb4cf;
-  color: white;
-}
-
-.custom-select option:hover {
-  background-color: #5bb4cf !important;
-  color: white;
-}

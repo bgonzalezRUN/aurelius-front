@@ -1,22 +1,20 @@
-import { jwtDecode } from "jwt-decode";
-import { LogOut } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../store/auth";
+import { LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/auth';
+import { capitalizeWords } from '../utils';
 
 export default function Sidebar() {
   const navigate = useNavigate();
-const { logout } = useAuthStore();
-  const token = localStorage.getItem("token");
-  const user: any = token ? jwtDecode(token) : null;
+  const { logout, user } = useAuthStore();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem('token');
     logout();
-    navigate("/");
+    navigate('/');
   };
 
   return (
-    <aside className="w-64 h-screen bg-[#00a6b5] text-white flex flex-col p-6 justify-between shadow-[4px_0_10px_rgba(0,0,0,0.25)]">
+    <aside className="flex-shrink-0 w-64 h-full bg-[#00a6b5] text-white flex flex-col p-6 justify-between shadow-[4px_0_10px_rgba(0,0,0,0.25)]">
       {/* ARRIBA */}
       <div className="flex flex-col gap-8">
         {/* LOGO */}
@@ -39,18 +37,17 @@ const { logout } = useAuthStore();
       {/* ABAJO: PERFIL + CERRAR SESIÓN */}
       <div className="flex flex-col gap-4">
         {/* PERFIL */}
-        <div className="flex items-center gap-3 bg-[#01687d] p-3 rounded-lg backdrop-blur-sm shadow-inner">
+        <div className="flex items-center gap-3 bg-primaryDark p-3 rounded-lg backdrop-blur-sm shadow-inner">
           <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-xl font-bold">
-            {user?.userName?.charAt(0).toUpperCase() || "U"}
+            {user?.userName?.charAt(0).toUpperCase() || 'U'}
           </div>
 
           <div className="flex flex-col">
             <span className="font-semibold leading-5">
-              {user?.userName + " " + user?.userLastName ||
-                "usuario@example.com"}
+              {capitalizeWords(`${user?.userName} ${user?.userLastName}`)}
             </span>
             <span className="text-sm text-white/80">
-              {user?.role || "Sin rol"}
+              {capitalizeWords(user?.role || 'Sin rol')}
             </span>
           </div>
         </div>

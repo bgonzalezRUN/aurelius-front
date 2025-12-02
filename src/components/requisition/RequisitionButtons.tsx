@@ -182,8 +182,7 @@ export default function RequisitionButtons({
       return (
         <BaseButton
           key={action.key}
-          label={action.label || ''}
-          size="sm"
+          label={action.label || ''}         
           onclick={action.onClick}
         />
       );
