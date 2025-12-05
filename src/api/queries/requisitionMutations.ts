@@ -80,6 +80,7 @@ export function useRequisitionMutations() {
       queryClient.invalidateQueries({
         queryKey: ['requisitionById', variables.requisitionId],
       });
+      queryClient.invalidateQueries({ queryKey: ['requisitions'] });
     },
   });
 
