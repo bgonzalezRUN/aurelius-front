@@ -30,7 +30,7 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
     onFilesSelected,
     disabled = false,
     ...rest
-  }) => {
+  }, ref) => {
     const [isDragging, setIsDragging] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -105,7 +105,7 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
             multiple={multiple}
             disabled={disabled}
             className="hidden"
-            ref={inputRef}
+            ref={inputRef||ref}
             onChange={handleFileChange}
             aria-invalid={!!errorMessage}
             aria-describedby={errorMessage ? `${name}-error` : undefined}

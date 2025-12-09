@@ -11,6 +11,8 @@ import RejectRequisition from './RejectRequisition';
 import OrderHistory from './OrderHistory';
 import { useAuthStore } from '../../store/auth';
 import { usePopupStore } from '../../store/popup';
+import clsx from 'clsx';
+import { VIEW,  type ViewValue } from '../../types/view';
 
 type ModalType = 'DETAILS' | 'EDIT' | 'REJECT' | 'HISTORY' | null;
 
@@ -31,12 +33,14 @@ interface Actions {
 
 export default function RequisitionButtons({
   requisitionId,
+  viewType = VIEW.CARD,
 }: {
   requisitionId: string;
+  viewType?: ViewValue;
 }) {
   const { data } = useRequisitionById(requisitionId);
   const { submitReq, changeReqState, signReq } = useRequisitionMutations();
-  const {user}= useAuthStore();
+  const { user } = useAuthStore();
   const hasPermission = usePermission();
   const { openPopup: openPopupValidate } = usePopupStore();
   const [activeModal, setActiveModal] = useState<ModalType>(null);
@@ -182,7 +186,7 @@ export default function RequisitionButtons({
       return (
         <BaseButton
           key={action.key}
-          label={action.label || ''}         
+          label={action.label || ''}
           onclick={action.onClick}
         />
       );
@@ -202,8 +206,13 @@ export default function RequisitionButtons({
 
   return (
     <>
-      <div className="flex flex-wrap justify-between items-center text-primaryDark">
-        <div className="flex">{actions.icons.map(renderAction)}</div>
+      <div
+        className={clsx(
+          'flex flex-wrap items-center text-primaryDark',
+          viewType === VIEW.CARD && 'justify-between'
+        )}
+      >
+        <div className="flex mr-2">{actions.icons.map(renderAction)}</div>
 
         {data.requisitionStatus === 'APPROVED' && (
           <p className="text-xs">Requisición firmada</p>

@@ -32,7 +32,7 @@ export const Input = forwardRef<HTMLInputElement, FormInputProps>(
       isItBig=false,
       ...rest
     },
-   
+   ref
   ) => {
     return (
       <div className={`mb-4 ${containerClassName}`}>
@@ -51,7 +51,7 @@ export const Input = forwardRef<HTMLInputElement, FormInputProps>(
           )} ${disabledClasses(disabled)} ${inputClassName}`}
           {...rest}
           {...registration}
-          ref={registration?.ref}
+          ref={registration?.ref||ref}
           
         />
 

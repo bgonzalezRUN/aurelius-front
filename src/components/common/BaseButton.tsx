@@ -4,7 +4,7 @@ type ButtonVariant = 'primary' | 'secondary';
 type ButtonSize = 'xs' | 'sm' | 'md';
 
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: 'bg-primaryDark text-white hover:bg-primaryHover',
+  primary: 'bg-primary-primary text-white hover:bg-primaryHover',
   secondary: 'bg-grey-300 text-white hover:bg-gray-300',
 };
 

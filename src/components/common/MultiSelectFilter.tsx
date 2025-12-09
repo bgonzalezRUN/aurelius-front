@@ -5,9 +5,10 @@ import React, {
   type FC,
   useCallback,
 } from 'react';
-import clsx from 'clsx';
+
 import { BaseButton } from '.';
-import { labelClasses } from '../form/styles';
+
+import { SlidersHorizontal } from 'lucide-react';
 
 export interface SelectOption {
   value: string;
@@ -24,11 +25,10 @@ export interface MultiSelectFilterProps {
 }
 
 export const MultiSelectFilter: FC<MultiSelectFilterProps> = ({
-  label,
   options,
   selectedValues,
   onValuesChange,
-  placeholder = 'Selecciona filtros...',
+  placeholder = 'Seleccionar filtros:',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [values, setValues] = useState<string[]>(selectedValues);
@@ -75,66 +75,35 @@ export const MultiSelectFilter: FC<MultiSelectFilterProps> = ({
     onValuesChange(values);
   }, [onValuesChange, values]);
 
-  const triggerClasses = clsx(
-    'w-full px-2 py-1 border rounded-lg text-left flex justify-between items-center transition duration-150',
-    'border-gray-300 hover:border-primaryDark',
-    'bg-white cursor-pointer'
-  );
-
-  const dropdownMenuClasses =
-    'absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto';
-
   return (
-    <div className="flex items-end gap-6" ref={dropdownRef}>
-      <div className="w-full relative">
-        <label className={labelClasses}>
-          {label}
-        </label>
+    <div className="relative inline-block" ref={dropdownRef}>
+      <button
+        type="button"
+        className="h-11 w-[51px] bg-primary-primary rounded-[10px] p-2"
+        onClick={() => setIsOpen(prev => !prev)}
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+      >
+        <SlidersHorizontal color="white" width="100%" height="100%" />
+      </button>
 
-        <button
-          type="button"
-          className={triggerClasses}
-          onClick={() => setIsOpen(prev => !prev)}
-          role="combobox"
-          aria-haspopup="listbox"
-          aria-expanded={isOpen}
+      {isOpen && (
+        <div
+          className="absolute left-0 z-10 mt-1 h-80 w-max max-w-52 bg-white border border-gray-300 rounded-lg shadow-lg overflow-y-auto px-3 py-4 flex flex-col items-start justify-between gap-y-3 [&>*:last-child]:mx-auto"
+          role="listbox"
+          aria-multiselectable="true"
         >
-          <span
-            className={
-              values.length === 0 ? 'text-gray-500' : 'text-gray-900'
-            }
-          >
-            {selectedLabel}
-          </span>
-          <svg
-            className={`w-4 h-4 transition-transform ${
-              isOpen ? 'rotate-180' : ''
-            }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M19 9l-7 7-7-7"
-            ></path>
-          </svg>
-        </button>
-        {isOpen && (
-          <div
-            className={dropdownMenuClasses}
-            role="listbox"
-            aria-multiselectable="true"
-          >
+          <span className="text-gray-700">{selectedLabel}</span>
+
+          <div className="max-h-60 overflow-auto">
             {options.map(option => {
               const isChecked = values.includes(option.value);
 
               return (
                 <div
                   key={option.value}
-                  className="flex items-center p-2 hover:bg-primary-primary hover:text-white text-gray-700 transition"
+                  className="flex items-center py-2 px-1 hover:bg-primary-primary hover:text-white text-gray-700 transition"
                   role="option"
                   aria-selected={isChecked}
                 >
@@ -143,19 +112,24 @@ export const MultiSelectFilter: FC<MultiSelectFilterProps> = ({
                     value={option.value}
                     checked={isChecked}
                     onChange={handleChange}
-                    className="h-4 w-4 text-primaryDark rounded focus:ring-primary-primary border-gray-300"
+                    className="h-4 w-4 flex-shrink-0 text-primaryDark rounded focus:ring-primary-primary border-gray-300"
                   />
-                  <label className="ml-3 text-sm font-medium  cursor-pointer">
+
+                  <label className="ml-3 text-sm font-medium cursor-pointer">
                     {option.label}
                   </label>
                 </div>
               );
             })}
           </div>
-        )}
-      </div>
 
-      <BaseButton label="Filtrar" size="md" onclick={handleFilter} />
+          <BaseButton
+            label="Aplicar filtros"
+            size="md"
+            onclick={handleFilter}
+          />
+        </div>
+      )}
     </div>
   );
 };

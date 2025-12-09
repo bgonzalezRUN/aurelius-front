@@ -10,7 +10,7 @@ const statusStyles: Record<StatusDocument, string> = {
 };
 
 export const StatusBadge = ({ status }: { status: StatusDocument }) => {
-  const base = "px-2 py-0.5 rounded-[5px] text-xs font-medium";
+  const base = "px-2 py-0.5 rounded-[5px] text-xs font-medium text-center max-w-fit";
   const styles = statusStyles[status] ?? "bg-gray-100 text-gray-700";
   const label = statusLabelsDocument[status] ?? status;
 

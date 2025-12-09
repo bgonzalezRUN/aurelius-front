@@ -29,7 +29,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     disabled = false,
     rows = 3,
     ...rest
-  }) => {
+  }, ref) => {
     return (
       <div className={`mb-4 ${containerClassName}`}>
         <label htmlFor={name} className={labelClasses}>
@@ -47,7 +47,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           )} ${disabledClasses(disabled)} ${textareaClassName}`}
           {...rest}
           {...registration}
-          ref={registration?.ref}
+           ref={registration?.ref||ref}
         />
 
         <ErrorMessage errorMessage={errorMessage} name={name} />
