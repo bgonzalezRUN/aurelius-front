@@ -27,7 +27,7 @@ export default function RequisitionItemList({
       </span>
     ),
     date: (
-      <span className={baseStyles}>
+      <span className={baseStyles} >
         {data.arrivalDate ? dateformatter(new Date(data.arrivalDate)) : 'N/A'}
       </span>
     ),
@@ -47,7 +47,12 @@ export default function RequisitionItemList({
         <span className={`${baseStyles} line-clamp-1`}>
           {capitalizeWords(CATEGORYITEM[Number(data.categories[0].categoryId)])}
         </span>
-        <span className={baseStyles}> {` +${data.categories.length - 1}`}</span>
+        {data.categories.length > 1 && (
+          <span className={baseStyles}>
+           
+            {` +${data.categories.length - 1}`}
+          </span>
+        )}
       </span>
     ),
     priority: (
@@ -71,7 +76,10 @@ export default function RequisitionItemList({
         ))}
       </div>
       <div className="border-t border-grey-primary pt-6">
-        <RequisitionButtons requisitionId={requisitionId} viewType={VIEW.LIST} />
+        <RequisitionButtons
+          requisitionId={requisitionId}
+          viewType={VIEW.LIST}
+        />
       </div>
     </article>
   );
