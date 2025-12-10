@@ -31,9 +31,7 @@ type TimeWindow = { start: string; end: string };
 const emptyLineItem: LineItem = {
   material: '',
   metricUnit: '',
-  quantity: '0',
-  part: '',
-  subpart: '',
+  quantity: '0',  
 };
 interface FormData {
   project: string;
@@ -218,9 +216,7 @@ export default function RequisitionModal({
         <Textarea
           label="Comentarios"
           name="requisitionComments"
-          registration={register('requisitionComments', {
-            required: 'Escribe un comentario',
-          })}
+          registration={register('requisitionComments')}
           errorMessage={errors.requisitionComments?.message}
         />
         <div className="flex gap-x-2 [&>div]:w-2/4">
@@ -381,9 +377,7 @@ export default function RequisitionModal({
                               ? 'No tiene nombre, por favor agrega uno.'
                               : key === 'metricUnit'
                               ? 'No tiene unidad, por favor agrega una.'
-                              : key === 'part'
-                              ? 'No tiene partida, por favor agrega una.'
-                              : `${lineItemLabels[key]} es obligatorio.`,
+                              : `${lineItemLabels[key]} es obligatorio.`
                         },
                       };
                     }

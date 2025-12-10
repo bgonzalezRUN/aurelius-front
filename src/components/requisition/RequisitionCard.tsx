@@ -17,7 +17,7 @@ export default function RequisitionCard({
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition flex flex-col w-[400px]">
+      <div className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition flex flex-col w-[300px]">
         {/* Título + Fecha */}
         <div className="flex justify-between items-start mb-1">
           <h2 className="text-base font-semibold text-[#01687d] leading-tight">

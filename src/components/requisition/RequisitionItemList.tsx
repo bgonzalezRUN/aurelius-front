@@ -18,6 +18,11 @@ export default function RequisitionItemList({
   const baseStyles = 'text-base font-semibold text-grey-primary';
 
   const requisitionDetails = {
+      supplier: (
+      <span className={baseStyles}>
+        {data.requisitionCode}
+      </span>
+    ),
     name: (
       <span
         className="text-base font-bold text-secondary line-clamp-2"
@@ -30,12 +35,7 @@ export default function RequisitionItemList({
       <span className={baseStyles} >
         {data.arrivalDate ? dateformatter(new Date(data.arrivalDate)) : 'N/A'}
       </span>
-    ),
-    supplier: (
-      <span className={baseStyles}>
-        {capitalizeWords(data.sendTo[0]?.name) || 'Sin registro'}
-      </span>
-    ),
+    ),  
     arrivalWindows: (
       <span className={baseStyles}>
         {fmtTime(data.arrivalWindows[0].start)} –{' '}
@@ -45,7 +45,7 @@ export default function RequisitionItemList({
     category: (
       <span className="flex">
         <span className={`${baseStyles} line-clamp-1`}>
-          {capitalizeWords(CATEGORYITEM[Number(data.categories[0].categoryId)])}
+          {capitalizeWords(CATEGORYITEM[Number(data?.categories[0]?.categoryId)])||'Sin categorías'}
         </span>
         {data.categories.length > 1 && (
           <span className={baseStyles}>
@@ -69,13 +69,13 @@ export default function RequisitionItemList({
     status: <StatusBadge status={data.requisitionStatus} />,
   };
   return (
-    <article className="w-full h-[150px] bg-white rounded-[10px] shadow-sm p-4 hover:shadow-md transition flex flex-col justify-between">
-      <div className="flex [&>*]:flex-1 items-start gap-x-3">
+    <article className="w-full h-[9.375rem] bg-white rounded-[10px] shadow-sm p-4 hover:shadow-md transition flex flex-col justify-between">
+      <div className="flex [&>*]:flex-1 items-start gap-x-3 border-b border-grey-primary pb-3 h-[50%]">
         {Object.entries(requisitionDetails).map(([, valor]) => (
           <>{valor}</>
         ))}
       </div>
-      <div className="border-t border-grey-primary pt-6">
+      <div className='pt-3'>
         <RequisitionButtons
           requisitionId={requisitionId}
           viewType={VIEW.LIST}

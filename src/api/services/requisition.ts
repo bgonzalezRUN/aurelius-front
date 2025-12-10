@@ -2,18 +2,14 @@ import type {
   BackendPayload,
   HistoryRequisition,
   Requisition,
-  Status,
 } from '../../types';
 import type { Category } from '../../types/category';
+import type { PaginationData } from '../../types/pagination';
 import api from '../http';
 
 const REQUISITIONS_BASE = '/requisitions';
 
-interface ApiRequisitionResponse {
-  totalItems: number;
-  itemsPerPage: number;
-  currentPage: number;
-  totalPages: number;
+interface ApiRequisitionResponse extends PaginationData {
   data: Partial<Requisition>[];
 }
 
@@ -28,16 +24,12 @@ export const createRequisition = async (
 // Obtener todas las requisiciones
 export const getRequisitions = async (
   params?: Record<string, unknown>
-): Promise<Partial<Requisition>[]> => {
-  const res = await api.get<Record<Status, ApiRequisitionResponse>>(
-    `${REQUISITIONS_BASE}`,
-    { params }
-  );
+): Promise<ApiRequisitionResponse> => {
+  const res = await api.get<ApiRequisitionResponse>(`${REQUISITIONS_BASE}`, {
+    params,
+  });
 
-  // aplanar la respuesta
-  const flat = Object.values(res.data).flatMap(statusBlock => statusBlock.data);
-
-  return flat;
+  return res.data;
 };
 
 // Obtener una requisición por ID

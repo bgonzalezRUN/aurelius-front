@@ -7,9 +7,9 @@ export default function RequisitionListTable({
   data: Partial<Requisition[]>;
 }) {
   const tableHeaders = [
+    'Nro. de Requisición',
     'Nombre',
     'Fecha',
-    'Proveedor sugerido',
     'Horario',
     'Categorías',
     'Prioridad',
@@ -19,8 +19,8 @@ export default function RequisitionListTable({
   ];
 
   return (
-    <div>
-      <div className="flex [&>*]:flex-1 items-start gap-x-3 mb-3 px-3">
+    <div className='flex flex-col h-full'>
+      <div className="flex [&>*]:flex-1 items-start gap-x-3 mb-3 px-4 flex-none">
         {tableHeaders.map(header => (
           <span
             className="text-grey-600 font-bold text-xl text-center"
@@ -31,7 +31,7 @@ export default function RequisitionListTable({
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-6">
+      <div className="flex flex-col gap-6 overflow-y-auto flex-1">
         {data.map((r, index) => (
           <RequisitionItemList
             requisitionId={r?.requisitionId || ''}
