@@ -212,13 +212,13 @@ export default function RequisitionButtons({
           viewType === VIEW.CARD && 'justify-between'
         )}
       >
-        <div className="flex mr-2">{actions.icons.map(renderAction)}</div>
+        <div className="flex">{actions.icons.map(renderAction)}</div>
 
         {data.requisitionStatus === 'APPROVED' && (
           <p className="text-xs">Requisición firmada</p>
         )}
 
-        <div className="flex gap-2">{actions.buttons.map(renderAction)}</div>
+        <div className="flex gap-2 ml-2">{actions.buttons.map(renderAction)}</div>
       </div>
 
       {activeModal === 'DETAILS' && (

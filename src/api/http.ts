@@ -5,13 +5,12 @@ const API_BASE = 'http://localhost:3000/';
 const api = axios.create({
   baseURL: API_BASE,
   headers: {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${useAuthStore.getState().token}`,
+    'Content-Type': 'application/json',   
   },
 });
 
 api.interceptors.request.use(config => {
-  const token = useAuthStore.getState().token;
+  const token = useAuthStore.getState().getToken();
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
