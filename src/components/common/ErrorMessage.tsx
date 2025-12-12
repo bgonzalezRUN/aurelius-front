@@ -7,7 +7,7 @@ export default function ErrorMessage({
 }) {
   if (!errorMessage) return null;
   return (
-    <p id={`${name}-error`} role="alert" className="mt-1 text-sm text-red-600">
+    <p id={`${name}-error`} role="alert" className="mt-1 mb-4 text-sm text-red-600">
       {errorMessage}
     </p>
   );

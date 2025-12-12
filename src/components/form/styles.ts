@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-export const baseClasses = (isItBig) => {
+export const baseClasses = (isItBig: boolean) => {
   return clsx(
     'block w-full  px-2 py-1 border rounded-lg focus:outline-none transition duration-150 ease-in-out',
     { 'text-xs': isItBig  }

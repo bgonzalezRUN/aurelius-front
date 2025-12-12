@@ -1,11 +1,13 @@
+import clsx from 'clsx';
 import { type ReactNode } from 'react';
 
-type ButtonVariant = 'primary' | 'secondary';
+type ButtonVariant = 'primary' | 'secondary' | 'primaryDark';
 type ButtonSize = 'xs' | 'sm' | 'md';
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary: 'bg-primary-primary text-white hover:bg-primaryHover',
   secondary: 'bg-grey-300 text-white hover:bg-gray-300',
+  primaryDark: 'bg-primaryDark text-white hover:bg-primary-200',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -27,16 +29,19 @@ export default function ButtonBase({
   onclick?: () => void;
   disabled?: boolean;
   type?: 'button' | 'submit' | 'reset';
-  variant?: 'primary' | 'secondary';
+  variant?: ButtonVariant;
   size?: ButtonSize;
   isLoading?: boolean;
 }) {
   const variantClasses = variantStyles[variant];
   const sizeClasses = sizeStyles[size];
-  
+
   return (
     <button
-      className={`flex gap-x-3 items-center rounded-md font-semibold cursor-pointer ${variantClasses} ${sizeClasses} disabled:opacity-50 disabled:cursor-not-allowed`}
+      className={clsx(
+        `flex gap-x-3 items-center rounded-md font-semibold cursor-pointer ${variantClasses} ${sizeClasses} disabled:opacity-50 disabled:cursor-not-allowed`,
+        typeof label === 'string' && 'justify-center'
+      )}
       onClick={onclick}
       disabled={disabled || isLoading}
       type={type}
