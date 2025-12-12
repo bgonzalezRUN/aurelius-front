@@ -18,12 +18,23 @@ interface AuthState {
   user: User | null;
   rehydrateUser: (token: string) => void;
   getToken: () => string | null;
+  getUser: () =>  User | null;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
+      getUser: () => {
+        const token = get().token;
+        if (!token) return null;
+        const decodedToken = jwtDecode(token) as User;
+        if (Date.now() > decodedToken.exp * 1000) {
+          get().logout();
+          return null;
+        }
+        return decodedToken;
+      },
       logout: () => set({ token: null, user: null }),
       token: null,
       getToken: () => {
@@ -34,7 +45,7 @@ export const useAuthStore = create<AuthState>()(
           get().logout();
           return null;
         }
-        return token
+        return token;
       },
       login: newToken => {
         set({ token: newToken });

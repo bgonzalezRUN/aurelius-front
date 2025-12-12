@@ -12,7 +12,7 @@ import OrderHistory from './OrderHistory';
 import { useAuthStore } from '../../store/auth';
 import { usePopupStore } from '../../store/popup';
 import clsx from 'clsx';
-import { VIEW,  type ViewValue } from '../../types/view';
+import { VIEW, type ViewValue } from '../../types/view';
 
 type ModalType = 'DETAILS' | 'EDIT' | 'REJECT' | 'HISTORY' | null;
 
@@ -40,11 +40,13 @@ export default function RequisitionButtons({
 }) {
   const { data } = useRequisitionById(requisitionId);
   const { submitReq, changeReqState, signReq } = useRequisitionMutations();
-  const { user } = useAuthStore();
+  const { getUser } = useAuthStore();
   const hasPermission = usePermission();
   const { openPopup: openPopupValidate } = usePopupStore();
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const closeModal = () => setActiveModal(null);
+
+  const user = getUser();
 
   const actions: Actions = useMemo((): Actions => {
     if (!data) return { icons: [], buttons: [] };
@@ -218,7 +220,9 @@ export default function RequisitionButtons({
           <p className="text-xs">Requisición firmada</p>
         )}
 
-        <div className="flex gap-2 ml-2">{actions.buttons.map(renderAction)}</div>
+        <div className="flex gap-2 ml-2">
+          {actions.buttons.map(renderAction)}
+        </div>
       </div>
 
       {activeModal === 'DETAILS' && (

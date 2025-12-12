@@ -2,7 +2,8 @@ import { useAuthStore } from '../store/auth';
 import { ROLES, type Permission } from '../types/roles';
 
 export function usePermission() {
-   const {user} = useAuthStore();
+  const { getUser } = useAuthStore();
+  const user = getUser();
 
   const hasPermission = (permission: Permission): boolean => {
     if (!user) return false;

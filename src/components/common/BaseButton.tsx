@@ -33,15 +33,19 @@ export default function ButtonBase({
 }) {
   const variantClasses = variantStyles[variant];
   const sizeClasses = sizeStyles[size];
-
+  
   return (
     <button
-      className={`rounded-md font-semibold cursor-pointer ${variantClasses} ${sizeClasses} disabled:opacity-50 disabled:cursor-not-allowed`}
+      className={`flex gap-x-3 items-center rounded-md font-semibold cursor-pointer ${variantClasses} ${sizeClasses} disabled:opacity-50 disabled:cursor-not-allowed`}
       onClick={onclick}
-      disabled={disabled}
+      disabled={disabled || isLoading}
       type={type}
     >
-      {`${label} ${isLoading ? '...': ''}`}
+      {typeof label !== 'string' ? (
+        <>{label}</>
+      ) : (
+        <> {`${label} ${isLoading ? '...' : ''}`}</>
+      )}
     </button>
   );
 }

@@ -21,6 +21,7 @@ export function useRequisitionMutations() {
         title: 'Requisición creada',
         message: 'La requisición ha sido creada correctamente',
         confirmButtonText: 'Aceptar',
+        cancelButtonText: 'Cerrar'
       });
       queryClient.invalidateQueries({ queryKey: ['requisitions'] });
     },

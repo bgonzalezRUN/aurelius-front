@@ -7,9 +7,9 @@ export interface IRestrictedProps {
 }
 
 const Restricted: React.FC<IRestrictedProps> = ({ permission, children }) => {
-  const { user } = useAuthStore();
+  const { getUser } = useAuthStore();
   let canShow = false;
-
+  const user = getUser();
   if (user) {
     const userPermissions = user?.permissions || [];
     const isDev = userPermissions.includes('unlock:all');

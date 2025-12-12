@@ -3,9 +3,9 @@ import { useAuthStore } from '../store/auth';
 import { paths } from '../paths';
 
 const ProtectedRoute = () => {
-  const { user } = useAuthStore();
+  const { getUser } = useAuthStore();
 
-  if (!user) {
+  if (!getUser()) {
     return <Navigate to={paths.LOGIN} replace />;
   }
 
