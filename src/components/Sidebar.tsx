@@ -1,14 +1,22 @@
-import { FolderDot, LogOut } from 'lucide-react';
+import { FolderRoot, LogOut } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 import { capitalizeWords } from '../utils';
 import { BaseButton } from './common';
 import { useNavigate } from 'react-router-dom';
 import { paths } from '../paths';
+import { useCostCenter } from '../api/queries/costCenterQuery';
+import CCItem from './sidebar/CCItem';
+import { useCallback, useState } from 'react';
+
+type Options = 'project';
 
 export default function Sidebar() {
   const { getUser, logout } = useAuthStore();
   const user = getUser();
   const navigate = useNavigate();
+  const { data } = useCostCenter();
+  const [idProject, setProjectId] = useState<number | null>(null);
+  const [optionOpen, setOptionOpen] = useState<Options | ''>('project');
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -16,30 +24,69 @@ export default function Sidebar() {
     navigate(paths.LOGIN);
   };
 
+  const optionOpenHandler = (newValue: Options) => {
+    setOptionOpen(value => (value === newValue ? '' : newValue));
+  };
+
+  const setProjectIDHandler = useCallback(
+    (id: number) => {
+      if (id === idProject) setProjectId(null);
+      else {
+        setProjectId(id);
+      }
+    },
+    [idProject]
+  );
+
+  const centerCosts = user?.isAdminCC ? data?.data : [];
+
   return (
     <>
-      <aside className="flex-shrink-0 w-64 h-full bg-white flex flex-col items-center pt-8 border-primary-primary border-r shadow-[8px_0_6px_-1px_rgba(0,166,180,0.25)] mr-2">
-        <div className="flex justify-center w-28 h-16 mb-10">
-          <img
-            className="w-full"
-            src="/public/Grupo-indi-azul.png"
-            alt="logo grupo indi"
-          />
+      <aside className="flex-shrink-0 w-64 h-full max-h-screen py-5 bg-white flex flex-col border-primary-primary border-r shadow-[8px_0_6px_-1px_rgba(0,166,180,0.25)] mr-2">
+        <div className="flex-none">
+          <div className="flex justify-center w-28 h-16 mb-5 mx-auto">
+            <img
+              className="w-full"
+              src="/public/Grupo-indi-azul.png"
+              alt="logo grupo indi"
+            />
+          </div>
         </div>
 
-        <nav className="flex flex-col gap-4 w-full px-6">
-          <button className="h-11 w-full flex items-center gap-3 px-4 text-white font-semibold text-lg rounded-lg bg-primary-primary hover:bg-primaryHover transition">
-            <FolderDot />
-            Proyectos
-          </button>
-        </nav>
+        <div className="flex-1 min-h-0 px-6 overflow-hidden pb-2">
+          <div className="h-full overflow-y-auto py-2">
+            <div className="flex flex-col gap-4">
+              <BaseButton
+                label={
+                  <>
+                    <FolderRoot />
+                    Proyectos
+                  </>
+                }
+                size="md"
+                onclick={() => optionOpenHandler('project')}
+              />
+              {optionOpen === 'project' && (
+                <>
+                  {centerCosts?.map(item => (
+                    <CCItem
+                      key={item?.costCenterId}
+                      costCenterId={item?.costCenterId || ''}
+                      isOpen={idProject === Number(item?.costCenterId)}
+                      setIsOpen={setProjectIDHandler}
+                    />
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
 
-        <div className="w-full border-t border-grey-50 pt-8 mt-auto px-6 min-h-24 flex flex-col gap-y-8 pb-7">
-          <div className="flex gap-x-4 items-center">
+        <div className="flex-none w-full border-t border-grey-50 pt-5 px-6 flex flex-col">
+          <div className="flex gap-x-4 items-center mb-4">
             <div className="w-10 h-10 rounded-full flex-none">
               <img className="w-full" src="/public/user.png" alt="" />
             </div>
-
             <div className="font-semibold text-base leading-none w-full overflow-hidden">
               <p
                 className="text-grey-700 truncate"

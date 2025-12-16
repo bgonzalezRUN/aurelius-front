@@ -8,6 +8,11 @@ import { Upload } from 'lucide-react';
 import { labelClasses } from './styles';
 import ErrorMessage from '../common/ErrorMessage';
 
+export interface FileSelection {
+  files: FileList | null;
+  inputName?: string;
+}
+
 export interface FileInputProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'onChange'> {
   label: string;
@@ -16,22 +21,26 @@ export interface FileInputProps
   containerClassName?: string;
   accept?: string;
   multiple?: boolean;
-  onFilesSelected: (files: FileList | null) => void;
+  onFilesSelected: (files: FileSelection) => void;
 }
 
 export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
-  ({
-    label,
-    name,
-    errorMessage,
-    containerClassName = '',
-    accept,
-    multiple = false,
-    onFilesSelected,
-    disabled = false,
-    ...rest
-  }, ref) => {
+  (
+    {
+      label,
+      name,
+      errorMessage,
+      containerClassName = '',
+      accept,
+      multiple = false,
+      onFilesSelected,
+      disabled = false,
+      ...rest
+    },
+    ref
+  ) => {
     const [isDragging, setIsDragging] = useState(false);
+    const [documentName, setDocumentName] = useState<string>('');
     const inputRef = useRef<HTMLInputElement>(null);
 
     const preventDefaults = (e: React.DragEvent) => {
@@ -59,11 +68,19 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
       if (inputRef.current) {
         inputRef.current.files = files;
       }
-      onFilesSelected(files);
+      setDocumentName(files?.[0]?.name ?? '');
+      onFilesSelected({ files });
     };
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-      onFilesSelected(e.target.files);
+      const inputName = e.target.name;
+      const files = e.target.files;
+      const selectionData: FileSelection = {
+        files: files,
+        inputName: inputName,
+      };
+      setDocumentName(files?.[0]?.name ?? '');
+      onFilesSelected(selectionData);
     };
 
     const dropAreaClasses = `flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg transition duration-200 cursor-pointer text-center`;
@@ -82,10 +99,7 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
 
     return (
       <div className={`mb-4 ${containerClassName}`}>
-        <label
-          htmlFor={name}
-          className={labelClasses}
-        >
+        <label htmlFor={name} className={labelClasses}>
           {label}
         </label>
 
@@ -105,25 +119,27 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
             multiple={multiple}
             disabled={disabled}
             className="hidden"
-            ref={inputRef||ref}
+            ref={inputRef || ref}
             onChange={handleFileChange}
             aria-invalid={!!errorMessage}
             aria-describedby={errorMessage ? `${name}-error` : undefined}
             {...rest}
           />
 
-         <Upload className='text-grey-primary'/>
-
-          <p className="mt-2 text-sm text-gray-600">
-            <span className="font-semibold text-primaryDark">
-              Haz clic para seleccionar
-            </span>{' '}
-            o arrastra y suelta aquí.
-          </p>
-         
+          <Upload className="text-grey-primary" />
+          {!documentName ? (
+            <p className="mt-2 text-sm text-gray-600">
+              <span className="font-semibold text-primaryDark">
+                Haz clic para seleccionar
+              </span>{' '}
+              o arrastra y suelta aquí.
+            </p>
+          ) : (
+            <p className="mt-2 text-sm text-primaryDark">{documentName}</p>
+          )}
         </div>
 
-          <ErrorMessage errorMessage={errorMessage} name={name} />
+        <ErrorMessage errorMessage={errorMessage} name={name} />
       </div>
     );
   }

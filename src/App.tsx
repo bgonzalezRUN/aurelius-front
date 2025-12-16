@@ -8,6 +8,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import { paths } from './paths';
 import UserAuth from './pages/UserAuth';
+import CostCenter from './pages/CostCenter';
+import CostCenterManage from './pages/costCenter/CostCenterManage';
+import LayoutWithoutSidebar from './components/LayoutWithoutSidebar';
 
 export default function App() {
   const queryClient = new QueryClient();
@@ -23,6 +26,18 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route path={paths.BASE} element={<Layout />}>
               <Route path={paths.REQUISITIONS} element={<RequisitionsPage />} />
+            </Route>
+          </Route>
+
+          <Route element={<ProtectedRoute />}>
+            <Route path={paths.ADMIN} element={<Layout />}>
+              <Route path={paths.CC} element={<LayoutWithoutSidebar />}>
+                <Route index element={<CostCenter />} />
+                <Route
+                  path={`:id/${paths.MANAGE}`}
+                  element={<CostCenterManage />}
+                />
+              </Route>
             </Route>
           </Route>
         </Routes>

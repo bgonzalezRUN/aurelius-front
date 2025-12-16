@@ -13,7 +13,7 @@ const variantStyles: Record<ButtonVariant, string> = {
 const sizeStyles: Record<ButtonSize, string> = {
   xs: 'text-xs px-2 py-1',
   sm: 'text-sm px-3 py-1',
-  md: 'text-md px-4 py-1',
+  md: 'text-md px-4 py-2',
 };
 
 export default function ButtonBase({

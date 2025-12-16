@@ -16,6 +16,7 @@ import { getLeadingNumber } from '../utils/number';
 import type { Requisition } from '../types';
 import { Pagination } from '../components/common/Pagination';
 import { useUrlPagination } from '../hooks/useUrlPagination';
+import { H1 } from '../components/common/Text';
 
 export default function RequisitionsPage() {
   const [showModal, setShowModal] = useState(false);
@@ -53,9 +54,8 @@ export default function RequisitionsPage() {
     <>
       <div className="flex flex-col h-full max-h-screen gap-y-5">
         <div className="flex justify-between flex-none mb-2 items-center">
-          <h1 className="text-3xl font-bold text-primaryDark">
-            Listado de requisiciones
-          </h1>
+          <H1>Listado de requisiciones</H1>
+         
           <Restricted permission="create:requisition">
             <button
               onClick={() => setShowModal(true)}

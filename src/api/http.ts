@@ -24,7 +24,7 @@ api.interceptors.response.use(
   response => response,
   async error => {
     const status = error.response ? error.response.status : null;
-    if (status === 401 || status === 403) {
+    if (status === 401) {
       useAuthStore.getState().logout();
     }
     const userMessage =

@@ -1,13 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { jwtDecode } from 'jwt-decode';
-import type { Permission, RoleName } from '../types/roles';
 
-interface User {
-  userName?: string;
-  userLastName?: string;
-  role: RoleName;
-  permissions: Permission;
+import type { User } from '../types/user';
+
+export interface UserAuth extends User {
   exp: number;
 }
 
@@ -15,10 +12,10 @@ interface AuthState {
   logout: () => void;
   token: string | null;
   login: (u: string) => void;
-  user: User | null;
+  user: UserAuth | null;
   rehydrateUser: (token: string) => void;
   getToken: () => string | null;
-  getUser: () =>  User | null;
+  getUser: () => UserAuth | null;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -28,7 +25,7 @@ export const useAuthStore = create<AuthState>()(
       getUser: () => {
         const token = get().token;
         if (!token) return null;
-        const decodedToken = jwtDecode(token) as User;
+        const decodedToken = jwtDecode(token) as UserAuth;
         if (Date.now() > decodedToken.exp * 1000) {
           get().logout();
           return null;
@@ -40,7 +37,7 @@ export const useAuthStore = create<AuthState>()(
       getToken: () => {
         const token = get().token;
         if (!token) return null;
-        const decodedToken = jwtDecode(token) as User;
+        const decodedToken = jwtDecode(token) as UserAuth;
         if (Date.now() > decodedToken.exp * 1000) {
           get().logout();
           return null;
@@ -50,7 +47,7 @@ export const useAuthStore = create<AuthState>()(
       login: newToken => {
         set({ token: newToken });
         try {
-          const decodedUser = jwtDecode(newToken) as User;
+          const decodedUser = jwtDecode(newToken) as UserAuth;
           set({ user: decodedUser });
         } catch {
           set({ user: null });
@@ -58,7 +55,7 @@ export const useAuthStore = create<AuthState>()(
       },
       rehydrateUser: (token: string) => {
         try {
-          const decodedUser = jwtDecode(token) as User;
+          const decodedUser = jwtDecode(token) as UserAuth;
           set({ user: decodedUser });
         } catch {
           set({ token: null, user: null });

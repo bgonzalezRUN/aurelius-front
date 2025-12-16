@@ -1,11 +1,16 @@
 import { useMutation } from '@tanstack/react-query';
-import { useAuthStore } from '../../store/auth';
+import { useAuthStore,  } from '../../store/auth';
 import { useNavigate } from 'react-router-dom';
 import { paths } from '../../paths';
-import { login as loginService, register as registerService } from '../services/authService';
+import {
+  login as loginService,
+  register as registerService,
+} from '../services/authService';
 import type { Auth, LoginResponse, UserRegister } from '../../types/auth';
 import type { ApiError } from '../http';
 import { usePopupStore } from '../../store/popup';
+import { jwtDecode } from 'jwt-decode';
+import type { User } from '../../types/user';
 
 export function useAuthMutations() {
   const { login: loginStatus } = useAuthStore();
@@ -16,7 +21,12 @@ export function useAuthMutations() {
     mutationFn: loginService,
     onSuccess: data => {
       loginStatus(data.token);
-      navigate(paths.REQUISITIONS);
+      const { isAdminCC } = jwtDecode(data.token) as User;
+      if (isAdminCC) {
+        navigate(`${paths.ADMIN}/${paths.CC}`);
+      } else {
+        navigate(paths.BASE);
+      }
     },
   });
 
@@ -28,14 +38,15 @@ export function useAuthMutations() {
         message:
           'Su usuario se ha creado correctamente, te invitamos a iniciar sesión.',
         confirmButtonText: 'Ir a iniciar sesión',
-        onConfirm: ()=>{navigate(paths.LOGIN)}
+        onConfirm: () => {
+          navigate(paths.LOGIN);
+        },
       });
-      
     },
   });
 
   return {
     login,
-    register
+    register,
   };
 }
