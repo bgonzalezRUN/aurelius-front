@@ -7,11 +7,18 @@ import {
   PRIORITY,
   type BackendPayload,
   type LineItem,
-  type Priority,
   type SendTo,
+  type TimeWindow,
 } from '../types';
 import { BaseButton, Dialog, OptionButton } from './common';
-import { MultiSelect, FileInput, Input, Select, Textarea } from './form';
+import {
+  MultiSelect,
+  FileInput,
+  Input,
+  Select,
+  Textarea,
+  type FileSelection,
+} from './form';
 
 import { capitalizeWords } from '../utils';
 import useExtractItemsFromFile from '../hooks/useExtractItemsFromFile';
@@ -24,25 +31,16 @@ import {
   useRequisitionById,
 } from '../api/queries/requisitionQueries';
 import { toInputTime } from '../utils/time';
-import { CATEGORYITEM } from '../types/category';
+import { CATEGORYITEM, type Category } from '../types/category';
 import { getLeadingNumber } from '../utils/number';
+import { useParams } from 'react-router-dom';
+import { useCostCenterById } from '../api/queries/costCenterQuery';
 
-type TimeWindow = { start: string; end: string };
 const emptyLineItem: LineItem = {
   material: '',
   metricUnit: '',
-  quantity: '0',  
+  quantity: '0',
 };
-interface FormData {
-  project: string;
-  requisitionPriority: Priority;
-  requisitionComments: string;
-  arrivalDate: string;
-  sendTo: string[];
-  items: LineItem[];
-  arrivalWindows: TimeWindow[];
-  categories: string[];
-}
 
 const VENDORS = ['proveedor 1', 'proveedor 2', 'proveedor 3'];
 
@@ -61,6 +59,8 @@ export default function RequisitionModal({
   const { createReq, updateReq } = useRequisitionMutations();
   const { parseAndFill, extractData } = useExtractItemsFromFile();
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const { id } = useParams();
+  const { data: cc } = useCostCenterById(id || '');
 
   const {
     register,
@@ -69,7 +69,7 @@ export default function RequisitionModal({
     setValue,
     watch,
     formState: { errors, isValid, dirtyFields },
-  } = useForm<FormData>({
+  } = useForm<BackendPayload>({
     defaultValues: isEditing
       ? {
           ...data,
@@ -100,10 +100,15 @@ export default function RequisitionModal({
     if (attachedFile) parseAndFill(attachedFile);
   }, [attachedFile, parseAndFill]);
 
-  const handleFilesSelected = useCallback((files: FileList | null) => {
+  useEffect(() => {
+    if (createReq.isSuccess) onClose();
+    if (updateReq.isSuccess) onClose();
+  }, [createReq.isSuccess, updateReq.isSuccess, onClose]);
+
+  const handleFilesSelected = useCallback((data: FileSelection) => {
     let selectedFile: File | null = null;
-    if (files && files.length > 0) {
-      selectedFile = files[0];
+    if (data?.files && data?.files?.length > 0) {
+      selectedFile = data?.files[0];
     }
     setAttachedFile(selectedFile);
   }, []);
@@ -122,7 +127,7 @@ export default function RequisitionModal({
     name: 'items',
   });
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = (data: BackendPayload) => {
     const dataFormated = {
       ...data,
       arrivalDate: toISOFromDateAndTime(data.arrivalDate, '00:00'),
@@ -130,18 +135,20 @@ export default function RequisitionModal({
         start: toISOFromDateAndTime(data.arrivalDate, w.start),
         end: toISOFromDateAndTime(data.arrivalDate, w.end),
       })),
-      sendTo: data?.sendTo?.map(item => ({ name: item })),
+      sendTo: data?.sendTo?.map(item => ({ name: item })) as SendTo[],
       items: data.items.map(item => ({
         ...item,
         quantity: String(item.quantity),
       })),
       categories: data?.categories?.map(category => ({
-        categoryId: getLeadingNumber(category),
-      })),
+        categoryId: getLeadingNumber(category.toString()),
+      })) as Partial<Category>[],
+      costCenter: {
+        costCenterId: Number(id),
+      },
     };
 
     const dataFormatedEdit = {
-      project: data.project,
       requisitionPriority: data.requisitionPriority,
       requisitionComments: data.requisitionComments,
       arrivalDate: toISOFromDateAndTime(data.arrivalDate, '00:00'),
@@ -149,23 +156,22 @@ export default function RequisitionModal({
         start: toISOFromDateAndTime(data.arrivalDate, w.start),
         end: toISOFromDateAndTime(data.arrivalDate, w.end),
       })),
-      sendTo: data.sendTo.map(item => ({ name: item })),
+      sendTo: data.sendTo.map(item => ({ name: item })) as SendTo[],
       items: data.items.map(item => ({
         ...item,
         quantity: String(item.quantity),
       })),
       categories: data?.categories?.map(category => ({
-        categoryId: getLeadingNumber(category) as number,
-      })),
+        categoryId: getLeadingNumber(category.toString()),
+      })) as Partial<Category>[],
     };
     if (!isEditing) {
       createReq.mutate(dataFormated);
-      onClose();
+
       return;
     }
 
     updateReq.mutate({ requisitionId: isEditing, data: dataFormatedEdit });
-    onClose();
   };
 
   return (
@@ -191,11 +197,9 @@ export default function RequisitionModal({
         <div className="flex gap-x-2 [&>div]:w-2/4">
           <Input
             label="Proyecto"
-            registration={register('project', {
-              required: 'Escribe el nombre del proyecto.',
-            })}
-            errorMessage={errors.project?.message}
+            value={cc?.costCenterName}
             name="project"
+            disabled
           />
           <Select
             name="requisitionPriority"
@@ -241,7 +245,7 @@ export default function RequisitionModal({
                 })) ?? []
               }
               setValue={setValue}
-              currentValues={categories}
+              currentValues={categories as string[]}
               registration={register('categories')}
             />
           </div>
@@ -254,7 +258,7 @@ export default function RequisitionModal({
             label: vendor,
           }))}
           setValue={setValue}
-          currentValues={sendTo}
+          currentValues={sendTo as string[]}
           registration={register('sendTo')}
         />
 
@@ -303,7 +307,7 @@ export default function RequisitionModal({
                     `arrivalWindows.${index}.end` as const,
                     {
                       required: 'La fecha de finalización es requerida.',
-                      validate: (value: string, formValues: FormData) => {
+                      validate: (value: string, formValues: BackendPayload) => {
                         const startDate =
                           formValues.arrivalWindows[index]?.start;
                         if (startDate && value < startDate) {
@@ -377,7 +381,7 @@ export default function RequisitionModal({
                               ? 'No tiene nombre, por favor agrega uno.'
                               : key === 'metricUnit'
                               ? 'No tiene unidad, por favor agrega una.'
-                              : `${lineItemLabels[key]} es obligatorio.`
+                              : `${lineItemLabels[key]} es obligatorio.`,
                         },
                       };
                     }
@@ -419,9 +423,7 @@ export default function RequisitionModal({
             size="md"
             type="submit"
             disabled={
-              isEditing
-                ? !isValid || !Object.keys(dirtyFields).length
-                : false
+              isEditing ? !isValid || !Object.keys(dirtyFields).length : false
             }
           />
         </div>

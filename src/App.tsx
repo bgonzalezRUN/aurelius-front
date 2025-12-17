@@ -11,6 +11,9 @@ import UserAuth from './pages/UserAuth';
 import CostCenter from './pages/CostCenter';
 import CostCenterManage from './pages/costCenter/CostCenterManage';
 import LayoutWithoutSidebar from './components/LayoutWithoutSidebar';
+import Unauthorized from './components/common/Unauthorized';
+import Welcome from './components/common/Welcome';
+import NotFound from './components/common/NotFound';
 
 export default function App() {
   const queryClient = new QueryClient();
@@ -22,15 +25,18 @@ export default function App() {
           <Route path={paths.REGISTER} element={<UserAuth />} />
           <Route path={paths.RECOVER_PASSWORD} element={<RecoveryLink />} />
           <Route path={paths.NEW_PASSWORD} element={<RecoveryPassword />} />
+          <Route path={paths.UNAUTHORIZED} element={<Unauthorized />} />
 
-          <Route element={<ProtectedRoute />}>
+          <Route element={<ProtectedRoute onlyAdmin={false}/>}>
             <Route path={paths.BASE} element={<Layout />}>
-              <Route path={paths.REQUISITIONS} element={<RequisitionsPage />} />
+             <Route index element={<Welcome />} />
+              <Route  path={`:id${paths.REQUISITIONS}`} element={<RequisitionsPage />} />
             </Route>
           </Route>
 
-          <Route element={<ProtectedRoute />}>
+          <Route element={<ProtectedRoute onlyAdmin/>}>
             <Route path={paths.ADMIN} element={<Layout />}>
+            <Route  path={`:id${paths.REQUISITIONS}`} element={<RequisitionsPage />} />
               <Route path={paths.CC} element={<LayoutWithoutSidebar />}>
                 <Route index element={<CostCenter />} />
                 <Route
@@ -40,6 +46,7 @@ export default function App() {
               </Route>
             </Route>
           </Route>
+           <Route path="*" element={<NotFound/>} />
         </Routes>
         <ConfirmationPopup />
       </BrowserRouter>

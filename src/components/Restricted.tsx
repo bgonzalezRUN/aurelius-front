@@ -1,5 +1,6 @@
 import React, { type ReactNode } from 'react';
-import { useAuthStore } from '../store/auth';
+import { usePermission } from '../hooks/usePermission';
+import type { Permission } from '../types';
 
 export interface IRestrictedProps {
   permission?: string;
@@ -7,15 +8,9 @@ export interface IRestrictedProps {
 }
 
 const Restricted: React.FC<IRestrictedProps> = ({ permission, children }) => {
-  const { getUser } = useAuthStore();
-  let canShow = false;
-  const user = getUser();
-  if (user) {
-    const userPermissions = user?.permissions || [];
-    const isDev = userPermissions.includes('unlock:all');
+  const{ hasPermission} = usePermission();
 
-    canShow = !permission || isDev || userPermissions.includes(permission);
-  }
+  const canShow = !permission || hasPermission(permission as Permission);
 
   return canShow ? <>{children}</> : null;
 };

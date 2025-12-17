@@ -1,9 +1,10 @@
 import { type ReactNode } from 'react';
 
 export const Header = ({ tableHeaders }: { tableHeaders: string[] }) => {
-  if (!tableHeaders.length) return null;
+  if (!tableHeaders.length) return null; 
+  
   return (
-    <div className={`grid grid-cols-${tableHeaders.length} gap-2 mb-2 px-4`}>
+    <div className={`grid grid-cols-${tableHeaders?.length} gap-2 mb-2 px-4`}>
       {tableHeaders.map(header => (
         <div
           key={header}
@@ -16,13 +17,30 @@ export const Header = ({ tableHeaders }: { tableHeaders: string[] }) => {
   );
 };
 
-export const Row = ({ content, numberColumns }: { content: ReactNode[], numberColumns:number }) => {
-  if (!content.length) return null;
-  
-  
+export const Row = ({
+  content,
+  numberColumns,
+  children,
+}: {
+  content?: ReactNode[];
+  numberColumns: number;
+  children?: ReactNode;
+}) => {
+  if (!content?.length && !children ) return null;
+
+  if (children) {
+    return (
+      <div
+        className={`grid grid-cols-${numberColumns} items-start gap-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4`}
+      >
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
-      {content.map((item, index) => (
+      {content?.map((item, index) => (
         <div
           key={index}
           className={`grid grid-cols-${numberColumns} gap-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4`}
@@ -54,7 +72,7 @@ export default function ListWrap({
     <div className="w-full">
       <Header tableHeaders={tableHeaders} />
 
-      <Row content={content} numberColumns={tableHeaders.length}/>
+      <Row content={content} numberColumns={tableHeaders.length} />
     </div>
   );
 }

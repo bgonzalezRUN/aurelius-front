@@ -7,12 +7,15 @@ import { paths } from '../paths';
 import { useCostCenter } from '../api/queries/costCenterQuery';
 import CCItem from './sidebar/CCItem';
 import { useCallback, useState } from 'react';
+import { usePermission } from '../hooks/usePermission';
+import { ROLEITEMNAME } from '../types';
 
 type Options = 'project';
 
 export default function Sidebar() {
   const { getUser, logout } = useAuthStore();
   const user = getUser();
+  const { rol } = usePermission();
   const navigate = useNavigate();
   const { data } = useCostCenter();
   const [idProject, setProjectId] = useState<number | null>(null);
@@ -38,7 +41,7 @@ export default function Sidebar() {
     [idProject]
   );
 
-  const centerCosts = user?.isAdminCC ? data?.data : [];
+  const centerCosts = user?.isAdminCC ? data?.data : user?.costCenter;
 
   return (
     <>
@@ -71,7 +74,7 @@ export default function Sidebar() {
                   {centerCosts?.map(item => (
                     <CCItem
                       key={item?.costCenterId}
-                      costCenterId={item?.costCenterId || ''}
+                      costCenterId={item?.costCenterId.toString() || ''}
                       isOpen={idProject === Number(item?.costCenterId)}
                       setIsOpen={setProjectIDHandler}
                     />
@@ -98,9 +101,9 @@ export default function Sidebar() {
               </p>
               <p
                 className="text-primary-500 truncate"
-                title={capitalizeWords(user?.role || 'Sin rol')}
+                title={rol && ROLEITEMNAME[rol] || 'Sin rol'}
               >
-                {capitalizeWords(user?.role || 'Sin rol')}
+                {rol && ROLEITEMNAME[rol] || 'Sin rol'}
               </p>
             </div>
           </div>

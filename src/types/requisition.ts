@@ -33,19 +33,21 @@ export type IRequisitionRequester = { name: string; timestamp: string };
 export type IRequisitionValidator = { name: string; timestamp: string };
 export type IRequisitionStatus = { status: string };
 
+export type TimeWindow = { start: string; end: string };
+
 export type BackendPayload = {
-  requisitionPriority: string;
-  project: string;
+  requisitionPriority: Priority;
   requisitionComments: string;
-  sendTo: SendTo[];
-  items: LineItem[];
   arrivalDate: string;
+  sendTo: SendTo[]|string[];
+  items: LineItem[];
+  arrivalWindows: TimeWindow[];
+  categories: Partial<Category>[]|string[];
 };
 
 export type Requisition = {
   requisitionId: string;
   requisitionPriority: Priority;
-  project: string;
   requisitionComments: string;
   requisitionStatus: StatusDocument;
   sendTo: SendTo[];

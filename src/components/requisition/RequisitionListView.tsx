@@ -18,24 +18,13 @@ export default function RequisitionItemList({
   const baseStyles = 'text-base font-semibold text-grey-primary';
 
   const requisitionDetails = {
-      supplier: (
-      <span className={baseStyles}>
-        {data.requisitionCode}
-      </span>
-    ),
-    name: (
-      <span
-        className="text-base font-bold text-secondary line-clamp-2"
-        title={capitalizeWords(data.project)}
-      >
-        {capitalizeWords(data.project)}
-      </span>
-    ),
+    supplier: <span className={baseStyles}>{data.requisitionCode}</span>,
+
     date: (
-      <span className={baseStyles} >
+      <span className={baseStyles}>
         {data.arrivalDate ? dateformatter(new Date(data.arrivalDate)) : 'N/A'}
       </span>
-    ),  
+    ),
     arrivalWindows: (
       <span className={baseStyles}>
         {fmtTime(data.arrivalWindows[0].start)} –{' '}
@@ -45,11 +34,12 @@ export default function RequisitionItemList({
     category: (
       <span className="flex">
         <span className={`${baseStyles} line-clamp-1`}>
-          {capitalizeWords(CATEGORYITEM[Number(data?.categories[0]?.categoryId)])||'Sin categorías'}
+          {capitalizeWords(
+            CATEGORYITEM[Number(data?.categories[0]?.categoryId)]
+          ) || 'Sin categorías'}
         </span>
         {data.categories.length > 1 && (
           <span className={baseStyles}>
-           
             {` +${data.categories.length - 1}`}
           </span>
         )}
@@ -69,18 +59,16 @@ export default function RequisitionItemList({
     status: <StatusBadge status={data.requisitionStatus} />,
   };
   return (
-    <article className="w-full h-[9.375rem] bg-white rounded-[10px] shadow-sm p-4 hover:shadow-md transition flex flex-col justify-between">
-      <div className="flex [&>*]:flex-1 items-start gap-x-3 border-b border-grey-primary pb-3 h-[50%]">
-        {Object.entries(requisitionDetails).map(([, valor]) => (
-          <>{valor}</>
-        ))}
-      </div>
-      <div className='pt-3'>
+    <>
+      {Object.entries(requisitionDetails).map(([, valor]) => (
+        <>{valor}</>
+      ))}
+      <div className="col-span-full">
         <RequisitionButtons
           requisitionId={requisitionId}
           viewType={VIEW.LIST}
         />
       </div>
-    </article>
+    </>
   );
 }

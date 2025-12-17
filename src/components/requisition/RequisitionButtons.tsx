@@ -41,7 +41,7 @@ export default function RequisitionButtons({
   const { data } = useRequisitionById(requisitionId);
   const { submitReq, changeReqState, signReq } = useRequisitionMutations();
   const { getUser } = useAuthStore();
-  const hasPermission = usePermission();
+  const { hasPermission, rol } = usePermission();
   const { openPopup: openPopupValidate } = usePopupStore();
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const closeModal = () => setActiveModal(null);
@@ -133,7 +133,7 @@ export default function RequisitionButtons({
           isVisible:
             hasPermission('reject:requisition') &&
             status === 'VALIDATED' &&
-            user?.role !== 'gerente de obra',
+            rol !== 'GO',
 
           className: 'text-red-primary',
           variant: 'icon',
@@ -177,6 +177,7 @@ export default function RequisitionButtons({
     user,
     submitReq,
     openPopupValidate,
+    rol,
   ]);
 
   if (!data) return null;

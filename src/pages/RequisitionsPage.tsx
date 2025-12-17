@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import RequisitionList from '../components/RequisitionList';
 import RequisitionModal from '../components/RequisitionModal';
 import Restricted from '../components/Restricted';
-import { PlusIcon, Search } from 'lucide-react';
+import { PlusIcon, File } from 'lucide-react';
 import { SegmentedControl } from '../components/common/SegmentedControl';
 import { MultiSelectFilter } from '../components/common/MultiSelectFilter';
 import {
@@ -17,10 +17,14 @@ import type { Requisition } from '../types';
 import { Pagination } from '../components/common/Pagination';
 import { useUrlPagination } from '../hooks/useUrlPagination';
 import { H1 } from '../components/common/Text';
+import { Search } from '../components/common/Search';
+import { useCostCenterById } from '../api/queries/costCenterQuery';
+import { useParams } from 'react-router-dom';
 
 export default function RequisitionsPage() {
   const [showModal, setShowModal] = useState(false);
-  const [projectName, setProjectName] = useState('');
+  const { id } = useParams();
+  const { data: cc } = useCostCenterById(id || '');
   const [view, setView] = useState<ViewValue>(VIEW.LIST);
   const { data: categoriesData } = useCategories();
   const [filters, setFilters] = useState<string[]>([]);
@@ -29,7 +33,8 @@ export default function RequisitionsPage() {
   const { isLoading, data } = useRequisitions({
     categories: filters.map(filter => getLeadingNumber(filter)).join(','),
     offset,
-    limit: 50
+    limit: 50,
+    costCenterId: Number(id)
   });
 
   const handleCloseModal = useCallback(() => {
@@ -53,13 +58,16 @@ export default function RequisitionsPage() {
   return (
     <>
       <div className="flex flex-col h-full max-h-screen gap-y-5">
-        <div className="flex justify-between flex-none mb-2 items-center">
-          <H1>Listado de requisiciones</H1>
-         
+        <div className="flex justify-between flex-none mb-2 items-center gap-x-4">
+          <H1>
+            <File size={28} />
+            {`Listado de requisiciones de ${capitalizeWords(cc?.costCenterName || '')}`}
+          </H1>
+
           <Restricted permission="create:requisition">
             <button
               onClick={() => setShowModal(true)}
-              className="bg-white flex items-center rounded-lg shadow border border-primaryDark group ml-auto h-11"
+              className="bg-white flex items-center rounded-lg shadow border border-primaryDark group ml-auto h-11 flex-none"
             >
               <div className="bg-primaryDark text-white px-3 py-2 flex items-center justify-center group-hover:bg-primaryDark transition rounded-l-lg ">
                 <span className="text-lg font-bold">
@@ -73,19 +81,7 @@ export default function RequisitionsPage() {
           </Restricted>
         </div>
         <div className="flex gap-x-4 items-center flex-none">
-          <div className="flex gap-6 items-center">
-            <div className="relative w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
-
-              <input
-                type="text"
-                value={projectName}
-                onChange={e => setProjectName(e.target.value)}
-                placeholder="Buscar"
-                className="w-full bg-white drop-shadow-lg rounded-lg pl-10 pr-4 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-primaryDark"
-              />
-            </div>
-          </div>
+          <Search value="" onChange={() => {}} disabled />
           <MultiSelectFilter
             label="Filtrar por categorias"
             options={

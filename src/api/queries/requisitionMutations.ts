@@ -15,7 +15,7 @@ export function useRequisitionMutations() {
   const { openPopup: openPopupValidate } = usePopupStore();
 
   const createReq = useMutation({
-    mutationFn: createRequisition,
+    mutationFn:  createRequisition,
     onSuccess: () => {
       openPopupValidate({
         title: 'Requisición creada',
