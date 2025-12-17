@@ -49,6 +49,7 @@ export default function Team({ id }: { id: string }) {
           }
           size="md"
           onclick={popupHandler}
+          disabled
         />
       </div>,
     ]);

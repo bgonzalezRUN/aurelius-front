@@ -5,6 +5,7 @@ import { useAuthMutations } from '../../api/queries/authMutations';
 import { emailRegex } from '../../types/regex';
 import ErrorMessage from '../common/ErrorMessage';
 import { BaseButton } from '../common';
+import { useEffect } from 'react';
 
 interface UserRegisterProps extends UserRegister {
   confirmPassword: string;
@@ -15,19 +16,29 @@ export default function Register() {
     register,
     handleSubmit,
     watch,
+    reset,
     formState: { errors, isValid },
   } = useForm<UserRegisterProps>({ mode: 'onChange' });
   const { register: userRegister } = useAuthMutations();
 
   const onSubmit = async (data: UserRegisterProps) => {
     const newData = {
-      userName: data.userEmail,
+      userName: data.userName,
       userLastName: data.userLastName,
       userEmail: data.userEmail,
       userPassword: data.userPassword,
     };
     userRegister.mutate(newData);
   };
+
+  useEffect(() => {
+    
+  if(userRegister.isSuccess){
+    reset()
+  }
+   
+  }, [reset, userRegister.isSuccess])
+  
   const passwordValue = watch('userPassword');
 
   return (

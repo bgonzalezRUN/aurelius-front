@@ -41,7 +41,6 @@ export default function AssignUser({
     if (inviteAUserToACC.isSuccess) onClose();
   }, [inviteAUserToACC.isSuccess, onClose]);
 
-  console.log(inviteAUserToACC.error);
 
   return (
     <Dialog isOpen={isOpen} title="Invitar miembro" onClose={onClose}>

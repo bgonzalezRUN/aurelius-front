@@ -1,10 +1,15 @@
 import { type ReactNode } from 'react';
 
 export const Header = ({ tableHeaders }: { tableHeaders: string[] }) => {
-  if (!tableHeaders.length) return null; 
-  
+  if (!tableHeaders.length) return null;
+
   return (
-    <div className={`grid grid-cols-${tableHeaders?.length} gap-2 mb-2 px-4`}>
+    <div
+      className="grid gap-2 mb-2 px-4"
+      style={{
+        gridTemplateColumns: `repeat(${tableHeaders?.length}, minmax(0, 1fr))`,
+      }}
+    >
       {tableHeaders.map(header => (
         <div
           key={header}
@@ -26,7 +31,7 @@ export const Row = ({
   numberColumns: number;
   children?: ReactNode;
 }) => {
-  if (!content?.length && !children ) return null;
+  if (!content?.length && !children) return null;
 
   if (children) {
     return (

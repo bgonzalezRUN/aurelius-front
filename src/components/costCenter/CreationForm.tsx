@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { BaseButton, Dialog } from '../common';
 import { useForm } from 'react-hook-form';
 import { FileInput, Input, Textarea, type FileSelection } from '../form';
@@ -17,14 +17,19 @@ export default function CreationForm({
   const {
     handleSubmit,
     register,
-    setValue,
+    setValue,   
     formState: { errors, isValid },
   } = useForm<COST_CENTER>({ mode: 'onChange' });
-
   const { createCostCenter } = useCostCenterMutations();
+  useEffect(() => {
+    if (createCostCenter.isPending) {
+      onClose();
+      
+    }
+  }, [createCostCenter.isPending, onClose]);
+
   const onSubmit = (data: COST_CENTER) => {
     createCostCenter.mutate(data);
-    // onClose()
   };
 
   const handleFilesSelected = useCallback(

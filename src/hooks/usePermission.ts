@@ -9,9 +9,9 @@ export function usePermission() {
   const { id } = useParams();
 
   const getCC = useMemo(() => {
-    return user?.costCenter.find(cc => cc.costCenterId === Number(id));
+    return user?.costCenter?.find(cc => cc.costCenterId === Number(id));
   }, [id, user?.costCenter]);
-
+  
   const hasPermission = useCallback(
     (permission: Permission): boolean => {
       if (!user) return false;

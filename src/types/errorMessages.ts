@@ -3,7 +3,8 @@ export const ERROR_MESSAGES: Record<string, string> = {
   'duplicate key value violates unique constraint "UQ_85432bb369f1a54116c4e4d2ee2"':
     'El correo que intentas registrar ya existe.',
     'User not found': 'El usuario que intentas invitar no está registrado.',
-    'User is already assigned to this Cost Center' : 'El usuario que intenta invitar, ya se encuentra asignado a este CC'
+    'User is already assigned to this Cost Center' : 'El usuario que intenta invitar, ya se encuentra asignado a este CC',
+    'Wait to be assigned to a cost center.': 'No has sido asignado a ningún CC, te estaremos notificando cuando se te asigne'
 };
 
 export const DEFAULT_ERROR_MESSAGE =
