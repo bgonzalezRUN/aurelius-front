@@ -36,7 +36,10 @@ export const Row = ({
   if (children) {
     return (
       <div
-        className={`grid grid-cols-${numberColumns} items-start gap-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4`}
+        style={{
+          gridTemplateColumns: `repeat(${numberColumns}, minmax(0, 1fr))`,
+        }}
+        className={`grid items-start gap-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4`}
       >
         {children}
       </div>
@@ -48,7 +51,10 @@ export const Row = ({
       {content?.map((item, index) => (
         <div
           key={index}
-          className={`grid grid-cols-${numberColumns} gap-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4`}
+          style={{
+            gridTemplateColumns: `repeat(${numberColumns}, minmax(0, 1fr))`,
+          }}
+          className={`grid items-start gap-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4`}
         >
           {Array.isArray(item) ? (
             item.map((cell, cellIndex) => (
