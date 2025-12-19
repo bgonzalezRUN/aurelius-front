@@ -4,6 +4,7 @@ import type {
   USER_IN_CC,
 } from '../../types/costCenter';
 import type { PaginationData } from '../../types/pagination';
+import { capitalizeWords } from '../../utils';
 import api from '../http';
 
 const COST_CENTE_BASE = '/cost-center';
@@ -19,11 +20,19 @@ const createFormData = (data: COST_CENTER): FormData => {
   for (const key in data) {
     if (Object.prototype.hasOwnProperty.call(data, key)) {
       const value = data[key as keyof COST_CENTER];
-
+      if (value === null || value === undefined) continue;
       if (value instanceof File) {
         formData.append(key, value, value.name);
-      } else if (typeof value === 'string') {
-        formData.append(key, value);
+      } else if (Array.isArray(value)) {
+        value.forEach(item => {
+          if (item instanceof File) {
+            formData.append(key, item, item.name);
+          } else if (typeof item === 'string') {
+            formData.append(key, item);
+          }
+        });
+      } else {
+        formData.append(key, String(value));
       }
     }
   }
@@ -55,7 +64,8 @@ export const getCostCenterById = async (
   costCenterId: string
 ): Promise<COST_CENTER> => {
   const res = await api.get<COST_CENTER>(`${COST_CENTE_BASE}/${costCenterId}`);
-  return res.data;
+  const dataFormatted = { ...res.data, costCenterName: capitalizeWords(res.data.costCenterName) };
+  return dataFormatted;
 };
 
 export const getUsersByCostCenter = async (
@@ -71,9 +81,23 @@ export const assigneAUserToACC = async (data: USER_BY_CC): Promise<void> => {
   return res.data;
 };
 
-export const deleteCC = async (
+export const removeUserFromCC = async (
+  userId: string,
   costCenterId: string
 ): Promise<void> => {
+  const res = await api.delete(`${USER}/${userId}/${costCenterId}`);
+  return res.data;
+};
+
+export const updateUserCostCenter = async (
+  userId: string,
+  costCenterId: string
+): Promise<void> => {
+  const res = await api.put(`${USER}/update-role/${userId}/${costCenterId}`);
+  return res.data;
+};
+
+export const deleteCC = async (costCenterId: string): Promise<void> => {
   const res = await api.delete(`${COST_CENTE_BASE}/${costCenterId}`);
   return res.data;
 };

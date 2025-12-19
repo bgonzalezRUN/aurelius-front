@@ -3,6 +3,20 @@ import type { User } from "./user";
 
 export type COST_CENTER_STATUS = 'DRAFT' | 'OPEN' | 'CLOSED' | 'FROZEN';
 
+export const COST_CENTER_STATUS_ITEM: Record<COST_CENTER_STATUS, string> = {
+  DRAFT: 'Borrador',
+  OPEN: 'Abierto',
+  CLOSED: 'Cerrado',
+  FROZEN: 'Congelado',
+};
+
+export type ContentFile = {
+  fileName: string;
+  url: string;
+  fileType: string;  
+  costCenterFileId: number;
+}
+
 export type COST_CENTER = {
   costCenterName: string;
   costCenterDescription: string;
@@ -14,6 +28,7 @@ export type COST_CENTER = {
   costCenterId: string;
   costCenterCode: string;
   costCenterStatus: COST_CENTER_STATUS;
+  files?: ContentFile[];
 };
 
 export type KeyofCostCenter = keyof COST_CENTER;

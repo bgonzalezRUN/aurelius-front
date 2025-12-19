@@ -2,7 +2,7 @@ import DialogPrimary from '../common/DialogPrimary';
 import { BaseButton } from '../common';
 import { useCostCenterMutations } from '../../api/queries/costCenterMutation';
 
-export type typeAction = 'DELETE' | 'CLOSE' | 'FROZEN';
+export type typeAction = 'DELETE' | 'CLOSE' | 'FROZEN' | 'DEFROST' | 'OPEN';
 
 export default function ConfirmActions({
   isPopupOpen,
@@ -23,6 +23,7 @@ export default function ConfirmActions({
       CLOSE: () => changeStatusCC.mutate({ ccId, status: 'close' }),
       FROZEN: () => changeStatusCC.mutate({ ccId, status: 'frozen' }),
       OPEN: () => changeStatusCC.mutate({ ccId, status: 'open' }),
+      DEFROST: () => changeStatusCC.mutate({ ccId, status: 'open' }),
     };
     const currentAction = actions[typeAction];
     if (currentAction) {
@@ -32,6 +33,11 @@ export default function ConfirmActions({
   };
 
   const typeMessage = {
+    OPEN:{
+      title: 'Activar centro de costo',
+      message: '¿Seguro que quieres activar este centro de costo?',
+      actionLabel: 'Activar',
+    },
     DELETE: {
       title: 'Eliminar Centro de Costo',
       message: '¿Seguro que quieres eliminar este centro de costo?',
@@ -47,7 +53,7 @@ export default function ConfirmActions({
       message: '¿Seguro que quieres congelar este centro de costo?',
       actionLabel: 'Congelar',
     },
-    OPEN:{
+    DEFROST:{
       title: 'Descongelar Centro de Costo',
       message: '¿Seguro que quieres descongelar este centro de costo?',
       actionLabel: 'Descongelar',

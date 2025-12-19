@@ -32,7 +32,7 @@ export default function CostCenterCard({
         className="font-semibold text-grey-primary text-xs truncate ml-6"
         title={data.costCenterDescription}
       >
-        {`${data.requisitions.length} Requisiciones pendientes`}
+        {`${data?.requisitions?.length} Requisiciones pendientes`}
       </p>
     </div>
   );

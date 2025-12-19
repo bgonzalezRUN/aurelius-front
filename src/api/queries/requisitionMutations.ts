@@ -8,25 +8,19 @@ import {
   signRequisition,
 } from '../services/requisition';
 import type { Requisition } from '../../types';
-import { usePopupStore } from '../../store/popup';
+import { toast } from 'sonner';
 
 export function useRequisitionMutations() {
   const queryClient = useQueryClient();
-  const { openPopup: openPopupValidate } = usePopupStore();
-
   const createReq = useMutation({
-    mutationFn:  createRequisition,
+    mutationFn: createRequisition,
     onSuccess: () => {
-      openPopupValidate({
-        title: 'Requisición creada',
-        message: 'La requisición ha sido creada correctamente',
-        confirmButtonText: 'Aceptar',
-        cancelButtonText: 'Cerrar'
+      toast.success('Requisición creada', {
+        description: 'La requisición ha sido creada correctamente',
       });
       queryClient.invalidateQueries({ queryKey: ['requisitions'] });
     },
   });
-
   const updateReq = useMutation({
     mutationFn: ({
       requisitionId,
@@ -36,26 +30,20 @@ export function useRequisitionMutations() {
       data: Partial<Requisition>;
     }) => updateRequisition(requisitionId, data),
     onSuccess: (_, variables) => {
-      openPopupValidate({
-        title: 'Requisición actualizada',
-        message: 'La requisición ha sido actualizada correctamente',
-        confirmButtonText: 'Aceptar',
+      toast.success('Requisición actualizada', {
+        description: 'La requisición ha sido actualizada correctamente',
       });
       queryClient.invalidateQueries({ queryKey: ['requisitions'] });
-
       queryClient.invalidateQueries({
         queryKey: ['requisitionById', variables.requisitionId],
       });
     },
   });
-
   const submitReq = useMutation({
     mutationFn: updateSubmitRequisition,
     onSuccess: (_, requisitionId) => {
-      openPopupValidate({
-        title: 'Solicitud de validación',
-        message: 'La requisición ha sido enviada para ser validada.',
-        confirmButtonText: 'Aceptar',
+      toast.success('Solicitud de validación', {
+        description: 'La requisición ha sido enviada para ser validada.',
       });
       queryClient.invalidateQueries({
         queryKey: ['requisition-history', requisitionId],
@@ -65,15 +53,12 @@ export function useRequisitionMutations() {
       });
     },
   });
-
   const changeReqState = useMutation({
     mutationFn: updateStateRequisition,
     onSuccess: (_, variables) => {
-      openPopupValidate({
-        title: 'Validar requisición',
-        message:
+      toast.success('Validar requisición', {
+        description:
           'La requisición ha sido validada correctamente. Podrás consultarlo en el historial.',
-        confirmButtonText: 'Aceptar',
       });
       queryClient.invalidateQueries({
         queryKey: ['requisition-history', variables.requisitionId],
@@ -84,13 +69,11 @@ export function useRequisitionMutations() {
       queryClient.invalidateQueries({ queryKey: ['requisitions'] });
     },
   });
-
   const deleteReq = useMutation({
     mutationFn: deleteRequisition,
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ['requisitions'] }),
   });
-
   const signReq = useMutation({
     mutationFn: ({
       requisitionId,
@@ -100,12 +83,11 @@ export function useRequisitionMutations() {
       user: string;
     }) => signRequisition(requisitionId, user),
     onSuccess: (_, variables) => {
-      openPopupValidate({
-        title: 'Requisición aprobada',
-        message:
+      toast.success('Requisición aprobada', {
+        description:
           'La requisición ha sido aprobada correctamente. Podrás consultarlo en el historial.',
-        confirmButtonText: 'Aceptar',
       });
+
       queryClient.invalidateQueries({
         queryKey: ['requisition-history', variables.requisitionId],
       });

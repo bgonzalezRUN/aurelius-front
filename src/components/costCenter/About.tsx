@@ -1,5 +1,6 @@
 import {
   ArchiveRestore,
+  Check,
   CircleAlert,
   CirclePause,
   File,
@@ -7,45 +8,59 @@ import {
   Trash,
 } from 'lucide-react';
 import { useCostCenterById } from '../../api/queries/costCenterQuery';
-import { getFileDetails } from '../../utils/getDetailsOfTheCCFile';
 import clsx from 'clsx';
 import { BaseButton } from '../common';
 import type { ButtonVariant } from '../common/BaseButton';
-import { Fragment, useCallback, useState } from 'react';
+import { Fragment, useCallback, useMemo, useState } from 'react';
 import ConfirmActions, { type typeAction } from './ConfirmActions';
 import CreationForm from './CreationForm';
+import { groupBy } from '../../utils/files';
+import { StatusBadge } from './Status';
 
-type ModalType = 'EDIT' | 'DELETE' | 'CLOSE' | 'FROZEN' | 'OPEN' | null;
+export type ModalType = typeAction | 'EDIT' | null;
 
 export default function About({ id }: { id: string }) {
   const { data } = useCostCenterById(id);
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const closeModal = useCallback(() => setActiveModal(null), []);
 
-  const documents = [
-    {
-      name: 'Calendario operativo:',
-      details: getFileDetails(data?.costCenterCalender as string),
-      disable: !data?.costCenterCalender,
-    },
-    {
-      name: 'Presupuesto base:',
-      details: getFileDetails(data?.costCenterBudget as string[]),
-      disable: !data?.costCenterBudget.length,
-    },
-    {
-      name: 'Reglas fiscales:',
-      details: getFileDetails(data?.costCenterRules as string[]),
-      disable: !data?.costCenterRules.length,
-    },
-  ];
+  const groupedByType = useMemo(() => {
+    if (!data?.files) return [];
+    const grouped = groupBy(data?.files, 'fileType');
+    const { calendar, budget, rules } = grouped;
+    return [
+      {
+        name: 'Calendario operativo:',
+        details: calendar || [],
+        disable: !calendar?.length,
+      },
+      {
+        name: 'Presupuesto base:',
+        details: budget || [],
+        disable: !budget?.length,
+      },
+      {
+        name: 'Reglas fiscales:',
+        details: rules || [],
+        disable: !rules?.length,
+      },
+    ];
+  }, [data?.files]);
 
   const optionsHandler = () => [
+    {
+      label: 'Activar',
+      icon: Check,
+      onClick: () => setActiveModal('OPEN'),
+      hidden: data?.costCenterStatus !== 'DRAFT',
+    },
     {
       label: 'Editar',
       icon: Pencil,
       onClick: () => setActiveModal('EDIT'),
-      disable: data?.costCenterStatus !== 'OPEN',
+      // disable: data?.costCenterStatus === 'FROZEN',
+      disable: true,
+      hidden: data?.costCenterStatus === 'DRAFT'|| data?.costCenterStatus === 'CLOSED',
     },
     {
       label: 'Cerrar',
@@ -53,15 +68,18 @@ export default function About({ id }: { id: string }) {
       onClick: () => {
         setActiveModal('CLOSE');
       },
-      hidden: data?.costCenterStatus === 'CLOSED',
+      hidden:
+        data?.costCenterStatus === 'CLOSED' ||
+        data?.costCenterStatus === 'DRAFT',
     },
     {
       label: data?.costCenterStatus === 'FROZEN' ? 'Descongelar' : 'Congelar',
       icon: CirclePause,
       onClick: () => {
-        setActiveModal(data?.costCenterStatus === 'FROZEN' ? 'OPEN' : 'FROZEN');
+        setActiveModal(data?.costCenterStatus === 'FROZEN' ? 'DEFROST' : 'FROZEN');
       },
       disable: data?.costCenterStatus === 'CLOSED',
+      hidden: data?.costCenterStatus === 'DRAFT' || data?.costCenterStatus === 'CLOSED',
     },
     {
       label: 'Eliminar',
@@ -78,13 +96,14 @@ export default function About({ id }: { id: string }) {
     FROZEN: 'FROZEN',
     DELETE: 'DELETE',
     OPEN: 'OPEN',
+    DEFROST: 'DEFROST',
   };
 
   if (!data) return null;
 
   return (
     <>
-      <div className="bg-white rounded-lg max-h-[22rem] w-full p-5 flex flex-col gap-y-2 text-grey-primary font-semibold">
+      <div className="bg-white rounded-lg w-full p-5 flex flex-col gap-y-2 text-grey-primary font-semibold">
         <div className="flex justify-between">
           <p className="inline-flex items-center gap-x-1 text-secondary font-bold">
             <CircleAlert size={15} /> {data.costCenterName}
@@ -93,6 +112,10 @@ export default function About({ id }: { id: string }) {
             <span className="text-secondary">Código:</span>{' '}
             {data.costCenterCode}
           </p>
+        </div>
+        <div className="flex items-center gap-x-2">
+          <span className="text-secondary font-bold">Estado: </span>
+          <StatusBadge status={data.costCenterStatus} />
         </div>
         <p>
           <span className="text-secondary font-bold">Ubicación: </span>
@@ -105,16 +128,22 @@ export default function About({ id }: { id: string }) {
           </p>
         )}
 
-        {documents.map(({ name, details, disable }) => (
+        {groupedByType.map(({ name, details, disable }) => (
           <div className={clsx('flex w-full', { hidden: disable })} key={name}>
             <p className="text-secondary font-bold w-1/6">{name}</p>
             <p className="inline-flex items-center gap-x-1">
               {details.map(item => (
-                <Fragment key={item.name}>
+                <Fragment key={item.fileName}>
                   <span className="text-secondary font-bold inline-flex items-center gap-x-1">
-                    <File size={15} /> {item.name}
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <File size={15} />
+                    </a>
+                    {item.fileName}
                   </span>
-                  (<span>{item.type}</span>)
                 </Fragment>
               ))}
             </p>
