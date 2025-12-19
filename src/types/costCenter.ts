@@ -1,16 +1,19 @@
 import type { RoleName } from "./roles";
 import type { User } from "./user";
 
+export type COST_CENTER_STATUS = 'DRAFT' | 'OPEN' | 'CLOSED' | 'FROZEN';
+
 export type COST_CENTER = {
   costCenterName: string;
   costCenterDescription: string;
   costCenterAddress: string;
   costCenterCalender: File | string;
-  costCenterBudget: File | string[];
-  costCenterRules: File | string[];
+  costCenterBudget: File[] | string[];
+  costCenterRules: File[] | string[];
   requisitions: string[];
   costCenterId: string;
   costCenterCode: string;
+  costCenterStatus: COST_CENTER_STATUS;
 };
 
 export type KeyofCostCenter = keyof COST_CENTER;

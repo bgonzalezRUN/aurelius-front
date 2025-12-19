@@ -4,7 +4,7 @@ import React, {
   useRef,
   type ChangeEvent,
 } from 'react';
-import { Upload } from 'lucide-react';
+import { Upload, X } from 'lucide-react'; // Añadimos X para eliminar
 import { labelClasses } from './styles';
 import ErrorMessage from '../common/ErrorMessage';
 
@@ -41,7 +41,11 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
   ) => {
     const [isDragging, setIsDragging] = useState(false);
     const [documentName, setDocumentName] = useState<string>('');
-    const inputRef = useRef<HTMLInputElement>(null);
+    const internalRef = useRef<HTMLInputElement>(null);
+
+    // Combinamos la ref de React Hook Form con nuestra ref interna
+    const inputRef =
+      (ref as React.MutableRefObject<HTMLInputElement>) || internalRef;
 
     const preventDefaults = (e: React.DragEvent) => {
       e.preventDefault();
@@ -58,33 +62,59 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
       if (!disabled) setIsDragging(false);
     };
 
+    const processFiles = (files: FileList | null) => {
+      if (files && files.length > 0) {
+        const names = Array.from(files)
+          .map(file => file.name)
+          .join(', ');
+        setDocumentName(names);
+        onFilesSelected({ files, inputName: name });
+        return;
+      }
+
+      setDocumentName('');
+      if (inputRef.current) {
+        inputRef.current.value = '';
+      }
+      onFilesSelected({ files: null, inputName: name });
+    };
+
     const handleDrop = (e: React.DragEvent) => {
       preventDefaults(e);
       if (disabled) return;
-
       setIsDragging(false);
-      const files = e.dataTransfer.files;
 
+      let files = e.dataTransfer.files;
+      if (!files || files.length === 0) return;
+
+      if (!multiple && files.length > 1) {
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(files[0]);
+        files = dataTransfer.files;        
+      }
       if (inputRef.current) {
         inputRef.current.files = files;
       }
-      setDocumentName(files?.[0]?.name ?? '');
-      onFilesSelected({ files });
+      processFiles(files);
     };
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-      const inputName = e.target.name;
       const files = e.target.files;
-      const selectionData: FileSelection = {
-        files: files,
-        inputName: inputName,
-      };
-      setDocumentName(files?.[0]?.name ?? '');
-      onFilesSelected(selectionData);
+
+      if (files && files.length > 0) {
+        processFiles(files);
+      }
     };
 
-    const dropAreaClasses = `flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg transition duration-200 cursor-pointer text-center`;
+    const clearSelection = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (inputRef.current) {
+        inputRef.current.value = '';
+      }
+      processFiles(null);
+    };
 
+    const dropAreaClasses = `flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg transition duration-200 cursor-pointer text-center relative`;
     const borderColor = errorMessage
       ? 'border-red-500'
       : isDragging
@@ -94,7 +124,6 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
     const disabledClasses = disabled
       ? 'bg-gray-50 opacity-70 cursor-not-allowed'
       : 'bg-white';
-
     const finalClasses = `${dropAreaClasses} ${borderColor} ${disabledClasses}`;
 
     return (
@@ -111,6 +140,17 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
           onDrop={handleDrop}
           onClick={() => !disabled && inputRef.current?.click()}
         >
+          {documentName && !disabled && (
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="absolute top-2 right-2 p-1 bg-gray-100 hover:bg-red-100 rounded-full transition-colors text-gray-500 hover:text-red-600"
+              title="Eliminar archivo"
+            >
+              <X size={16} />
+            </button>
+          )}
+
           <input
             id={name}
             name={name}
@@ -119,7 +159,7 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
             multiple={multiple}
             disabled={disabled}
             className="hidden"
-            ref={inputRef || ref}
+            ref={inputRef}
             onChange={handleFileChange}
             aria-invalid={!!errorMessage}
             aria-describedby={errorMessage ? `${name}-error` : undefined}
@@ -135,7 +175,9 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
               o arrastra y suelta aquí.
             </p>
           ) : (
-            <p className="mt-2 text-sm text-primaryDark">{documentName}</p>
+            <p className="mt-2 text-sm text-primaryDark font-medium line-clamp-2 px-4">
+              {documentName}
+            </p>
           )}
         </div>
 

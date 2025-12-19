@@ -14,9 +14,18 @@ import LayoutWithoutSidebar from './components/LayoutWithoutSidebar';
 import Unauthorized from './components/common/Unauthorized';
 import Welcome from './components/common/Welcome';
 import NotFound from './components/common/NotFound';
+import { Toaster } from 'sonner';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false, 
+      retry: 1,
+    },
+  },
+});
 
 export default function App() {
-  const queryClient = new QueryClient();
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
@@ -49,6 +58,9 @@ export default function App() {
            <Route path="*" element={<NotFound/>} />
         </Routes>
         <ConfirmationPopup />
+        <Toaster position="bottom-right" richColors toastOptions={{
+            className: 'Nunito Sans', 
+          }}/>
       </BrowserRouter>
     </QueryClientProvider>
   );

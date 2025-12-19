@@ -23,17 +23,16 @@ export type ApiError = AxiosError & {
 api.interceptors.response.use(
   response => response,
   async error => {
-    const status = error.response ? error.response.status : null;
-    if (status === 401) {
+    if (error?.response?.data?.message === 'Token not found') {
       useAuthStore.getState().logout();
     }
     const userMessage =
       ERROR_MESSAGES[error?.response?.data?.message] || DEFAULT_ERROR_MESSAGE;
-      
+
     return Promise.reject({
       ...error,
       userMessage,
-    } as ApiError);   
+    } as ApiError);
   }
 );
 

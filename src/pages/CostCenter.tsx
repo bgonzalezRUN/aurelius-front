@@ -44,9 +44,7 @@ export default function CostCenter() {
 
       <div className="overflow-y-auto flex-1">
         <CCList viewType={view} isLoading={isLoading} data={data?.data} />
-      </div>
-
-      
+      </div>      
 
       {showModal && (
         <CreationForm isOpen={showModal} onClose={handleOpenModal} />

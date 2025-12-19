@@ -1,13 +1,14 @@
 import clsx from 'clsx';
 import { type ReactNode } from 'react';
 
-type ButtonVariant = 'primary' | 'secondary' | 'primaryDark';
+export type ButtonVariant = 'primary' | 'secondary' | 'primaryDark' | 'red';
 type ButtonSize = 'xs' | 'sm' | 'md';
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary: 'bg-primary-primary text-white hover:bg-primaryHover',
   secondary: 'bg-grey-300 text-white hover:bg-gray-300',
   primaryDark: 'bg-primaryDark text-white hover:bg-primary-200',
+  red: 'bg-red-primary text-white hover:opacity-80',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

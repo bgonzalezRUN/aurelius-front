@@ -72,7 +72,7 @@ export default function CCItem({
           <nav>
             <ul className="flex flex-col gap-y-3 justify-between">
               {internalRoutes.map(route => (
-                <li className="leading-none">
+                <li className="leading-none" key={route.path}>
                   <NavLink
                     to={route.path}
                     className={clsx(

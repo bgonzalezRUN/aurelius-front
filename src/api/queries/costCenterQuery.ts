@@ -12,7 +12,7 @@ export function useCostCenter(filters?: Record<string, unknown>) {
 
 export function useCostCenterById(id: string) {
   return useQuery({
-    queryKey: ['cost-center', id],
+    queryKey: ['cost-center-by-id', id],
     queryFn: () => getCostCenterById(id!),
     enabled: !!id,
   });

@@ -70,3 +70,19 @@ export const assigneAUserToACC = async (data: USER_BY_CC): Promise<void> => {
 
   return res.data;
 };
+
+export const deleteCC = async (
+  costCenterId: string
+): Promise<void> => {
+  const res = await api.delete(`${COST_CENTE_BASE}/${costCenterId}`);
+  return res.data;
+};
+
+export type StatusChange = 'close' | 'frozen' | 'open';
+export const changeStatusCC = async (
+  costCenterId: string,
+  status: StatusChange
+): Promise<void> => {
+  const res = await api.patch(`${COST_CENTE_BASE}/${costCenterId}/${status}`);
+  return res.data;
+};
