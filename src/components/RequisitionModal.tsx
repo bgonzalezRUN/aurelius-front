@@ -59,8 +59,8 @@ export default function RequisitionModal({
   const { createReq, updateReq } = useRequisitionMutations();
   const { parseAndFill, extractData } = useExtractItemsFromFile();
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
-  const { id } = useParams();
-  const { data: cc } = useCostCenterById(id || '');
+  const { costCenterId } = useParams();
+  const { data: cc } = useCostCenterById(costCenterId || '');
 
   const {
     register,
@@ -144,7 +144,7 @@ export default function RequisitionModal({
         categoryId: getLeadingNumber(category.toString()),
       })) as Partial<Category>[],
       costCenter: {
-        costCenterId: Number(id),
+        costCenterId: Number(costCenterId),
       },
     };
 

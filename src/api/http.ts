@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import { useAuthStore } from '../store/auth';
 import { DEFAULT_ERROR_MESSAGE, ERROR_MESSAGES } from '../types/errorMessages';
+// import { useParams } from 'react-router-dom';
 const API_BASE = 'http://localhost:3000/';
 
 const api = axios.create({
@@ -12,7 +13,11 @@ const api = axios.create({
 
 api.interceptors.request.use(config => {
   const token = useAuthStore.getState().getToken();
+  // const { costCenterId } = useParams();
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  // if (costCenterId) {
+  //   config.headers['x-cost-center-id'] = costCenterId;
+  // }
   return config;
 });
 

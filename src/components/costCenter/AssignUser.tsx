@@ -1,6 +1,6 @@
 import { BaseButton, Dialog } from '../common';
 import { useCostCenterMutations } from '../../api/queries/costCenterMutation';
-import type { USER_BY_CC } from '../../types/costCenter';
+import type { USER_BY_CC, USER_IN_CC } from '../../types/costCenter';
 import { useForm } from 'react-hook-form';
 import { Input, Select } from '../form';
 import { emailRegex } from '../../types/regex';
@@ -12,24 +12,38 @@ export default function AssignUser({
   onClose,
   isOpen,
   id,
+  user,
 }: {
   onClose: () => void;
   isOpen: boolean;
   id: string;
+  user: USER_IN_CC | null;
 }) {
-  const { inviteAUserToACC } = useCostCenterMutations();
+  const { inviteAUserToACC, updateUserFromCC } = useCostCenterMutations();
 
   const {
     handleSubmit,
     register,
     setValue,
     watch,
-    formState: { errors, isValid },
-  } = useForm<USER_BY_CC>({ mode: 'onChange' });
+    formState: { errors, isValid, dirtyFields },
+  } = useForm<USER_BY_CC>({
+    mode: 'onChange',
+    defaultValues: user
+      ? { userEmail: user.user.userEmail, roleId: user.role.roleId }
+      : {},
+  });
 
   const { roleId } = watch();
 
   const onSubmit = (data: USER_BY_CC) => {
+    if (user) {
+      updateUserFromCC.mutate({
+        userId: user.userCostCenterId,
+        roleId: Number(data.roleId),
+      });
+      return;
+    }
     inviteAUserToACC.mutate({
       ...data,
       costCenterId: Number(id),
@@ -39,8 +53,8 @@ export default function AssignUser({
 
   useEffect(() => {
     if (inviteAUserToACC.isSuccess) onClose();
-  }, [inviteAUserToACC.isSuccess, onClose]);
-
+    if (updateUserFromCC.isSuccess) onClose();
+  }, [inviteAUserToACC.isSuccess, updateUserFromCC.isSuccess, onClose]);
 
   return (
     <Dialog isOpen={isOpen} title="Invitar miembro" onClose={onClose}>
@@ -58,6 +72,7 @@ export default function AssignUser({
             errorMessage={errors.userEmail?.message}
             name="userEmail"
             type="email"
+            disabled={Boolean(user)}
           />
           <Select
             name="roleId"
@@ -89,7 +104,7 @@ export default function AssignUser({
             label="Aceptar"
             size="md"
             type="submit"
-            disabled={!isValid}
+            disabled={!isValid || !Object.keys(dirtyFields).length}
             isLoading={inviteAUserToACC.isPending}
           />
         </div>

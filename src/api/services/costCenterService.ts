@@ -1,10 +1,12 @@
 import type {
+  ContentFile,
   COST_CENTER,
   USER_BY_CC,
   USER_IN_CC,
 } from '../../types/costCenter';
 import type { PaginationData } from '../../types/pagination';
 import { capitalizeWords } from '../../utils';
+import { groupBy } from '../../utils/files';
 import api from '../http';
 
 const COST_CENTE_BASE = '/cost-center';
@@ -47,7 +49,19 @@ export const createCostCenter = async (data: COST_CENTER): Promise<void> => {
       'Content-Type': 'multipart/form-data',
     },
   });
+  return res.data;
+};
 
+export const updateCostCenter = async (
+  costCenterId: string,
+  data: COST_CENTER
+): Promise<void> => {
+  const formData = createFormData(data);
+  const res = await api.patch(`${COST_CENTE_BASE}/${costCenterId}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
   return res.data;
 };
 
@@ -64,7 +78,14 @@ export const getCostCenterById = async (
   costCenterId: string
 ): Promise<COST_CENTER> => {
   const res = await api.get<COST_CENTER>(`${COST_CENTE_BASE}/${costCenterId}`);
-  const dataFormatted = { ...res.data, costCenterName: capitalizeWords(res.data.costCenterName) };
+  const grouped = res?.data?.files?.length
+    ? (groupBy(res?.data?.files, 'fileType') as Record<string, ContentFile[]>)
+    : {};
+  const dataFormatted = {
+    ...res.data,
+    costCenterName: capitalizeWords(res.data.costCenterName),
+    formattedFiles: grouped,
+  };
   return dataFormatted;
 };
 
@@ -81,19 +102,16 @@ export const assigneAUserToACC = async (data: USER_BY_CC): Promise<void> => {
   return res.data;
 };
 
-export const removeUserFromCC = async (
-  userId: string,
-  costCenterId: string
-): Promise<void> => {
-  const res = await api.delete(`${USER}/${userId}/${costCenterId}`);
+export const removeUserFromCC = async (userId: number): Promise<void> => {
+  const res = await api.delete(`${USER}/${userId}`);
   return res.data;
 };
 
 export const updateUserCostCenter = async (
-  userId: string,
-  costCenterId: string
+  userId: number,
+  roleId: number
 ): Promise<void> => {
-  const res = await api.put(`${USER}/update-role/${userId}/${costCenterId}`);
+  const res = await api.patch(`${USER}/update-role/${userId}`, { roleId });
   return res.data;
 };
 

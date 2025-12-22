@@ -23,8 +23,8 @@ import { useParams } from 'react-router-dom';
 
 export default function RequisitionsPage() {
   const [showModal, setShowModal] = useState(false);
-  const { id } = useParams();
-  const { data: cc } = useCostCenterById(id || '');
+  const { costCenterId } = useParams();
+  const { data: cc } = useCostCenterById(costCenterId || '');
   const [view, setView] = useState<ViewValue>(VIEW.LIST);
   const { data: categoriesData } = useCategories();
   const [filters, setFilters] = useState<string[]>([]);
@@ -34,7 +34,7 @@ export default function RequisitionsPage() {
     categories: filters.map(filter => getLeadingNumber(filter)).join(','),
     offset,
     limit: 50,
-    costCenterId: Number(id)
+    costCenterId: Number(costCenterId)
   });
 
   const handleCloseModal = useCallback(() => {

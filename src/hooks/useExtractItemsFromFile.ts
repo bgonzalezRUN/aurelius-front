@@ -26,11 +26,6 @@ const HEADER_MAP: Record<string, keyof LineItem> = {
   cantidad: 'quantity',
   cant: 'quantity',
   qty: 'quantity',
-  partida: 'part',
-  pda: 'part',
-  subpartida: 'subpart',
-  concepto: 'subpart',
-  'sub-partida': 'subpart',
 };
 
 const UNIT_TOKENS = new Set([
@@ -90,8 +85,6 @@ function pickHeaderIndex(
     material: undefined,
     metricUnit: undefined,
     quantity: undefined,
-    part: undefined,
-    subpart: undefined,
   };
   row0.forEach((h, idx) => {
     const k = HEADER_MAP[normalizeHeader(String(h || ''))];
@@ -156,8 +149,6 @@ async function extractItemsFromExcel(file: File): Promise<LineItem[]> {
   const idxMaterial = headerIdxMap.material ?? 0;
   const idxUM = fallback('metricUnit', 1) as number;
   const idxQty = fallback('quantity', 2) as number;
-  const idxPart = fallback('part', 3) as number;
-  const idxSub = fallback('subpart', 4) as number;
 
   const out: LineItem[] = [];
   for (let r = 1; r < rows.length; r++) {
@@ -178,13 +169,7 @@ async function extractItemsFromExcel(file: File): Promise<LineItem[]> {
         .toString()
         .trim(),
       metricUnit: umRaw,
-      quantity: (qtyVal),
-      part: String(row[idxPart] ?? '')
-        .toString()
-        .trim(),
-      subpart: String(row[idxSub] ?? '')
-        .toString()
-        .trim(),
+      quantity: qtyVal,
     };
 
     if (!item.material) continue;
@@ -410,9 +395,7 @@ async function extractItemsFromPdf(file: File): Promise<LineItem[]> {
       const item: LineItem = {
         material: (materialFrag || '').replace(/\s+/g, ' ').trim(),
         metricUnit: (unit || '').trim(),
-        quantity: (qty),
-        part: textInBand(ln.cells, bounds.partida),
-        subpart: textInBand(ln.cells, bounds.subpart),
+        quantity: qty,
       };
 
       if (!item.material) {

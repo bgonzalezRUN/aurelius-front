@@ -15,11 +15,11 @@ export default function CCItem({
   setIsOpen: (value: number) => void;
 }) {
   const { data } = useCostCenterById(costCenterId);
-  const { id } = useParams();
+  const { costCenterId: costCenterIdParam } = useParams();
   const location = useLocation();
   const { getUser } = useAuthStore();
   const user = getUser();
-  const isActive = Number(id) === Number(costCenterId);
+  const isActive = Number(costCenterId) === Number(costCenterIdParam);
   const open = isOpen || isActive;
 
   const internalRoutesAdmin = [
@@ -79,7 +79,7 @@ export default function CCItem({
                       'inline-flex items-center text-grey-800 font-semibold gap-x-1 hover:text-secondary',
                       {
                         'text-secondary':
-                          Number(id) === Number(costCenterId) && location.pathname.includes(route.key),
+                          isActive && location.pathname.includes(route.key),
                       }
                     )}
                   >

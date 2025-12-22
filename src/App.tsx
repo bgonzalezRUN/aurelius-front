@@ -39,17 +39,17 @@ export default function App() {
           <Route element={<ProtectedRoute onlyAdmin={false}/>}>
             <Route path={paths.BASE} element={<Layout />}>
              <Route index element={<Welcome />} />
-              <Route  path={`:id${paths.REQUISITIONS}`} element={<RequisitionsPage />} />
+              <Route  path={`:costCenterId${paths.REQUISITIONS}`} element={<RequisitionsPage />} />
             </Route>
           </Route>
 
           <Route element={<ProtectedRoute onlyAdmin/>}>
             <Route path={paths.ADMIN} element={<Layout />}>
-            <Route  path={`:id${paths.REQUISITIONS}`} element={<RequisitionsPage />} />
+            <Route  path={`:costCenterId${paths.REQUISITIONS}`} element={<RequisitionsPage />} />
               <Route path={paths.CC} element={<LayoutWithoutSidebar />}>
                 <Route index element={<CostCenter />} />
                 <Route
-                  path={`:id/${paths.MANAGE}`}
+                  path={`:costCenterId/${paths.MANAGE}`}
                   element={<CostCenterManage />}
                 />
               </Route>

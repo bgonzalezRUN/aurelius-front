@@ -14,7 +14,6 @@ import type { ButtonVariant } from '../common/BaseButton';
 import { Fragment, useCallback, useMemo, useState } from 'react';
 import ConfirmActions, { type typeAction } from './ConfirmActions';
 import CreationForm from './CreationForm';
-import { groupBy } from '../../utils/files';
 import { StatusBadge } from './Status';
 
 export type ModalType = typeAction | 'EDIT' | null;
@@ -26,8 +25,7 @@ export default function About({ id }: { id: string }) {
 
   const groupedByType = useMemo(() => {
     if (!data?.files) return [];
-    const grouped = groupBy(data?.files, 'fileType');
-    const { calendar, budget, rules } = grouped;
+    const { calendar, budget, rules } = data.formattedFiles || {};
     return [
       {
         name: 'Calendario operativo:',
@@ -45,7 +43,8 @@ export default function About({ id }: { id: string }) {
         disable: !rules?.length,
       },
     ];
-  }, [data?.files]);
+    return [];
+  }, [data]);
 
   const optionsHandler = () => [
     {
@@ -58,9 +57,23 @@ export default function About({ id }: { id: string }) {
       label: 'Editar',
       icon: Pencil,
       onClick: () => setActiveModal('EDIT'),
-      // disable: data?.costCenterStatus === 'FROZEN',
-      disable: true,
-      hidden: data?.costCenterStatus === 'DRAFT'|| data?.costCenterStatus === 'CLOSED',
+      disable: data?.costCenterStatus === 'FROZEN',
+      hidden:
+        data?.costCenterStatus === 'DRAFT' ||
+        data?.costCenterStatus === 'CLOSED',
+    },
+    {
+      label: data?.costCenterStatus === 'FROZEN' ? 'Descongelar' : 'Congelar',
+      icon: CirclePause,
+      onClick: () => {
+        setActiveModal(
+          data?.costCenterStatus === 'FROZEN' ? 'DEFROST' : 'FROZEN'
+        );
+      },
+      disable: data?.costCenterStatus === 'CLOSED',
+      hidden:
+        data?.costCenterStatus === 'DRAFT' ||
+        data?.costCenterStatus === 'CLOSED',
     },
     {
       label: 'Cerrar',
@@ -71,15 +84,6 @@ export default function About({ id }: { id: string }) {
       hidden:
         data?.costCenterStatus === 'CLOSED' ||
         data?.costCenterStatus === 'DRAFT',
-    },
-    {
-      label: data?.costCenterStatus === 'FROZEN' ? 'Descongelar' : 'Congelar',
-      icon: CirclePause,
-      onClick: () => {
-        setActiveModal(data?.costCenterStatus === 'FROZEN' ? 'DEFROST' : 'FROZEN');
-      },
-      disable: data?.costCenterStatus === 'CLOSED',
-      hidden: data?.costCenterStatus === 'DRAFT' || data?.costCenterStatus === 'CLOSED',
     },
     {
       label: 'Eliminar',
@@ -179,7 +183,7 @@ export default function About({ id }: { id: string }) {
         />
       )}
       {activeModal === 'EDIT' && (
-        <CreationForm isOpen={true} onClose={closeModal} />
+        <CreationForm isOpen={true} onClose={closeModal} ccId={id} />
       )}
     </>
   );

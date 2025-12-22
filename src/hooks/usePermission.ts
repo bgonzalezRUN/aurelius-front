@@ -6,11 +6,14 @@ import { useParams } from 'react-router-dom';
 export function usePermission() {
   const { getUser } = useAuthStore();
   const user = getUser();
-  const { id } = useParams();
+  const { costCenterId : costCenterIdParam } = useParams();
 
   const getCC = useMemo(() => {
-    return user?.costCenter?.find(cc => cc.costCenterId === Number(id));
-  }, [id, user?.costCenter]);
+    return user?.costCenter?.find(cc => cc.costCenterId === Number(costCenterIdParam));
+  }, [costCenterIdParam, user?.costCenter]);
+
+  console.log(user);
+  
   
   const hasPermission = useCallback(
     (permission: Permission): boolean => {

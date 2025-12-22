@@ -8,8 +8,8 @@ import Team from '../../components/costCenter/Team';
 import Tabs from '../../components/common/Tabs';
 
 export default function CostCenterManage() {
-  const { id } = useParams();
-  const { data } = useCostCenterById(id || '');
+  const { costCenterId } = useParams();
+  const { data } = useCostCenterById(costCenterId || '');
   const [option, setOption] = useState<'about' | 'team'>('about');
 
   const handleTabSelect = useCallback((id: 'about' | 'team') => {
@@ -33,9 +33,9 @@ export default function CostCenterManage() {
   const renderContent = () => {
     switch (option) {
       case 'about':
-        return <About id={id || ''} />;
+        return <About id={costCenterId || ''} />;
       case 'team':
-        return <Team  id={id || ''}/>;
+        return <Team  id={costCenterId || ''}/>;
       default:
         return null;
     }
