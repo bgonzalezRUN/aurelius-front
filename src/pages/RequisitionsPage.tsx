@@ -35,7 +35,7 @@ export default function RequisitionsPage() {
   const { isLoading, data } = useRequisitions({
     categories: filters.map(filter => getLeadingNumber(filter)).join(','),
     offset,
-    limit: 1,
+    limit: 50,
     costCenterId: Number(costCenterId),
     search: query,
   });
