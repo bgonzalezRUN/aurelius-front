@@ -6,6 +6,7 @@ import { emailRegex } from '../../types/regex';
 import ErrorMessage from '../common/ErrorMessage';
 import { BaseButton } from '../common';
 import { useEffect } from 'react';
+import { trimValue } from '../../utils/string';
 
 interface UserRegisterProps extends UserRegister {
   confirmPassword: string;
@@ -32,13 +33,11 @@ export default function Register() {
   };
 
   useEffect(() => {
-    
-  if(userRegister.isSuccess){
-    reset()
-  }
-   
-  }, [reset, userRegister.isSuccess])
-  
+    if (userRegister.isSuccess) {
+      reset();
+    }
+  }, [reset, userRegister.isSuccess]);
+
   const passwordValue = watch('userPassword');
 
   return (
@@ -50,6 +49,7 @@ export default function Register() {
           label="Nombre"
           registration={register('userName', {
             required: 'Escribe tu nombre',
+            setValueAs: trimValue,
           })}
           errorMessage={errors.userName?.message}
           name="userName"
@@ -57,7 +57,8 @@ export default function Register() {
         <Input
           label="Apellido"
           registration={register('userLastName', {
-            required: 'Escribe tu nombre',
+            required: 'Escribe tu apellido',
+            setValueAs: trimValue,
           })}
           errorMessage={errors.userLastName?.message}
           name="userLastName"
@@ -79,6 +80,11 @@ export default function Register() {
           label="Contraseña"
           registration={register('userPassword', {
             required: 'Escribe tu contraseña',
+            setValueAs: trimValue,
+            minLength: {
+              value: 8,
+              message: 'La contraseña debe contener al menos 8 caracteres',
+            },
           })}
           errorMessage={errors.userPassword?.message}
           name="userPassword"
@@ -88,12 +94,14 @@ export default function Register() {
           label="Confirmar contraseña"
           registration={register('confirmPassword', {
             required: 'Escribe tu contraseña',
+            setValueAs: trimValue,
             validate: value =>
               value === passwordValue || 'Las contraseñas no coinciden',
           })}
           errorMessage={errors.confirmPassword?.message}
           name="confirmPassword"
           type="password"
+          min={8}
         />
 
         <ErrorMessage

@@ -22,7 +22,7 @@ export default function RequisitionItemList({
 
     date: (
       <span className={baseStyles}>
-        {data.arrivalDate ? dateformatter(new Date(data.arrivalDate)) : 'N/A'}
+        {data.arrivalDate ? dateformatter(data?.arrivalDate) : 'N/A'}
       </span>
     ),
     arrivalWindows: (

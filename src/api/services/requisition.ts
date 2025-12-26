@@ -2,6 +2,7 @@ import type {
   BackendPayload,
   HistoryRequisition,
   Requisition,
+  RequisitionFilter,
 } from '../../types';
 import type { Category } from '../../types/category';
 import type { PaginationData } from '../../types/pagination';
@@ -15,29 +16,36 @@ interface ApiRequisitionResponse extends PaginationData {
 
 // Crear requisición
 export const createRequisition = async (
-  data: BackendPayload
+  data: BackendPayload,
+  costCenterId: string
 ): Promise<Requisition> => {
-  const res = await api.post<Requisition>(`${REQUISITIONS_BASE}/`, data);
+  const res = await api.post<Requisition>(`${REQUISITIONS_BASE}/`, data, {
+    headers: { 'x-cost-center-id': costCenterId },
+  });
   return res.data;
 };
 
 // Obtener todas las requisiciones
 export const getRequisitions = async (
-  params?: Record<string, unknown>
+  params?: RequisitionFilter
 ): Promise<ApiRequisitionResponse> => {
   const res = await api.get<ApiRequisitionResponse>(`${REQUISITIONS_BASE}`, {
     params,
+    headers: { 'x-cost-center-id': params?.costCenterId },
   });
 
   return res.data;
 };
-
 // Obtener una requisición por ID
 export const getRequisitionById = async (
-  requisitionId: string
+  requisitionId: string,
+  costCenterId: string
 ): Promise<Requisition> => {
   const res = await api.get<Requisition>(
-    `${REQUISITIONS_BASE}/${requisitionId}`
+    `${REQUISITIONS_BASE}/${requisitionId}`,
+    {
+      headers: { 'x-cost-center-id': costCenterId },
+    }
   );
   return res.data;
 };
@@ -54,20 +62,29 @@ export const searchRequisitionsByProject = async (
 
 export const updateRequisition = async (
   requisitionId: string,
-  data: Partial<Requisition>
+  data: Partial<Requisition>,
+  costCenterId: string
 ): Promise<Requisition> => {
   const res = await api.patch<Requisition>(
     `${REQUISITIONS_BASE}/${requisitionId}`,
-    data
+    data,
+    {
+      headers: { 'x-cost-center-id': costCenterId },
+    }
   );
   return res.data;
 };
 
 export const updateSubmitRequisition = async (
-  requisitionId: string
+  requisitionId: string,
+  costCenterId: string
 ): Promise<Requisition> => {
   const res = await api.patch<Requisition>(
-    `${REQUISITIONS_BASE}/${requisitionId}/submit`
+    `${REQUISITIONS_BASE}/${requisitionId}/submit`,
+    {},
+    {
+      headers: { 'x-cost-center-id': costCenterId },
+    }
   );
   return res.data;
 };
@@ -76,23 +93,31 @@ export const updateStateRequisition = async ({
   requisitionId,
   observation,
   type,
+  costCenterId,
 }: {
   requisitionId: string;
   observation?: string;
   type: 'validate' | 'reject';
+  costCenterId: string;
 }): Promise<Requisition> => {
   const res = await api.patch<Requisition>(
     `${REQUISITIONS_BASE}/${requisitionId}/${type}`,
-    { observation }
+    { observation },
+    {
+      headers: { 'x-cost-center-id': costCenterId },
+    }
   );
   return res.data;
 };
 
 // Eliminar una requisición
 export const deleteRequisition = async (
-  requisitionId: string
-): Promise<number> => {
-  const res = await api.delete(`${REQUISITIONS_BASE}/${requisitionId}`);
+  requisitionId: string,
+  costCenterId: string
+): Promise<void> => {
+  const res = await api.delete(`${REQUISITIONS_BASE}/${requisitionId}`, {
+    headers: { 'x-cost-center-id': costCenterId },
+  });
   return res.data;
 };
 

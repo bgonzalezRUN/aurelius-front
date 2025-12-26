@@ -13,6 +13,7 @@ import { useAuthStore } from '../../store/auth';
 import { usePopupStore } from '../../store/popup';
 import clsx from 'clsx';
 import { VIEW, type ViewValue } from '../../types/view';
+import { useParams } from 'react-router-dom';
 
 type ModalType = 'DETAILS' | 'EDIT' | 'REJECT' | 'HISTORY' | null;
 
@@ -41,6 +42,7 @@ export default function RequisitionButtons({
   const { data } = useRequisitionById(requisitionId);
   const { submitReq, changeReqState, signReq } = useRequisitionMutations();
   const { getUser } = useAuthStore();
+  const { costCenterId } = useParams();
   const { hasPermission, rol } = usePermission();
   const { openPopup: openPopupValidate } = usePopupStore();
   const [activeModal, setActiveModal] = useState<ModalType>(null);
@@ -68,7 +70,11 @@ export default function RequisitionButtons({
         title: 'Validar requisición',
         message: `¿Estas seguro que quieres validar la requisición ${data.requisitionCode}?`,
         onConfirm: () =>
-          changeReqState.mutate({ requisitionId, type: 'validate' }),
+          changeReqState.mutate({
+            requisitionId,
+            type: 'validate',
+            costCenterId: costCenterId||'',
+          }),
       });
     };
 
@@ -168,17 +174,7 @@ export default function RequisitionButtons({
         },
       ],
     };
-  }, [
-    changeReqState,
-    data,
-    hasPermission,
-    requisitionId,
-    signReq,
-    user,
-    submitReq,
-    openPopupValidate,
-    rol,
-  ]);
+  }, [data, hasPermission, rol, openPopupValidate, submitReq, requisitionId, changeReqState, costCenterId, signReq, user?.userName, user?.userLastName]);
 
   if (!data) return null;
 

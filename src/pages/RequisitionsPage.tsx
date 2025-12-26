@@ -20,12 +20,14 @@ import { H1 } from '../components/common/Text';
 import { Search } from '../components/common/Search';
 import { useCostCenterById } from '../api/queries/costCenterQuery';
 import { useParams } from 'react-router-dom';
+import { Loading } from '../components/common';
 
 export default function RequisitionsPage() {
   const [showModal, setShowModal] = useState(false);
   const { costCenterId } = useParams();
   const { data: cc } = useCostCenterById(costCenterId || '');
   const [view, setView] = useState<ViewValue>(VIEW.LIST);
+  const [query, setQuery] = useState<string>('');
   const { data: categoriesData } = useCategories();
   const [filters, setFilters] = useState<string[]>([]);
   const [currentPage, setPageInUrl] = useUrlPagination('page');
@@ -33,8 +35,9 @@ export default function RequisitionsPage() {
   const { isLoading, data } = useRequisitions({
     categories: filters.map(filter => getLeadingNumber(filter)).join(','),
     offset,
-    limit: 50,
-    costCenterId: Number(costCenterId)
+    limit: 1,
+    costCenterId: Number(costCenterId),
+    search: query,
   });
 
   const handleCloseModal = useCallback(() => {
@@ -54,6 +57,13 @@ export default function RequisitionsPage() {
     },
     [currentPage, isLoading, setPageInUrl]
   );
+  const handleChange = useCallback((value: string) => {
+    setQuery(value);
+  }, []);
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <>
@@ -61,7 +71,9 @@ export default function RequisitionsPage() {
         <div className="flex justify-between flex-none mb-2 items-center gap-x-4">
           <H1>
             <File size={28} />
-            {`Listado de requisiciones de ${capitalizeWords(cc?.costCenterName || '')}`}
+            {`Listado de requisiciones de ${capitalizeWords(
+              cc?.costCenterName || ''
+            )}`}
           </H1>
 
           <Restricted permission="create:requisition">
@@ -81,7 +93,12 @@ export default function RequisitionsPage() {
           </Restricted>
         </div>
         <div className="flex gap-x-4 items-center flex-none">
-          <Search value="" onChange={() => {}} disabled />
+          <Search
+            value={query}
+            onChange={handleChange}
+            disabled={!data?.data.length && !query}
+          />
+
           <MultiSelectFilter
             label="Filtrar por categorias"
             options={
@@ -110,7 +127,7 @@ export default function RequisitionsPage() {
           />
         </div>
 
-        <div className="mt-4 px-2 flex-none">
+        <div className="mt-auto px-2 flex-none">
           <Pagination
             pagination={{
               currentPage: data?.currentPage || 0,

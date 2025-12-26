@@ -6,8 +6,10 @@ import {
   historyRequisition,
   getCategories,
 } from '../services/requisition';
+import type { RequisitionFilter } from '../../types';
+import { useParams } from 'react-router-dom';
 
-export function useRequisitions(filters?: Record<string, unknown>) {
+export function useRequisitions(filters?: RequisitionFilter) {  
   return useQuery({
     queryKey: ['requisitions', filters],  
     queryFn: () => getRequisitions(filters),
@@ -15,9 +17,10 @@ export function useRequisitions(filters?: Record<string, unknown>) {
 }
 
 export function useRequisitionById(id: string) {
+  const { costCenterId } = useParams();
   return useQuery({
     queryKey: ['requisitionById', id],
-    queryFn: () => getRequisitionById(id!),
+    queryFn: () => getRequisitionById(id!, costCenterId||''),
     enabled: !!id,
   });
 }

@@ -77,7 +77,9 @@ export const getCostCenter = async (
 export const getCostCenterById = async (
   costCenterId: string
 ): Promise<COST_CENTER> => {
-  const res = await api.get<COST_CENTER>(`${COST_CENTE_BASE}/${costCenterId}`);
+  const res = await api.get<COST_CENTER>(`${COST_CENTE_BASE}/${costCenterId}`, {
+    headers: { 'x-cost-center-id': costCenterId }
+  });
   const grouped = res?.data?.files?.length
     ? (groupBy(res?.data?.files, 'fileType') as Record<string, ContentFile[]>)
     : {};

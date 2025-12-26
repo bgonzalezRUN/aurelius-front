@@ -1,18 +1,13 @@
-import {
-  type FC,
-  type ReactNode,
-  Fragment,
-} from 'react';
+import { type FC, type ReactNode, Fragment } from 'react';
 import { Dialog } from '../common';
 import { capitalizeWords } from '../../utils';
-import type { HistoryRequisition, Requisition, Status } from '../../types';
+import type { HistoryRequisition, Status } from '../../types';
 import { dateformatter } from '../../utils/dateformatter';
 import HistoryStatus from './HistoryStatus';
 import clsx from 'clsx';
-import {
-  useRequisitionHistory,
-  useRequisitionById,
-} from '../../api/queries/requisitionQueries';
+import { useRequisitionHistory } from '../../api/queries/requisitionQueries';
+import { useParams } from 'react-router-dom';
+import { useCostCenterById } from '../../api/queries/costCenterQuery';
 
 interface OrderHistoryProps {
   isPopupOpen: boolean;
@@ -26,9 +21,8 @@ const OrderHistory: FC<OrderHistoryProps> = ({
   requisitionId,
 }) => {
   const { data: history } = useRequisitionHistory(requisitionId);
-  const { data } = useRequisitionById(requisitionId);
-
-  const { project: projectName } = data || {} as Requisition;
+  const { costCenterId } = useParams();
+  const { data } = useCostCenterById(costCenterId || '');
 
   const tableHeaders = ['Fecha', 'Usuario', 'Acción'];
   const labels: (keyof HistoryRequisition)[] = [
@@ -42,7 +36,7 @@ const OrderHistory: FC<OrderHistoryProps> = ({
   > = {
     createdAt: value => (
       <p className="text-grey-100 font-normal text-base">
-        {dateformatter(new Date(value))}
+        {dateformatter(value)}
       </p>
     ),
     historyUser: value => (
@@ -62,7 +56,7 @@ const OrderHistory: FC<OrderHistoryProps> = ({
       </p>
 
       <h3 className="text-secondary text-xl font-extrabold mb-3">
-        {capitalizeWords(projectName)}
+        {capitalizeWords(data?.costCenterName || '')}
       </h3>
 
       {history?.length ? (

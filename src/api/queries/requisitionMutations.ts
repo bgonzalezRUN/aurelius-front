@@ -7,13 +7,17 @@ import {
   deleteRequisition,
   signRequisition,
 } from '../services/requisition';
-import type { Requisition } from '../../types';
+import type { BackendPayload, Requisition } from '../../types';
 import { toast } from 'sonner';
+import { useParams } from 'react-router-dom';
 
 export function useRequisitionMutations() {
   const queryClient = useQueryClient();
+  const { costCenterId } = useParams();
+
   const createReq = useMutation({
-    mutationFn: createRequisition,
+    mutationFn: (data: BackendPayload) =>
+      createRequisition(data, costCenterId || ''),
     onSuccess: () => {
       toast.success('Requisición creada', {
         description: 'La requisición ha sido creada correctamente',
@@ -28,7 +32,7 @@ export function useRequisitionMutations() {
     }: {
       requisitionId: string;
       data: Partial<Requisition>;
-    }) => updateRequisition(requisitionId, data),
+    }) => updateRequisition(requisitionId, data, costCenterId || ''),
     onSuccess: (_, variables) => {
       toast.success('Requisición actualizada', {
         description: 'La requisición ha sido actualizada correctamente',
@@ -40,7 +44,8 @@ export function useRequisitionMutations() {
     },
   });
   const submitReq = useMutation({
-    mutationFn: updateSubmitRequisition,
+    mutationFn: (requisitionId: string) =>
+      updateSubmitRequisition(requisitionId, costCenterId || ''),
     onSuccess: (_, requisitionId) => {
       toast.success('Solicitud de validación', {
         description: 'La requisición ha sido enviada para ser validada.',
@@ -56,9 +61,15 @@ export function useRequisitionMutations() {
   const changeReqState = useMutation({
     mutationFn: updateStateRequisition,
     onSuccess: (_, variables) => {
-      toast.success('Validar requisición', {
-        description:
-          'La requisición ha sido validada correctamente. Podrás consultarlo en el historial.',
+      const type = {
+        reject: { title: 'Rechazar', content: 'rechazada' },
+        validate: { title: 'Validar', content: 'validada' },
+      };
+
+      toast.success(`${type[variables.type].title} requisición`, {
+        description: `La requisición ha sido ${
+          type[variables.type].content
+        } correctamente. Podrás consultarlo en el historial.`,
       });
       queryClient.invalidateQueries({
         queryKey: ['requisition-history', variables.requisitionId],
@@ -70,7 +81,8 @@ export function useRequisitionMutations() {
     },
   });
   const deleteReq = useMutation({
-    mutationFn: deleteRequisition,
+    mutationFn: (requisitionId: string) =>
+      deleteRequisition(requisitionId, costCenterId || ''),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ['requisitions'] }),
   });

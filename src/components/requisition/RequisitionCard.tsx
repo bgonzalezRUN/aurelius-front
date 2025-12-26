@@ -1,3 +1,4 @@
+import { useParams } from 'react-router-dom';
 import { useRequisitionById } from '../../api/queries/requisitionQueries';
 import type { Requisition, SendTo } from '../../types';
 import { capitalizeWords } from '../../utils';
@@ -6,6 +7,7 @@ import { fmtTime } from '../../utils/time';
 import { PriorityBadge } from '../common/PriorityBadge';
 import { StatusBadge } from '../common/StatusBadge';
 import RequisitionButtons from './RequisitionButtons';
+import { useCostCenterById } from '../../api/queries/costCenterQuery';
 
 export default function RequisitionCard({
   requisitionId,
@@ -13,6 +15,8 @@ export default function RequisitionCard({
   requisitionId: string;
 }) {
   const { data } = useRequisitionById(requisitionId);
+  const { costCenterId } = useParams();
+  const { data: datacc } = useCostCenterById(costCenterId || '');
   if (!data) return null;
 
   return (
@@ -21,7 +25,7 @@ export default function RequisitionCard({
         {/* Título + Fecha */}
         <div className="flex justify-between items-start mb-1">
           <h2 className="text-base font-semibold text-[#01687d] leading-tight">
-            {capitalizeWords(data.project)}
+            {capitalizeWords(datacc?.costCenterName || '')}
           </h2>
           <span className="text-[12px] text-gray-600 font-semibold">
             {data.requisitionCode}
@@ -30,9 +34,7 @@ export default function RequisitionCard({
 
         <div className="flex justify-between items-center mb-2">
           <p className="text-[12px] text-gray-600">
-            {data.arrivalDate
-              ? dateformatter(new Date(data.arrivalDate))
-              : 'N/A'}
+            {data.arrivalDate ? dateformatter(data.arrivalDate) : 'N/A'}
           </p>
           {Array.isArray((data as Requisition).arrivalWindows) &&
             (data as Requisition).arrivalWindows.length > 0 && (

@@ -12,8 +12,6 @@ export function usePermission() {
     return user?.costCenter?.find(cc => cc.costCenterId === Number(costCenterIdParam));
   }, [costCenterIdParam, user?.costCenter]);
 
-  console.log(user);
-  
   
   const hasPermission = useCallback(
     (permission: Permission): boolean => {

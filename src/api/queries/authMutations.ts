@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { useAuthStore,  } from '../../store/auth';
+import { useAuthStore } from '../../store/auth';
 import { useNavigate } from 'react-router-dom';
 import { paths } from '../../paths';
 import {
@@ -36,11 +36,8 @@ export function useAuthMutations() {
       openPopupValidate({
         title: 'Usuario creado',
         message:
-          'Su usuario se ha creado correctamente, te invitamos a iniciar sesión.',
-        confirmButtonText: 'Ir a iniciar sesión',
-        onConfirm: () => {
-          navigate(paths.LOGIN);
-        },
+          'Su usuario se ha creado correctamente, te enviaremos un correo cuando se te sea asignado a un centro de costos',
+        confirmButtonText: 'Entendido',
       });
     },
   });

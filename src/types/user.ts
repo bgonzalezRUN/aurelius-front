@@ -8,8 +8,8 @@ export type CC_FROM_USER = {
 };
 
 export interface User {
-  userName?: string;
-  userLastName?: string;
+  userName: string;
+  userLastName: string;
   userEmail: string;
   isAdminCC: boolean;
   costCenter: CC_FROM_USER[]; 

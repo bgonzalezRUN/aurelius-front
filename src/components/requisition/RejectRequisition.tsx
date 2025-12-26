@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form';
 import DialogPrimary from '../common/DialogPrimary';
 import { BaseButton } from '../common';
 import { useRequisitionMutations } from '../../api/queries/requisitionMutations';
+import { useParams } from 'react-router-dom';
 
 type FormData = {
   observation: string;
@@ -17,6 +18,8 @@ export default function RejectRequisition({
   requisitionId: string;
 }) {
   const { changeReqState } = useRequisitionMutations();
+  const { costCenterId } = useParams();
+
   const {
     register,
     handleSubmit,
@@ -28,6 +31,7 @@ export default function RejectRequisition({
       observation: data.observation,
       type: 'reject',
       requisitionId,
+      costCenterId: costCenterId || '',
     });
 
     closePopup();

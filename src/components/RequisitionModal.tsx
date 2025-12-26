@@ -228,6 +228,19 @@ export default function RequisitionModal({
             label="Fecha de llegada"
             registration={register('arrivalDate', {
               required: 'Selecciona la fecha de llegada',
+              validate: value => {
+                const selectedDate = new Date(value);
+                selectedDate.setMinutes(
+                  selectedDate.getMinutes() + selectedDate.getTimezoneOffset()
+                );
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                return (
+                  selectedDate >= today ||
+                  'La fecha no puede ser anterior a hoy'
+                );
+              },
             })}
             errorMessage={errors.arrivalDate?.message}
             name="arrivalDate"

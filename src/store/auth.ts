@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { jwtDecode } from 'jwt-decode';
-
 import type { User } from '../types/user';
+import { queryClient } from '../api/queryClient';
 
 export interface UserAuth extends User {
   exp: number;
@@ -30,9 +30,13 @@ export const useAuthStore = create<AuthState>()(
           get().logout();
           return null;
         }
+
         return decodedToken;
       },
-      logout: () => set({ token: null, user: null }),
+      logout: () => {
+        queryClient.clear();
+        set({ token: null, user: null });
+      },
       token: null,
       getToken: () => {
         const token = get().token;

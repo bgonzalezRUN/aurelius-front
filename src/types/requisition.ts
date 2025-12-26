@@ -39,10 +39,10 @@ export type BackendPayload = {
   requisitionPriority: Priority;
   requisitionComments: string;
   arrivalDate: string;
-  sendTo: SendTo[]|string[];
+  sendTo: SendTo[] | string[];
   items: LineItem[];
   arrivalWindows: TimeWindow[];
-  categories: Partial<Category>[]|string[];
+  categories: Partial<Category>[] | string[];
 };
 
 export type Requisition = {
@@ -77,4 +77,12 @@ export const lineItemLabels: Record<keyof LineItem, string> = {
   material: 'Material',
   metricUnit: 'Unidad',
   quantity: 'Cantidad',
+};
+
+export type RequisitionFilter = {
+  categories: string;
+  offset: number;
+  limit: number;
+  costCenterId: number
+  search: string
 };

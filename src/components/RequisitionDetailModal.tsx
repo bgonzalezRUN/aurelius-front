@@ -1,13 +1,14 @@
-import { useState } from "react";
-import {
-  deleteRequisition,
-  signRequisition,
-  
-} from "../api/requisitionService";
-import { jwtDecode } from "jwt-decode";
-import { Check, CircleX, Eye, Layers, Trash2 } from "lucide-react";
-import { useRequisitionById } from "../api/queries/requisitionQueries";
-import { Loading } from "./common";
+import { Check, CircleX, Eye, Layers, Trash2 } from 'lucide-react';
+import { useRequisitionById } from '../api/queries/requisitionQueries';
+import { Loading } from './common';
+import { useCostCenterById } from '../api/queries/costCenterQuery';
+import { useParams } from 'react-router-dom';
+import { dateformatter, fmtTime } from '../utils';
+
+import type { TimeWindow } from '../types';
+import { useRequisitionMutations } from '../api/queries/requisitionMutations';
+import { usePopupStore } from '../store/popup';
+import { useEffect } from 'react';
 
 export interface DecodedSignature {
   requisition_id: number;
@@ -15,11 +16,6 @@ export interface DecodedSignature {
   user: string;
   timestamp: string;
   ip: string;
-}
-
-interface DecodedToken {
-  userName?: string;
-  userLastName?: string;
 }
 
 export default function RequisitionDetailModal({
@@ -32,38 +28,18 @@ export default function RequisitionDetailModal({
   requisitionId: string;
 }) {
   const { data, isLoading } = useRequisitionById(requisitionId);
-  const [showSignModal, setShowSignModal] = useState(false);
+  const { costCenterId } = useParams();
+  const { openPopup: openPopupValidate } = usePopupStore();
+  const { deleteReq } = useRequisitionMutations();
+  const { data: costCenterData } = useCostCenterById(costCenterId || '');
 
-  // Modal de eliminación
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  // ---- Formateadores ----
-  const fmtDate = (iso?: string) =>
-    iso
-      ? new Intl.DateTimeFormat("es-CO", { dateStyle: "medium" }).format(
-          new Date(iso)
-        )
-      : "—";
-
-  const fmtTime = (iso?: string) =>
-    iso
-      ? new Intl.DateTimeFormat("es-CO", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }).format(new Date(iso))
-      : "";
+  useEffect(() => {
+    if (deleteReq.isSuccess) {
+      onClose();
+    }
+  }, [deleteReq.isSuccess, onClose]);
 
   if (!open || !data) return null;
-
-  const token = localStorage.getItem("token");
-  let user = "";
-
-  if (token) {
-    const decoded = jwtDecode<DecodedToken>(token);
-    user =
-      decoded.userName + " " + decoded.userLastName || "Usuario desconocido";
-  }
 
   const decodeSignature = (
     signatureBase64?: string
@@ -74,48 +50,22 @@ export default function RequisitionDetailModal({
       const decodedJson = atob(signatureBase64);
       return JSON.parse(decodedJson);
     } catch (err) {
-      console.error("Error decoding signature:", err);
+      console.error('Error decoding signature:', err);
       return null;
     }
   };
 
-  const onConfirmSign = async () => {
-    if (!user) {
-      alert("No se encontró un usuario válido. Inicia sesión nuevamente.");
-      return;
-    }
-
-    try {
-      await signRequisition(data.requisitionId, user);
-      alert("✅ Requisición firmada exitosamente");
-      setShowSignModal(false);
-      onClose();
-      location.reload();
-    } catch (error) {
-      console.error(error);
-      alert("❌ Ocurrió un error al firmar la requisición");
-    }
+  const onConfirmDelete = () => {
+    openPopupValidate({
+      title: 'Confirmar eliminación',
+      message: `¿Estas seguro que quieres eliminar la requisición ${data.requisitionCode}?`,
+      onConfirm: () => deleteReq.mutate(data.requisitionId),
+    });
   };
 
-  // --- Eliminación ---
-  const openDeleteConfirm = () => setShowDeleteModal(true);
-
-  const onConfirmDelete = async () => {
-    try {
-      setIsDeleting(true);
-      await deleteRequisition(data.requisitionId);
-      setShowDeleteModal(false);
-      onClose();
-      location.reload();
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  // Badge de prioridad
-   if (isLoading) {
-      return <Loading/>
-    }
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
@@ -130,7 +80,7 @@ export default function RequisitionDetailModal({
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={openDeleteConfirm}
+              onClick={onConfirmDelete}
               className="px-2 py-2 rounded-lg  hover:bg-red-300 text-gray-800 transition"
             >
               <Trash2 />
@@ -153,9 +103,9 @@ export default function RequisitionDetailModal({
                 <div className="flex flex-col justify-between items-start mb-1">
                   <span className="font-semibold text-base text-black">
                     Proyecto:
-                  </span>{" "}
+                  </span>{' '}
                   <h2 className="text-lg font-bold text-[#01687d] leading-tight">
-                    {data.project}
+                    {costCenterData?.costCenterName}
                   </h2>
                 </div>
 
@@ -164,15 +114,15 @@ export default function RequisitionDetailModal({
                     <span className="font-semibold text-base text-black">
                       Fecha de llegada:
                     </span>
-                    <span>{fmtDate(data.arrivalDate)}</span>
+                    <span>{dateformatter(data.arrivalDate || '')}</span>
                   </div>
 
                   <div className="flex flex-col justify-end sm:flex-row sm:items-center sm:gap-2">
-                    {Array.isArray((data as any).arrivalWindows) &&
-                      (data as any).arrivalWindows.length > 0 && (
+                    {Array.isArray(data.arrivalWindows) &&
+                      data.arrivalWindows.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-2">
-                          {(data as any).arrivalWindows.map(
-                            (w: any, i: number) => (
+                          {data.arrivalWindows.map(
+                            (w: TimeWindow, i: number) => (
                               <span
                                 key={i}
                                 className="text-xs text-black px-2 py-0.5 rounded-md border border-[#01687d]"
@@ -186,20 +136,21 @@ export default function RequisitionDetailModal({
                   </div>
                 </div>
               </div>
-
-              <div className="col-span-2">
-                <span className="font-semibold text-base text-black">
-                  Enviar a:
-                </span>{" "}
-                {data.sendTo?.map((s, i) => (
-                  <span
-                    key={i}
-                    className="ml-1 text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-lg"
-                  >
-                    {s.name}
-                  </span>
-                ))}
-              </div>
+              {data.sendTo.length ? (
+                <div className="col-span-2">
+                  <span className="font-semibold text-base text-black">
+                    Proveedores sugeridos
+                  </span>{' '}
+                  {data.sendTo?.map((s, i) => (
+                    <span
+                      key={i}
+                      className="ml-1 text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-lg"
+                    >
+                      {s.name}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </section>
 
@@ -222,8 +173,6 @@ export default function RequisitionDetailModal({
                       <th className="p-2 text-left">Material</th>
                       <th className="p-2 text-left">Unidad</th>
                       <th className="p-2 text-left">Cantidad</th>
-                      <th className="p-2 text-left">Partida</th>
-                      <th className="p-2 text-left">Subpartida</th>
                     </tr>
                   </thead>
 
@@ -236,8 +185,6 @@ export default function RequisitionDetailModal({
                         <td className="p-2">{it.material}</td>
                         <td className="p-2">{it.metricUnit}</td>
                         <td className="p-2">{it.quantity}</td>
-                        <td className="p-2">{it.part}</td>
-                        <td className="p-2">{it.subpart}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -269,9 +216,7 @@ export default function RequisitionDetailModal({
                       <strong>{data.requester.name}</strong>
                     </p>
                     <p className="text-xs text-gray-500">
-                      {new Date(
-                        data.requester.timestamp
-                      ).toLocaleString()}
+                      {new Date(data.requester.timestamp).toLocaleString()}
                     </p>
                   </div>
                 )}
@@ -296,9 +241,7 @@ export default function RequisitionDetailModal({
                       <strong>{data.validator.name}</strong>
                     </p>
                     <p className="text-xs text-gray-500">
-                      {new Date(
-                        data.validator.timestamp
-                      ).toLocaleString()}
+                      {new Date(data.validator.timestamp).toLocaleString()}
                     </p>
                   </div>
                 )}
@@ -313,9 +256,7 @@ export default function RequisitionDetailModal({
                 </p>
 
                 {(() => {
-                  const signature = decodeSignature(
-                    data.approver
-                  );
+                  const signature = decodeSignature(data.approver);
 
                   if (!signature) {
                     return (
@@ -341,75 +282,6 @@ export default function RequisitionDetailModal({
             </div>
           </section>
         </div>
-        {/* MODAL CONFIRMAR FIRMA */}
-        {showSignModal && (
-          <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 backdrop-blur-sm">
-            <div className="bg-white w-[400px] p-6 rounded-2xl shadow-xl border">
-              <h2 className="text-xl font-semibold text-[#058cb5] mb-2">
-                Confirmar firma
-              </h2>
-              <p className="text-gray-700 mb-6">
-                ¿Deseas firmar como <strong>{user}</strong>?
-              </p>
-
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setShowSignModal(false)}
-                  className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300"
-                >
-                  Cancelar
-                </button>
-
-                <button
-                  onClick={onConfirmSign}
-                  className="px-4 py-2 rounded-lg bg-[#058cb5] hover:bg-[#037997] text-white"
-                >
-                  Confirmar firma
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* MODAL ELIMINAR */}
-        {showDeleteModal && (
-          <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 backdrop-blur-sm">
-            <div className="bg-white w-[420px] p-6 rounded-2xl shadow-xl border">
-              <h4 className="text-lg font-semibold text-red-600 mb-2">
-                Confirmar eliminación
-              </h4>
-
-              <p className="text-gray-700 mb-6 text-sm">
-                Estás por eliminar la requisición{" "}
-                <strong>#{data.requisitionId}</strong> del proyecto{" "}
-                <strong>{data.project}</strong>.
-                <br />
-                Esta acción es permanente.
-              </p>
-
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => setShowDeleteModal(false)}
-                  className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300"
-                >
-                  Cancelar
-                </button>
-
-                <button
-                  onClick={onConfirmDelete}
-                  disabled={isDeleting}
-                  className={`px-4 py-2 rounded-lg text-white ${
-                    isDeleting
-                      ? "bg-red-300 cursor-not-allowed"
-                      : "bg-red-600 hover:bg-red-700"
-                  }`}
-                >
-                  {isDeleting ? "Eliminando..." : "Confirmar"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

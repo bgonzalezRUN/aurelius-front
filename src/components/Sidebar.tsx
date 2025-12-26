@@ -17,7 +17,7 @@ export default function Sidebar() {
   const user = getUser();
   const { rol } = usePermission();
   const navigate = useNavigate();
-  const { data } = useCostCenter();
+  const { data } = useCostCenter({ limit: 50});
   const [idProject, setProjectId] = useState<number | null>(null);
   const [optionOpen, setOptionOpen] = useState<Options | ''>('project');
 
@@ -100,7 +100,7 @@ export default function Sidebar() {
                 {capitalizeWords(`${user?.userName} ${user?.userLastName}`)}
               </p>
               <p
-                className="text-primary-500 truncate"
+                className="text-primary-500 line-clamp-2"
                 title={rol && ROLEITEMNAME[rol] || 'Sin rol'}
               >
                 {rol && ROLEITEMNAME[rol] || 'Sin rol'}

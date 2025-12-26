@@ -2,7 +2,7 @@ import { useState } from "react";
 import { recoveryLink } from "../api/authService";
 import { useNavigate } from "react-router-dom";
 
-export const RecoveryLink = () => {
+const RecoveryLink = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -86,3 +86,5 @@ export const RecoveryLink = () => {
     </div>
   );
 };
+
+export default RecoveryLink

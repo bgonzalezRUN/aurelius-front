@@ -1,9 +1,10 @@
-export const dateformatter = (date: Date) => {
+export const dateformatter = (date: string) => {
+const newDate = new Date(date);
   return new Intl.DateTimeFormat('es-MX', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-  }).format(date);
+  }).format(newDate);
 };
 
 export const toISOFromDateAndTime = (dateStr: string, timeStr: string) => {
