@@ -1,135 +1,138 @@
-import React, {
+import  {
   useState,
   useRef,
   useEffect,
   type FC,
   useCallback,
 } from 'react';
-
+import { SlidersHorizontal } from 'lucide-react';
 import { BaseButton } from '.';
 
-import { SlidersHorizontal } from 'lucide-react';
 
 export interface SelectOption {
   value: string;
   label: string;
-  disabled?: boolean;
+}
+
+export interface FilterGroup {
+  id: string; // Ej: 'status' o 'categories'
+  label: string;
+  options: SelectOption[];
 }
 
 export interface MultiSelectFilterProps {
-  label: string;
-  options: SelectOption[];
-  selectedValues: string[];
-  onValuesChange: (newValues: string[]) => void;
+  groups: FilterGroup[];
+  selectedValues: Record<string, string[]>; // Ej: { status: ['active'], categories: ['1'] }
+  onValuesChange: (newValues: Record<string, string[]>) => void;
   placeholder?: string;
 }
 
 export const MultiSelectFilter: FC<MultiSelectFilterProps> = ({
-  options,
+  groups,
   selectedValues,
   onValuesChange,
-  placeholder = 'Seleccionar filtros:',
-  label
+  placeholder = 'Filtros seleccionados'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [values, setValues] = useState<string[]>(selectedValues);
+  // Estado interno local para manejar los cambios antes de "Aplicar"
+  const [localValues, setLocalValues] = useState<Record<string, string[]>>(selectedValues);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Sincronizar estado local si las props cambian externamente
+  useEffect(() => {
+    setLocalValues(selectedValues);
+  }, [selectedValues]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const getSelectedLabel = () => {
-    if (values.length === 0) return placeholder;
+  const handleChange = (groupId: string, optionValue: string, isChecked: boolean) => {
+    setLocalValues(prev => {
+      const currentGroupValues = prev[groupId] || [];
+      const newGroupValues = isChecked
+        ? [...currentGroupValues, optionValue]
+        : currentGroupValues.filter(v => v !== optionValue);
 
-    if (values.length === 1) {
-      return options.find(o => o.value === values[0])?.label;
-    }
-
-    return `${values.length} seleccionados`;
+      return {
+        ...prev,
+        [groupId]: newGroupValues
+      };
+    });
   };
 
-  const selectedLabel = getSelectedLabel();
+  const handleApply = useCallback(() => {
+    onValuesChange(localValues);
+    setIsOpen(false);
+  }, [onValuesChange, localValues]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const optionValue = e.target.value;
-    const isChecked = e.target.checked;
-
-    const newValues = isChecked
-      ? [...values, optionValue]
-      : values.filter(v => v !== optionValue);
-
-    setValues(newValues);
-  };
-
-  const handleFilter = useCallback(() => {
-    onValuesChange(values);
-  }, [onValuesChange, values]);
+  const totalSelected = Object.values(localValues).flat().length;
 
   return (
-    <div className="relative inline-block" ref={dropdownRef} title={label}>
+    <div className="relative inline-block" ref={dropdownRef}>
       <button
         type="button"
-        className="h-11 w-[51px] bg-primary-primary rounded-[10px] p-2"
+        className="h-11 w-[51px] bg-primary-primary rounded-[10px] p-2 relative"
         onClick={() => setIsOpen(prev => !prev)}
-        role="combobox"
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
       >
         <SlidersHorizontal color="white" width="100%" height="100%" />
+        {totalSelected > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center border-2 border-white">
+            {totalSelected}
+          </span>
+        )}
       </button>
 
       {isOpen && (
-        <div
-          className="absolute left-0 z-10 mt-1 w-max max-w-52 bg-white border border-gray-300 rounded-lg shadow-lg overflow-y-auto px-3 py-4 flex flex-col items-start justify-between gap-y-3 [&>*:last-child]:mx-auto"
-          role="listbox"
-          aria-multiselectable="true"
-          
-        >
-          <span className="text-gray-700">{selectedLabel}</span>
-
-          <div className="max-h-60 overflow-auto w-full">
-            {options.map(option => {
-              const isChecked = values.includes(option.value);
-
-              return (
-                <div
-                  key={option.value}
-                  className="flex items-center py-2 px-1 hover:bg-primary-primary hover:text-white text-gray-700 transition "
-                  role="option"
-                  aria-selected={isChecked}
-                >
-                  <input
-                    type="checkbox"
-                    value={option.value}
-                    checked={isChecked}
-                    onChange={handleChange}
-                    className="h-4 w-4 flex-shrink-0 text-primaryDark rounded focus:ring-primary-primary border-gray-300"
-                  />
-
-                  <label className="ml-3 text-sm font-medium cursor-pointer">
-                    {option.label}
-                  </label>
-                </div>
-              );
-            })}
+        <div className="absolute left-0 z-20 mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-xl overflow-hidden flex flex-col">
+          <div className="p-3 border-b border-gray-100 bg-gray-50">
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              {totalSelected === 0 ? placeholder : `${totalSelected} seleccionados`}
+            </span>
           </div>
 
-          <BaseButton
-            label="Aplicar filtros"
-            size="md"
-            onclick={handleFilter}
-          />
+          <div className="max-h-80 overflow-y-auto p-3 flex flex-col gap-y-6">
+            {groups.map(group => (
+              <div key={group.id} className="flex flex-col gap-y-2">
+                <h4 className="text-sm font-bold text-primary-primary border-b border-gray-100 pb-1">
+                  {group.label}
+                </h4>
+                <div className="flex flex-col">
+                  {group.options.map(option => {
+                    const isChecked = (localValues[group.id] || []).includes(option.value);
+                    return (
+                      <label 
+                        key={option.value} 
+                        className="flex items-center py-1.5 px-1 hover:bg-gray-50 rounded cursor-pointer transition"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => handleChange(group.id, option.value, e.target.checked)}
+                          className="h-4 w-4 text-primaryDark rounded border-gray-300 focus:ring-primary-primary"
+                        />
+                        <span className="ml-3 text-sm text-gray-700">{option.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="p-3 bg-gray-50 border-t border-gray-100 flex justify-center">
+            <BaseButton
+              label="Aplicar filtros"
+              size="md"
+              onclick={handleApply}
+            />
+          </div>
         </div>
       )}
     </div>

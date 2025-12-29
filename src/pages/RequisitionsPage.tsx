@@ -1,4 +1,3 @@
- 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import RequisitionList from '../components/RequisitionList';
 import RequisitionModal from '../components/RequisitionModal';
@@ -30,10 +29,10 @@ export default function RequisitionsPage() {
   const [view, setView] = useState<ViewValue>(VIEW.LIST);
   const [query, setQuery] = useState<string>('');
   const { data: categoriesData } = useCategories();
-  const [filters, setFilters] = useState<{
-    categories: string[];
-    status: string[];
-  }>({ categories: [], status: [] });
+  const [filters, setFilters] = useState<Record<string, string[]>>({
+    status: [],
+    categories: [],
+  });
   const [currentPage, setPageInUrl] = useUrlPagination('page');
   const [offset, setOffset] = useState<number>(1);
   const { isLoading, data } = useRequisitions({
@@ -44,7 +43,7 @@ export default function RequisitionsPage() {
     limit: 50,
     costCenterId: Number(costCenterId),
     search: query,
-    status: filters.status.map(filter => (filter)).join(',')
+    status: filters.status.map(filter => filter).join(','),
   });
 
   const handleCloseModal = useCallback(() => {
@@ -57,14 +56,29 @@ export default function RequisitionsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
-  const statusOptions = useMemo(() => {
-  return Object.entries(statusLabels)
-    .filter(([key]) => key !== 'REJECTED')
-    .map(([key, value]) => ({
-      value: key,
-      label: value,
-    }));
-}, []);
+  const filterGroups = useMemo(() => {
+    return [
+      {
+        id: 'status',
+        label: 'Estados',
+        options: Object.entries(statusLabels)
+          .filter(([key]) => key !== 'REJECTED')
+          .map(([key, value]) => ({
+            value: key,
+            label: value,
+          })),
+      },
+      {
+        id: 'categories',
+        label: 'Categorías',
+        options:
+          categoriesData?.map(({ categoryName, categoryId }) => ({
+            value: `${categoryId}${categoryName}`,
+            label: capitalizeWords(CATEGORYITEM[Number(categoryId)]),
+          })) ?? [],
+      },
+    ];
+  }, [categoriesData]);
 
   const handlePageChange = useCallback(
     (page: number) => {
@@ -77,11 +91,11 @@ export default function RequisitionsPage() {
     setQuery(value);
   }, []);
 
-  const handleFilter = useCallback(
-    (name: string, values: string[]) => {
-      setFilters({ ...filters, [name]: values });
+  const handleFilterChange = useCallback(
+    (newFilters: Record<string, string[]>) => {
+      setFilters(newFilters);
     },
-    [filters]
+    []
   );
 
   if (isLoading) {
@@ -123,21 +137,9 @@ export default function RequisitionsPage() {
           />
 
           <MultiSelectFilter
-            label="Filtrar por categorias"
-            options={
-              categoriesData?.map(({ categoryName, categoryId }) => ({
-                value: `${categoryId}${categoryName}`,
-                label: capitalizeWords(CATEGORYITEM[Number(categoryId)]),
-              })) ?? []
-            }
-            onValuesChange={values => handleFilter('categories', values)}
-            selectedValues={filters.categories}
-          />
-          <MultiSelectFilter
-            label="Filtrar por estado"
-            options={statusOptions}
-            onValuesChange={values => handleFilter('status', values)}
-            selectedValues={filters.status}
+            groups={filterGroups}
+            selectedValues={filters}
+            onValuesChange={handleFilterChange}
           />
           <SegmentedControl
             options={[
