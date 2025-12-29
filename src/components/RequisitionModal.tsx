@@ -164,6 +164,9 @@ export default function RequisitionModal({
       categories: data?.categories?.map(category => ({
         categoryId: getLeadingNumber(category.toString()),
       })) as Partial<Category>[],
+      costCenter: {
+        costCenterId: Number(costCenterId),
+      },
     };
     if (!isEditing) {
       createReq.mutate(dataFormated);

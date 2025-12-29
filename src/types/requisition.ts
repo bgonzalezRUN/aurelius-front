@@ -85,4 +85,5 @@ export type RequisitionFilter = {
   limit: number;
   costCenterId: number
   search: string
+  status: string
 };

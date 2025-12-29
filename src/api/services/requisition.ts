@@ -124,19 +124,24 @@ export const deleteRequisition = async (
 // Firmar requisición
 export const signRequisition = async (
   requisitionId: string,
-  user: string
+  user: string,
+  costCenterId: string
 ): Promise<Requisition> => {
   const ip = await fetch('https://api.ipify.org?format=json')
     .then(res => res.json())
     .then(data => data.ip)
     .catch(() => 'unknown');
 
-  const res = await api.patch(`/requisitions/${requisitionId}/sign`, {
-    requisitionId,
-    user,
-    ip,
-    action: 'sign',
-  });
+  const res = await api.patch(
+    `/requisitions/${requisitionId}/sign`,
+    {
+      requisitionId,
+      user,
+      ip,
+      action: 'sign',
+    },
+    { headers: { 'x-cost-center-id': costCenterId } }
+  );
 
   return res.data;
 };

@@ -93,7 +93,7 @@ export function useRequisitionMutations() {
     }: {
       requisitionId: string;
       user: string;
-    }) => signRequisition(requisitionId, user),
+    }) => signRequisition(requisitionId, user, costCenterId || ''),
     onSuccess: (_, variables) => {
       toast.success('Requisición aprobada', {
         description:

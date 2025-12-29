@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+ 
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import RequisitionList from '../components/RequisitionList';
 import RequisitionModal from '../components/RequisitionModal';
 import Restricted from '../components/Restricted';
@@ -13,7 +14,7 @@ import { capitalizeWords } from '../utils';
 import { CATEGORYITEM } from '../types/category';
 import { VIEW, type ViewValue } from '../types/view';
 import { getLeadingNumber } from '../utils/number';
-import type { Requisition } from '../types';
+import { statusLabels, type Requisition } from '../types';
 import { Pagination } from '../components/common/Pagination';
 import { useUrlPagination } from '../hooks/useUrlPagination';
 import { H1 } from '../components/common/Text';
@@ -29,15 +30,21 @@ export default function RequisitionsPage() {
   const [view, setView] = useState<ViewValue>(VIEW.LIST);
   const [query, setQuery] = useState<string>('');
   const { data: categoriesData } = useCategories();
-  const [filters, setFilters] = useState<string[]>([]);
+  const [filters, setFilters] = useState<{
+    categories: string[];
+    status: string[];
+  }>({ categories: [], status: [] });
   const [currentPage, setPageInUrl] = useUrlPagination('page');
   const [offset, setOffset] = useState<number>(1);
   const { isLoading, data } = useRequisitions({
-    categories: filters.map(filter => getLeadingNumber(filter)).join(','),
+    categories: filters.categories
+      .map(filter => getLeadingNumber(filter))
+      .join(','),
     offset,
     limit: 50,
     costCenterId: Number(costCenterId),
     search: query,
+    status: filters.status.map(filter => (filter)).join(',')
   });
 
   const handleCloseModal = useCallback(() => {
@@ -50,6 +57,15 @@ export default function RequisitionsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
+  const statusOptions = useMemo(() => {
+  return Object.entries(statusLabels)
+    .filter(([key]) => key !== 'REJECTED')
+    .map(([key, value]) => ({
+      value: key,
+      label: value,
+    }));
+}, []);
+
   const handlePageChange = useCallback(
     (page: number) => {
       if (page === currentPage || isLoading) return;
@@ -60,6 +76,13 @@ export default function RequisitionsPage() {
   const handleChange = useCallback((value: string) => {
     setQuery(value);
   }, []);
+
+  const handleFilter = useCallback(
+    (name: string, values: string[]) => {
+      setFilters({ ...filters, [name]: values });
+    },
+    [filters]
+  );
 
   if (isLoading) {
     return <Loading />;
@@ -107,8 +130,14 @@ export default function RequisitionsPage() {
                 label: capitalizeWords(CATEGORYITEM[Number(categoryId)]),
               })) ?? []
             }
-            onValuesChange={setFilters}
-            selectedValues={filters}
+            onValuesChange={values => handleFilter('categories', values)}
+            selectedValues={filters.categories}
+          />
+          <MultiSelectFilter
+            label="Filtrar por estado"
+            options={statusOptions}
+            onValuesChange={values => handleFilter('status', values)}
+            selectedValues={filters.status}
           />
           <SegmentedControl
             options={[

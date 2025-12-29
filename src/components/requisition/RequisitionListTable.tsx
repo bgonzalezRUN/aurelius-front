@@ -24,7 +24,7 @@ export default function RequisitionListTable({
 
       {data.map(r => (
         <Row numberColumns={tableHeaders.length}>
-          <RequisitionItemList requisitionId={r?.requisitionId || ''} />
+          <RequisitionItemList requisitionId={r?.requisitionId || ''} key={r?.requisitionId}/>
         </Row>
       ))}
     </div>

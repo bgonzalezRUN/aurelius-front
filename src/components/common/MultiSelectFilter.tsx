@@ -29,6 +29,7 @@ export const MultiSelectFilter: FC<MultiSelectFilterProps> = ({
   selectedValues,
   onValuesChange,
   placeholder = 'Seleccionar filtros:',
+  label
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [values, setValues] = useState<string[]>(selectedValues);
@@ -76,7 +77,7 @@ export const MultiSelectFilter: FC<MultiSelectFilterProps> = ({
   }, [onValuesChange, values]);
 
   return (
-    <div className="relative inline-block" ref={dropdownRef}>
+    <div className="relative inline-block" ref={dropdownRef} title={label}>
       <button
         type="button"
         className="h-11 w-[51px] bg-primary-primary rounded-[10px] p-2"
@@ -90,20 +91,21 @@ export const MultiSelectFilter: FC<MultiSelectFilterProps> = ({
 
       {isOpen && (
         <div
-          className="absolute left-0 z-10 mt-1 h-80 w-max max-w-52 bg-white border border-gray-300 rounded-lg shadow-lg overflow-y-auto px-3 py-4 flex flex-col items-start justify-between gap-y-3 [&>*:last-child]:mx-auto"
+          className="absolute left-0 z-10 mt-1 w-max max-w-52 bg-white border border-gray-300 rounded-lg shadow-lg overflow-y-auto px-3 py-4 flex flex-col items-start justify-between gap-y-3 [&>*:last-child]:mx-auto"
           role="listbox"
           aria-multiselectable="true"
+          
         >
           <span className="text-gray-700">{selectedLabel}</span>
 
-          <div className="max-h-60 overflow-auto">
+          <div className="max-h-60 overflow-auto w-full">
             {options.map(option => {
               const isChecked = values.includes(option.value);
 
               return (
                 <div
                   key={option.value}
-                  className="flex items-center py-2 px-1 hover:bg-primary-primary hover:text-white text-gray-700 transition"
+                  className="flex items-center py-2 px-1 hover:bg-primary-primary hover:text-white text-gray-700 transition "
                   role="option"
                   aria-selected={isChecked}
                 >

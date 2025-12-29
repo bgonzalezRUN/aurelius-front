@@ -1,4 +1,4 @@
-import { type ChangeEvent, useEffect, useState } from 'react';
+import { type ChangeEvent, useEffect, useRef, useState } from 'react';
 import { Search as SearchIcon } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -20,6 +20,17 @@ export function Search({
   disabled = false,
 }: SearchProps) {
   const [inputValue, setInputValue] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (inputValue.length > 0) {
+      inputRef.current?.focus();
+
+      const len = inputRef.current?.value.length || 0;
+      inputRef.current?.setSelectionRange(len, len);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     setInputValue(value);
@@ -58,6 +69,7 @@ export function Search({
         autoComplete="off"
         spellCheck={false}
         disabled={disabled}
+        ref={inputRef}
       />
     </div>
   );

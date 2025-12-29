@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import {
   getCostCenter,
   getCostCenterById,
@@ -13,6 +13,7 @@ export function useCostCenter(filters?: Record<string, unknown>) {
     queryKey: ['cost-center', filters],
     queryFn: () => getCostCenter(filters),
     enabled: !!user && user.isAdminCC,
+    placeholderData: keepPreviousData,
   });
 }
 
