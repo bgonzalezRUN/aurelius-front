@@ -129,7 +129,7 @@ export default function RequisitionsPage() {
             </button>
           </Restricted>
         </div>
-        <div className="flex gap-x-4 items-center flex-none">
+        <div className="flex gap-x-4 items-center flex-none [&>*:last-child]:ml-auto">
           <Search
             value={query}
             onChange={handleChange}

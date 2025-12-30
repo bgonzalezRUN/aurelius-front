@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/auth';
 import { useNavigate } from 'react-router-dom';
-import { paths } from '../../paths';
+import { paths, pathsBase } from '../../paths';
 import {
   login as loginService,
   register as registerService,
@@ -23,7 +23,7 @@ export function useAuthMutations() {
       loginStatus(data.token);
       const { isAdminCC } = jwtDecode(data.token) as User;
       if (isAdminCC) {
-        navigate(`${paths.ADMIN}/${paths.CC}`);
+        navigate(pathsBase.ADMINCC);
       } else {
         navigate(paths.BASE);
       }

@@ -1,13 +1,21 @@
-import { useNavigate, useLocation } from 'react-router-dom';
-import { paths } from '../paths';
+import { useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { paths, pathsBase } from '../paths';
 import Login from '../components/auth/Login';
 import Register from '../components/auth/Register';
 import clsx from 'clsx';
+import { useAuthStore } from '../store/auth';
 
 export default function UserAuth() {
   const navigate = useNavigate();
   const location = useLocation();
   const isLoginPage = location.pathname === paths.LOGIN;
+  const { getUser } = useAuthStore();
+  const user = getUser();
+
+  if (user && isLoginPage) {
+    const to = user?.isAdminCC ? pathsBase.ADMINCC : paths.BASE;
+    return <Navigate to={to} replace />;
+  }
 
   return (
     <div className="h-screen bg-linear-to-br from-white to-blue-50 flex items-start sm:items-center justify-center p-4">

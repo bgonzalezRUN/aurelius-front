@@ -13,7 +13,7 @@ import type { USER_BY_CC, COST_CENTER } from '../../types/costCenter';
 import type { ApiError } from '../http';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { paths } from '../../paths';
+import { pathsBase } from '../../paths';
 
 export function useCostCenterMutations() {
   const queryClient = useQueryClient();
@@ -82,7 +82,7 @@ export function useCostCenterMutations() {
   const deleteCostCenter = useMutation({
     mutationFn: deleteCC,
     onSuccess: () => {
-      navigate(`${paths.ADMIN}/${paths.CC}`);
+      navigate(pathsBase.ADMINCC);
       toast.success('Centro de costo eliminado', {
         description: 'El centro de costos se ha eliminado correctamente.',
       });

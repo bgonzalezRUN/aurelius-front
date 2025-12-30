@@ -8,5 +8,9 @@ export const paths = {
   REQUISITIONS: '/requisiciones',
   CC: 'centros-de-costos',
   UNAUTHORIZED: '/unauthorized',
-  MANAGE: 'administrar'
+  MANAGE: 'administrar',
+};
+
+export const pathsBase = {
+  ADMINCC: `${paths.ADMIN}/${paths.CC}`,
 };

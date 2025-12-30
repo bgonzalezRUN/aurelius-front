@@ -83,8 +83,13 @@ export function useRequisitionMutations() {
   const deleteReq = useMutation({
     mutationFn: (requisitionId: string) =>
       deleteRequisition(requisitionId, costCenterId || ''),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['requisitions'] }),
+    onSuccess: () => {
+      toast.success('Requisición eliminada', {
+        description:
+          'La requisición ha sido eliminada correctamente.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['requisitions'] });
+    },
   });
   const signReq = useMutation({
     mutationFn: ({

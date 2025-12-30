@@ -56,7 +56,7 @@ export default function CostCenter() {
             label="Nuevo CC"
           />
         </div>
-        <div className="flex gap-x-4 items-center flex-none">
+        <div className="flex gap-x-4 items-center flex-none justify-between">
           <Search
             value={query}
             onChange={handleChange}

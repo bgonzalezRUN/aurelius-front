@@ -5,7 +5,7 @@ interface PopupProps {
   isOpen: boolean;
   onClose: () => void;
   children: ReactNode;
-  title: string;
+  title: string | ReactNode;
 }
 
 const Dialog: FC<PopupProps> = ({ isOpen, onClose, children, title }) => {
@@ -19,9 +19,13 @@ const Dialog: FC<PopupProps> = ({ isOpen, onClose, children, title }) => {
         className="bg-white p-6 rounded-[10px] shadow-2xl max-w-3xl w-full border border-solid border-grayPrimary transform transition-all duration-300 scale-100  opacity-100  max-h-[90vh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
-       
-        <div className="flex justify-between items-center mb-4 flex-none">
-          <h2 className="text-2xl font-extrabold text-grey-100">{title}</h2>
+        <div className="flex justify-between items-center mb-4 flex-none gap-x-2">
+          {typeof title === 'string' ? (
+            <h2 className="text-2xl font-extrabold text-grey-100">{title}</h2>
+          ) : (
+            <div className="w-full flex gap-x-1 items-center text-2xl font-extrabold text-grey-100">{title}</div>
+          )}
+
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
