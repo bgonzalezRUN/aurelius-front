@@ -4,7 +4,7 @@ export default function OptionButton({
   buttonHandler, children,
   title
 }: {
-  buttonHandler: () => void;
+  buttonHandler?: () => void;
   children?: ReactNode;
   title: string;
 }) {

@@ -25,30 +25,35 @@ export default function Login() {
         Accede a tu cuenta de Aurelius
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
-        <Input
-          label="Email"
-          registration={register('userEmail', {
-            required: 'Escribe tu correo electrónico',
-            pattern: {
-              value: emailRegex,
-              message: 'Ingresa un correo válido',
-            },
-          })}
-          errorMessage={errors.userEmail?.message}
-          name="userEmail"
-          type="email"
-        />
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-col [&>*:nth-last-child(1)]:w-80 items-center justify-between h-full"
+      >
+        <div className="w-full">
+          <Input
+            label="Email"
+            registration={register('userEmail', {
+              required: 'Escribe tu correo electrónico',
+              pattern: {
+                value: emailRegex,
+                message: 'Ingresa un correo válido',
+              },
+            })}
+            errorMessage={errors.userEmail?.message}
+            name="userEmail"
+            type="email"
+          />
 
-        <Input
-          label="Contraseña"
-          registration={register('userPassword', {
-            required: 'Escribe una contraseña',
-          })}
-          errorMessage={errors.userPassword?.message}
-          name="userPassword"
-          type="password"
-        />
+          <Input
+            label="Contraseña"
+            registration={register('userPassword', {
+              required: 'Escribe una contraseña',
+            })}
+            errorMessage={errors.userPassword?.message}
+            name="userPassword"
+            type="password"
+          />
+        </div>
 
         <ErrorMessage
           errorMessage={login?.error?.userMessage}

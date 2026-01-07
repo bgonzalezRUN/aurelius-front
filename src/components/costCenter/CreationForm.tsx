@@ -9,8 +9,6 @@ import { trimValue } from '../../utils/string';
 import { useCostCenterById } from '../../api/queries/costCenterQuery';
 import { CircleAlert } from 'lucide-react';
 
-const MAX_FILE_SIZE = 10485760;
-
 export default function CreationForm({
   onClose,
   isOpen,
@@ -102,19 +100,19 @@ export default function CreationForm({
         <input
           type="hidden"
           {...register('costCenterCalender', {
-            validate: value => validateFileSize(value as File, MAX_FILE_SIZE),
+            validate: value => validateFileSize(value as File),
           })}
         />
         <input
           type="hidden"
           {...register('costCenterBudget', {
-            validate: value => validateFileSize(value as File[], MAX_FILE_SIZE),
+            validate: value => validateFileSize(value as File[]),
           })}
         />
         <input
           type="hidden"
           {...register('costCenterRules', {
-            validate: value => validateFileSize(value as File[], MAX_FILE_SIZE),
+            validate: value => validateFileSize(value as File[]),
           })}
         />
         <div className="flex gap-x-2 [&>div]:w-2/4">

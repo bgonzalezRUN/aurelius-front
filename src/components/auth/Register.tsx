@@ -1,122 +1,94 @@
-import { useForm } from 'react-hook-form';
-import type { UserRegister } from '../../types/auth';
-import { Input } from '../form';
-import { useAuthMutations } from '../../api/queries/authMutations';
-import { emailRegex } from '../../types/regex';
-import ErrorMessage from '../common/ErrorMessage';
+import clsx from 'clsx';
+import { TruckIcon, UsersIcon } from 'lucide-react';
+import { useCallback, useState, type ReactNode } from 'react';
+import CollaboratorForm from './CollaboratorForm';
 import { BaseButton } from '../common';
-import { useEffect } from 'react';
-import { trimValue } from '../../utils/string';
+import SupplierForm from './SupplierForm';
 
-interface UserRegisterProps extends UserRegister {
-  confirmPassword: string;
-}
+type Role = 'user' | 'vendor';
 
 export default function Register() {
-  const {
-    register,
-    handleSubmit,
-    watch,
-    reset,
-    formState: { errors, isValid },
-  } = useForm<UserRegisterProps>({ mode: 'onChange' });
-  const { register: userRegister } = useAuthMutations();
+  const [role, setRole] = useState<Role | null>(null);
+  const [showForm, setShowForm] = useState<boolean>(false);
 
-  const onSubmit = async (data: UserRegisterProps) => {
-    const newData = {
-      userName: data.userName,
-      userLastName: data.userLastName,
-      userEmail: data.userEmail,
-      userPassword: data.userPassword,
-    };
-    userRegister.mutate(newData);
-  };
+  const registerType: {
+    roleType: Role;
+    icon: ReactNode;
+    type: string;
+    description: string;
+  }[] = [
+    {
+      roleType: 'user',
+      icon: <UsersIcon />,
+      type: 'Soy colaborador',
+      description: 'Gestionar proyectos y materiales internos',
+    },
+    {
+      roleType: 'vendor',
+      icon: <TruckIcon />,
+      type: 'Soy proveedor',
+      description: 'Ofrecer materiales',
+    },
+  ];
 
-  useEffect(() => {
-    if (userRegister.isSuccess) {
-      reset();
-    }
-  }, [reset, userRegister.isSuccess]);
+  const goBackHandler = useCallback(() => {
+    setShowForm(current => !current);
+  }, []);
 
-  const passwordValue = watch('userPassword');
+  if (showForm) {
+    return (
+      <>
+        {role === 'user' ? (
+          <CollaboratorForm goBack={goBackHandler} />
+        ) : (
+          <SupplierForm goBack={goBackHandler} />
+        )}
+      </>
+    );
+  }
 
   return (
-    <>
-      <h2 className="text-xl font-semibold text-slate-800">Crear cuenta</h2>
-      <p className="text-slate-500 text-sm mb-5">Crea una cuenta de Aurelius</p>
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
-        <Input
-          label="Nombre"
-          registration={register('userName', {
-            required: 'Escribe tu nombre',
-            setValueAs: trimValue,
-          })}
-          errorMessage={errors.userName?.message}
-          name="userName"
-        />
-        <Input
-          label="Apellido"
-          registration={register('userLastName', {
-            required: 'Escribe tu apellido',
-            setValueAs: trimValue,
-          })}
-          errorMessage={errors.userLastName?.message}
-          name="userLastName"
-        />
-        <Input
-          label="Email"
-          registration={register('userEmail', {
-            required: 'Escribe tu correo electrónico',
-            pattern: {
-              value: emailRegex,
-              message: 'Ingresa un correo válido',
-            },
-          })}
-          errorMessage={errors.userEmail?.message}
-          name="userEmail"
-          type="email"
-        />
-        <Input
-          label="Contraseña"
-          registration={register('userPassword', {
-            required: 'Escribe tu contraseña',
-            setValueAs: trimValue,
-            minLength: {
-              value: 8,
-              message: 'La contraseña debe contener al menos 8 caracteres',
-            },
-          })}
-          errorMessage={errors.userPassword?.message}
-          name="userPassword"
-          type="password"
-        />
-        <Input
-          label="Confirmar contraseña"
-          registration={register('confirmPassword', {
-            required: 'Escribe tu contraseña',
-            setValueAs: trimValue,
-            validate: value =>
-              value === passwordValue || 'Las contraseñas no coinciden',
-          })}
-          errorMessage={errors.confirmPassword?.message}
-          name="confirmPassword"
-          type="password"
-          min={8}
-        />
-
-        <ErrorMessage
-          errorMessage={userRegister?.error?.userMessage}
-          name="register-form"
-        />
-        <BaseButton
-          label="Registrarme"
-          size="md"
-          type="submit"
-          variant="primaryDark"
-          disabled={!isValid}
-          isLoading={userRegister.isPending}
-        />
-      </form>
-    </>
+    <div className="flex flex-col h-full justify-around flex-wrap [&>*:last-child]:w-80 items-center ">
+      <h2 className="text-xl font-semibold text-primaryDark text-center">
+        ¿Cómo vas a usar Aurelius?
+      </h2>
+      <div className="flex justify-around h-3/4 items-center flex-wrap gap-3 w-full">
+        {registerType.map(({ roleType, icon, type, description }) => (
+          <button
+            key={roleType}
+            onClick={() => setRole(roleType)}
+            className={clsx(
+              'flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all duration-200 text-center max-w-xs w-full h-full',
+              'hover:border-primaryHover hover:bg-grey-200',
+              role === roleType
+                ? 'border-primaryDark bg-teal-50 shadow-md'
+                : 'border-slate-200 bg-white shadow-sm'
+            )}
+          >
+            <div
+              className={clsx(
+                'p-3 rounded-full mb-4',
+                role === roleType
+                  ? 'bg-primaryDark text-white'
+                  : 'bg-slate-100 text-slate-600'
+              )}
+            >
+              {icon}
+            </div>
+            <h3 className="font-bold text-lg text-primaryDark">{type}</h3>
+            <p className="text-sm text-grey-700 font-semibold mt-2">
+              {description}
+            </p>
+          </button>
+        ))}
+      </div>
+      <BaseButton
+        label="Continuar"
+        size="md"
+        type="submit"
+        variant="primaryDark"
+        onclick={() => setShowForm(true)}
+      />
+    </div>
   );
 }

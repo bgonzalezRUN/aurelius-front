@@ -154,7 +154,7 @@ export const historyRequisition = async (
 };
 
 export const getCategories = async (): Promise<Category[]> => {
-  const res = await api.get(`/requisition-category/`);
+  const res = await api.get(`/category/`);
 
   return res.data;
 };

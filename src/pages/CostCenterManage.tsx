@@ -1,11 +1,11 @@
 import { UserStar } from 'lucide-react';
-import { H1 } from '../../components/common/Text';
-import { useCostCenterById } from '../../api/queries/costCenterQuery';
+import { H1 } from '../components/common/Text';
+import { useCostCenterById } from '../api/queries/costCenterQuery';
 import { useParams } from 'react-router-dom';
-import About from '../../components/costCenter/About';
+import About from '../components/costCenter/About';
 import { useCallback, useState } from 'react';
-import Team from '../../components/costCenter/Team';
-import Tabs from '../../components/common/Tabs';
+import Team from '../components/costCenter/Team';
+import Tabs from '../components/common/Tabs';
 
 export default function CostCenterManage() {
   const { costCenterId } = useParams();

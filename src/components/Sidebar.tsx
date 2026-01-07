@@ -1,4 +1,4 @@
-import { FolderRoot, LogOut } from 'lucide-react';
+import { FolderRoot, LogOut, Package } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 import { capitalizeWords } from '../utils';
 import { BaseButton } from './common';
@@ -17,7 +17,7 @@ export default function Sidebar() {
   const user = getUser();
   const { rol } = usePermission();
   const navigate = useNavigate();
-  const { data } = useCostCenter({ limit: 50});
+  const { data } = useCostCenter({ limit: 50 });
   const [idProject, setProjectId] = useState<number | null>(null);
   const [optionOpen, setOptionOpen] = useState<Options | ''>('project');
 
@@ -62,6 +62,16 @@ export default function Sidebar() {
               <BaseButton
                 label={
                   <>
+                    <Package />
+                    Proveedores
+                  </>
+                }
+                size="md"
+                onclick={() => navigate(paths.SUPPLIER)}
+              />
+              <BaseButton
+                label={
+                  <>
                     <FolderRoot />
                     Proyectos
                   </>
@@ -101,9 +111,9 @@ export default function Sidebar() {
               </p>
               <p
                 className="text-primary-500 line-clamp-2"
-                title={rol && ROLEITEMNAME[rol] || 'Sin rol'}
+                title={(rol && ROLEITEMNAME[rol]) || 'Sin rol'}
               >
-                {rol && ROLEITEMNAME[rol] || 'Sin rol'}
+                {(rol && ROLEITEMNAME[rol]) || 'Sin rol'}
               </p>
             </div>
           </div>

@@ -1,6 +1,7 @@
+const MAX_FILE_SIZE = 10485760;
+
 export const validateFileSize = (
-  value: File | File[] | FileList,
-  MAX_FILE_SIZE: number
+  value: File | File[] | FileList,  
 ) => {
   if (!value) return true;
 

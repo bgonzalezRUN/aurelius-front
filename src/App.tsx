@@ -11,16 +11,15 @@ import { Toaster } from 'sonner';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import { queryClient } from './api/queryClient';
-
+import Supplier from './pages/Supplier';
+import SupplierDetails from './pages/SupplierDetails';
 
 const RequisitionsPage = lazy(() => import('./pages/RequisitionsPage'));
 const RecoveryLink = lazy(() => import('./pages/RecoveryLink'));
 const RecoveryPassword = lazy(() => import('./pages/RecoveryPassword'));
 const UserAuth = lazy(() => import('./pages/UserAuth'));
 const CostCenter = lazy(() => import('./pages/CostCenter'));
-const CostCenterManage = lazy(
-  () => import('./pages/costCenter/CostCenterManage')
-);
+const CostCenterManage = lazy(() => import('./pages/CostCenterManage'));
 
 export default function App() {
   return (
@@ -29,7 +28,7 @@ export default function App() {
         <Suspense fallback={<Loading />}>
           <Routes>
             <Route path={paths.LOGIN} element={<UserAuth />} />
-            <Route path={paths.REGISTER} element={<UserAuth />} />
+            <Route path={paths.REGISTER} element={<UserAuth />} />           
             <Route path={paths.RECOVER_PASSWORD} element={<RecoveryLink />} />
             <Route path={paths.NEW_PASSWORD} element={<RecoveryPassword />} />
             <Route path={paths.UNAUTHORIZED} element={<Unauthorized />} />
@@ -41,6 +40,8 @@ export default function App() {
                   path={`:costCenterId${paths.REQUISITIONS}`}
                   element={<RequisitionsPage />}
                 />
+                <Route path={paths.SUPPLIER}  element={<Supplier />} />
+                <Route  path={`${paths.SUPPLIER}/:supplierId`}  element={<SupplierDetails />} />
               </Route>
             </Route>
 

@@ -2,10 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-
 /* Se aplicará a todos los elementos con scroll en navegadores WebKit */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -21,3 +21,11 @@
   background: #8dc3cc; /* Color al pasar el ratón */
 }
 
+.no-scrollbar {
+  -ms-overflow-style: none;     /* IE y Edge */
+  scrollbar-width: none;        /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;                /* Chrome, Safari */
+}
