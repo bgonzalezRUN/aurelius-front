@@ -1,3 +1,4 @@
+import { Fragment, useCallback, useMemo, useState } from 'react';
 import {
   ArchiveRestore,
   Check,
@@ -11,7 +12,6 @@ import { useCostCenterById } from '../../api/queries/costCenterQuery';
 import clsx from 'clsx';
 import { BaseButton } from '../common';
 import type { ButtonVariant } from '../common/BaseButton';
-import { Fragment, useCallback, useMemo, useState } from 'react';
 import ConfirmActions, { type typeAction } from './ConfirmActions';
 import CreationForm from './CreationForm';
 import { StatusBadge } from './Status';
@@ -42,8 +42,7 @@ export default function About({ id }: { id: string }) {
         details: rules || [],
         disable: !rules?.length,
       },
-    ];
-    return [];
+    ];    
   }, [data]);
 
   const optionsHandler = () => [

@@ -26,7 +26,7 @@ export function usePermission() {
     [getCC?.permissions, user]
   );
 
-  const rol = user?.isAdminCC ? 'ACC' : getCC?.role;
+  const rol = user?.role;
 
   return { hasPermission, rol };
 }

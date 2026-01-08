@@ -12,7 +12,7 @@ export function useCostCenter(filters?: Record<string, unknown>) {
   return useQuery({
     queryKey: ['cost-center', filters],
     queryFn: () => getCostCenter(filters),
-    enabled: !!user && user.isAdminCC,
+    enabled: !!user && user.userType === 'ADMIN',
     placeholderData: keepPreviousData,
   });
 }

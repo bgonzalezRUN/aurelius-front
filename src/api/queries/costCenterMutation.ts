@@ -82,7 +82,7 @@ export function useCostCenterMutations() {
   const deleteCostCenter = useMutation({
     mutationFn: deleteCC,
     onSuccess: () => {
-      navigate(pathsBase.ADMINCC);
+      navigate(pathsBase.ACC);
       toast.success('Centro de costo eliminado', {
         description: 'El centro de costos se ha eliminado correctamente.',
       });

@@ -1,27 +1,30 @@
-import { useMemo } from 'react';
-import type { Supplier} from '../../types/supplier';
-import ListWrap from '../common/ListWrap';
-import { Eye } from 'lucide-react';
-import { OptionButton } from '../common';
-import { paths } from '../../paths';
-import { NavLink } from 'react-router-dom';
+import type { SupplierDTO } from '../../types/supplier';
+import { Header, Row } from '../common/ListWrap';
+import WithoutData from '../common/WithoutData';
+import SupplierItem from './SupplierItem';
 
 const tableHeaders = ['Nombre', 'Dirección', 'Estado', 'Ver más'];
 
-export default function SupplierList({ data }: { data: Supplier[] }) {
-  const content = useMemo(() => {
-    if (!data) return [];
-    return data.map(value => [
-      <p className="text-secondary font-bold">{value.bankName}</p>,
-      <p className="text-grey-primary font-bold">{value.fiscalAddress}</p>,
-      // <p className="text-grey-primary font-bold">{value}</p>,
-      <NavLink to={`${paths.SUPPLIER}/${value.id}`}>
-        <OptionButton title="Ver detalles">
-          <Eye className="text-grey-primary" />
-        </OptionButton>
-      </NavLink>,
-    ]);
-  }, [data]);
+export default function SupplierList({
+  data,
+}: {
+  data: Partial<SupplierDTO[]>;
+}) {
+  if (!data || data.length === 0) {
+    return <WithoutData message="No hay proveedores" />;
+  }
+  return (
+    <div className="w-full space-y-2">
+      <Header tableHeaders={tableHeaders} />
 
-  return <ListWrap tableHeaders={tableHeaders} content={content} />;
+      {data.map(supplier => (
+        <Row numberColumns={tableHeaders.length}>
+          <SupplierItem
+            supplierId={supplier?.supplierId || ''}
+            key={supplier?.supplierId}
+          />
+        </Row>
+      ))}
+    </div>
+  );
 }

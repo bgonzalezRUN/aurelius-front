@@ -46,7 +46,7 @@ export default function CCItem({
     },
   ];
 
-  const internalRoutes = user?.isAdminCC
+  const internalRoutes = user?.role === 'ACC'
     ? internalRoutesAdmin
     : internalRoutesNoAdmin;
 

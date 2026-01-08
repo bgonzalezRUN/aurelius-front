@@ -21,9 +21,10 @@ export function useAuthMutations() {
     mutationFn: loginService,
     onSuccess: data => {
       loginStatus(data.token);
-      const { isAdminCC } = jwtDecode(data.token) as User;
-      if (isAdminCC) {
-        navigate(pathsBase.ADMINCC);
+      const { userType, role } = jwtDecode(data.token) as User;         
+      if (userType === 'ADMIN' && role in pathsBase) {
+        const path = pathsBase[role as keyof typeof pathsBase]
+        navigate(path);
       } else {
         navigate(paths.BASE);
       }

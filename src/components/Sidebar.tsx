@@ -21,8 +21,7 @@ export default function Sidebar() {
   const [idProject, setProjectId] = useState<number | null>(null);
   const [optionOpen, setOptionOpen] = useState<Options | ''>('project');
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
+  const handleLogout = () => {    
     logout();
     navigate(paths.LOGIN);
   };
@@ -41,7 +40,7 @@ export default function Sidebar() {
     [idProject]
   );
 
-  const centerCosts = user?.isAdminCC ? data?.data : user?.costCenter;
+  const centerCosts = user?.userType === 'ADMIN' ? data?.data : user?.costCenter;
 
   return (
     <>

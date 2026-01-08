@@ -7,10 +7,13 @@ export type CC_FROM_USER = {
   role: RoleName;
 };
 
+export type User_Type = 'EMPLOYEE' | 'SUPPLIER' | 'ADMIN';
+
 export interface User {
   userName: string;
   userLastName: string;
   userEmail: string;
-  isAdminCC: boolean;
-  costCenter: CC_FROM_USER[]; 
+  userType: User_Type;
+  costCenter: CC_FROM_USER[];
+  role: RoleName;
 }

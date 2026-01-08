@@ -1,27 +1,36 @@
-export const ROLES = {
-  RFR: [
-    'create:requisition',
-    'read:requisition',
-    'update:requisition',
-    'delete:requisition',
-    'submit:requisition',
-  ],
-  GO: [
-    'create:requisition',
-    'read:requisition',
-    'update:requisition',
-    'delete:requisition',
-    'reject:requisition',
-    'validate:requisition',
-  ],
-  DO: ['read:requisition', 'approve:requisition', 'reject:requisition'],
-  AC: ['read:requisition', 'send_to_purchase:requisition'],
-  ACC: [],
-  'QA/GGT': [],
-} as const;
+export type RoleName = 'RFR' | 'GO' | 'DO' | 'ACO' | 'ACC' | 'QA/GGT';
 
-export type RoleName = keyof typeof ROLES;
-export type Permission = (typeof ROLES)[RoleName][number];
+export type Permission =
+  | 'unlock:all'
+  | 'create:requisition'
+  | 'read:requisition'
+  | 'update:requisition'
+  | 'delete:requisition'
+  | 'submit:requisition'
+  | 'validate:requisition'
+  | 'approve:requisition'
+  | 'reject:requisition'
+  | 'send:to:purchase:requisition'
+  | 'create:cost:center'
+  | 'read:cost:center'
+  | 'update:cost:center'
+  | 'delete:cost:center'
+  | 'open:cost:center'
+  | 'close:cost:center'
+  | 'freeze:cost:center'
+  | 'create:user:cost:center'
+  | 'read:user:cost:center'
+  | 'update:user:cost:center'
+  | 'delete:user:cost:center'
+  | 'create:supplier'
+  | 'read:supplier'
+  | 'update:supplier'
+  | 'delete:supplier'
+  | 'create:user'
+  | 'read:user'
+  | 'update:user'
+  | 'delete:user'
+  | 'assign:role';
 
 export const ROLEITEM: Record<
   number,
@@ -38,7 +47,7 @@ export const ROLEITEMNAME: Record<RoleName, string> = {
   RFR: 'Solicitante',
   GO: 'Gerente de obra',
   DO: 'Director de obra',
-  AC: 'Auxiliar de compras',
+  ACO: 'Administrador de compras',
   ACC: 'Administrador de CC',
   'QA/GGT': 'QA/GGT',
 };

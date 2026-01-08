@@ -1,6 +1,6 @@
 import type { Requisition } from '../../types';
 import { Header, Row } from '../common/ListWrap';
-import RequisitionItemList from './RequisitionListView';
+import RequisitionItemList from './RequisitionItemList';
 
 export default function RequisitionListTable({
   data,

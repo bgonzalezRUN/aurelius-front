@@ -3,24 +3,16 @@ import { useAuthStore } from '../store/auth';
 import { paths } from '../paths';
 import type { RoleName } from '../types/roles';
 
-const ProtectedRoute = ({
-  onlyAdmin,
-}: {
-  allowedRoles?: RoleName[];
-  onlyAdmin: boolean;
-}) => {
+const ProtectedRoute = ({ allowedRoles }: { allowedRoles: RoleName[] }) => {
   const { getUser } = useAuthStore();
   const user = getUser();
 
   if (!user) {
     return <Navigate to={paths.LOGIN} replace />;
-  } 
-
-  if (onlyAdmin && !user.isAdminCC) {
-    return <Navigate to={paths.UNAUTHORIZED} replace />;
   }
+  if (!allowedRoles) return null;
 
-  if (!onlyAdmin && user.isAdminCC) {
+  if (!allowedRoles?.includes(user.role)) {
     return <Navigate to={paths.UNAUTHORIZED} replace />;
   }
 

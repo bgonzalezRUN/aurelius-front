@@ -18,7 +18,6 @@ import clsx from 'clsx';
 import { labelClasses } from './styles';
 import ErrorMessage from '../common/ErrorMessage';
 
-
 export interface SelectOption {
   value: string;
   label: string;
@@ -34,6 +33,7 @@ export interface FormSingleSelectDropdownProps<TFieldValues extends FieldValues>
   currentValue: string;
   errorMessage?: string;
   placeholder?: string;
+  onChange?: () => void;
 }
 
 export const Select = <TFieldValues extends FieldValues>({
@@ -46,9 +46,10 @@ export const Select = <TFieldValues extends FieldValues>({
   errorMessage,
   placeholder = 'Selecciona una opción...',
   disabled = false,
+  onChange,
 }: React.PropsWithChildren<FormSingleSelectDropdownProps<TFieldValues>>) => {
   const [isOpen, setIsOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null); 
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const selectedLabel =
     options.find(o => o.value === currentValue)?.label || placeholder;
@@ -57,8 +58,11 @@ export const Select = <TFieldValues extends FieldValues>({
     (value: string) => {
       setValue(name, value as any, { shouldValidate: true, shouldDirty: true });
       setIsOpen(false);
+      if(onChange){
+        onChange()
+      }
     },
-    [name, setValue]
+    [name, onChange, setValue]
   );
 
   useEffect(() => {

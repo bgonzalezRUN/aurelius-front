@@ -1,9 +1,22 @@
-import { useForm, type Path } from 'react-hook-form';
-import { FileInput, Input, MultiSelect, Select, type FileSelection } from '../form';
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react';
+import { Controller, useFieldArray, useForm, type Path } from 'react-hook-form';
+import {
+  FileInput,
+  Input,
+  MultiSelect,
+  Select,
+  type FileSelection,
+} from '../form';
 import { emailRegex, onlyNumberRegex } from '../../types/regex';
+import { NumericFormat } from 'react-number-format';
 import ErrorMessage from '../common/ErrorMessage';
 import { BaseButton, OptionButton } from '../common';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { trimValue } from '../../utils/string';
 import { ArrowLeft } from 'lucide-react';
 import { useSupplierMutations } from '../../api/queries/supplierMutations';
@@ -14,6 +27,7 @@ import { capitalizeWords } from '../../utils';
 import { CATEGORYITEM } from '../../types/category';
 import { validateFileSize } from '../../utils/validateFileSize';
 import { useGetBanks } from '../../api/queries/banksQueries';
+import { PAYMENT_TERMS_TYPE_ITEM } from '../../types/paymentTerms';
 
 interface SupplierDTOProps extends SupplierDTO {
   confirmPassword: string;
@@ -23,7 +37,8 @@ type idSteps =
   | 'general_information'
   | 'contact'
   | 'bank_information'
-  | 'documents';
+  | 'documents'
+  | 'payment_terms';
 
 const steps: { id: idSteps; label: string; description: string }[] = [
   {
@@ -37,8 +52,42 @@ const steps: { id: idSteps; label: string; description: string }[] = [
     label: 'Información bancaria',
     description: 'Datos bancarios',
   },
-  { id: 'documents', label: 'Documentos', description: 'Acta constitutiva, Constancia situación fiscal, Poderes legales, Reformas estatutarias, Opinion cumplimiento SAT, Contrato' },
+  {
+    id: 'documents',
+    label: 'Documentos',
+    description:
+      'Acta constitutiva, Constancia situación fiscal, Poderes legales, Reformas estatutarias, Opinion cumplimiento SAT, Contrato',
+  },
+  {
+    id: 'payment_terms',
+    label: 'Condiciones de pago',
+    description: 'Condiciones de pago',
+  },
 ];
+
+const TERM_CONFIG = {
+  ADVANCE_PAYMENT: {
+    adv: 100,
+    credit: 0,
+    balance: 0,
+    days: 0,
+    disableAdv: true,
+  },
+  OUTSTANDING_BALANCE: {
+    adv: 100,
+    credit: 0,
+    balance: 0,
+    days: 0,
+    disableAdv: true,
+  },
+  CREDIT: { adv: 0, balance: 0, disableAdv: true },
+  ADVANCE_PAYMENT_OUTSTANDING_BALANCE: {
+    credit: 0,
+    days: 0,
+    disableAdv: false,
+  },
+  ADVANCE_PAYMENT_CREDIT: { adv: 0, balance: 0, disableAdv: false },
+};
 
 export default function SupplierForm({ goBack }: { goBack: () => void }) {
   const {
@@ -48,13 +97,24 @@ export default function SupplierForm({ goBack }: { goBack: () => void }) {
     watch,
     reset,
     setValue,
+    control,
     formState: { errors, isSubmitting },
-  } = useForm<SupplierDTOProps>({ mode: 'onChange', shouldUnregister: false });
-
+  } = useForm<SupplierDTOProps>({
+    mode: 'onChange',
+    shouldUnregister: false,
+    defaultValues: {
+      paymentTerms: [{ paymentTermType: undefined }],
+    },
+  });
+  const { fields } = useFieldArray({
+    control,
+    name: 'paymentTerms',
+  });
   const { data: banks } = useGetBanks();
   const { createSupplier } = useSupplierMutations();
   const { data: categoriesData } = useCategories();
   const [currentStep, setCurrentStep] = useState<number>(0);
+  const { supplierPassword, categories, bankName, paymentTerms } = watch();
 
   useEffect(() => {
     if (createSupplier.isSuccess) {
@@ -69,16 +129,13 @@ export default function SupplierForm({ goBack }: { goBack: () => void }) {
     createSupplier.mutate(supplierData);
   };
 
-  const { supplierPassword, categories, bankName } = watch();
-
-
   const errorsValidations: Record<idSteps, Path<SupplierDTOProps>[]> = {
     general_information: [
       'companyName',
       'rfc',
       'categories',
       'businessTransaction',
-      'fiscalAddress'
+      'fiscalAddress',
     ],
     contact: [
       'supplierPhone',
@@ -89,6 +146,7 @@ export default function SupplierForm({ goBack }: { goBack: () => void }) {
     ],
     bank_information: ['bankName', 'bankAccount', 'registeredName'],
     documents: ['supplierFile'],
+    payment_terms: ['paymentTerms'],
   };
 
   const handleNext = async () => {
@@ -124,6 +182,7 @@ export default function SupplierForm({ goBack }: { goBack: () => void }) {
     },
     [setValue]
   );
+
   const stepByStepForm: Record<idSteps, ReactNode> = {
     general_information: (
       <div
@@ -258,10 +317,12 @@ export default function SupplierForm({ goBack }: { goBack: () => void }) {
             required: 'Selecciona el banco',
           })}
           errorMessage={errors.bankName?.message}
-          options={banks?.map(({ code, name }) => ({
-            value: code,
-            label: name.toUpperCase(),
-          })) ?? []}
+          options={
+            banks?.map(({ code, name }) => ({
+              value: code,
+              label: name.toUpperCase(),
+            })) ?? []
+          }
           setValue={setValue}
           currentValue={bankName}
         />
@@ -300,12 +361,232 @@ export default function SupplierForm({ goBack }: { goBack: () => void }) {
         />
       </>
     ),
+    payment_terms: (
+      <div
+        className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-x-2 md:gap-y-0"
+        key="step-5"
+      >
+        {fields.map((field, index) => {
+          const currentType = paymentTerms[index].paymentTermType;
+          return (
+            <Fragment key={field.id}>
+              <Select
+                name={`paymentTerms.${index}.paymentTermType`}
+                label="Tipo de condición"
+                registration={register(
+                  `paymentTerms.${index}.paymentTermType`,
+                  {
+                    required: 'Selecciona un tipo de condición',
+                  }
+                )}
+                errorMessage={
+                  errors?.paymentTerms?.[index]?.paymentTermType?.message
+                }
+                options={
+                  Object.entries(PAYMENT_TERMS_TYPE_ITEM).map(
+                    ([key, value]) => ({
+                      value: key,
+                      label: value,
+                    })
+                  ) ?? []
+                }
+                setValue={setValue}
+                currentValue={currentType}
+                onChange={() => {
+                  const config =
+                    TERM_CONFIG[
+                      paymentTerms[index]
+                        .paymentTermType as keyof typeof TERM_CONFIG
+                    ];
+
+                  if (config) {
+                    if ('adv' in config)
+                      setValue(
+                        `paymentTerms.${index}.advancePercentage`,
+                        config.adv
+                      );
+                    if ('days' in config)
+                      setValue(`paymentTerms.${index}.creditDays`, config.days);
+                    if ('balance' in config)
+                      setValue(
+                        `paymentTerms.${index}.balancePercentage`,
+                        config.balance
+                      );
+                    if ('credit' in config)
+                      setValue(
+                        `paymentTerms.${index}.creditPercentage`,
+                        config.credit
+                      );
+                  }
+                }}
+              />
+              <Controller
+                control={control}
+                name={`paymentTerms.${index}.advancePercentage`}
+                rules={{
+                  validate: val => {
+                    if (
+                      (currentType === 'ADVANCE_PAYMENT' ||
+                        currentType === 'ADVANCE_PAYMENT_CREDIT' ||
+                        currentType === 'OUTSTANDING_BALANCE') &&
+                      (!val || val <= 0)
+                    ) {
+                      return 'El porcentaje anticipado no puede ser 0';
+                    }
+                    return true;
+                  },
+
+                  max: { value: 100, message: 'Máximo 100' },
+                }}
+                render={({ field: { onChange, value, ref, name } }) => (
+                  <NumericFormat
+                    name={name}
+                    value={value}
+                    onValueChange={vals => {
+                      const val = vals.floatValue ?? 0;
+                      onChange(val);
+                      if (
+                        currentType === 'ADVANCE_PAYMENT' ||
+                        currentType === 'ADVANCE_PAYMENT_OUTSTANDING_BALANCE'
+                      ) {
+                        setValue(
+                          `paymentTerms.${index}.balancePercentage`,
+                          Math.max(0, 100 - val)
+                        );
+                      }
+                      if (currentType === 'ADVANCE_PAYMENT_CREDIT') {
+                        setValue(
+                          `paymentTerms.${index}.creditPercentage`,
+                          Math.max(0, 100 - val)
+                        );
+                        setValue(
+                          `paymentTerms.${index}.balancePercentage`,
+                          Math.max(0, 100 - val)
+                        );
+                      }
+                    }}
+                    getInputRef={ref}
+                    customInput={Input}
+                    suffix="%"
+                    label={
+                      currentType === 'ADVANCE_PAYMENT' ||
+                      currentType === 'ADVANCE_PAYMENT_OUTSTANDING_BALANCE' || currentType === 'ADVANCE_PAYMENT_CREDIT'
+                        ? 'Pago anticipado'
+                        : 'Pago despues de entrega'
+                    }
+                    disabled={TERM_CONFIG[currentType]?.disableAdv}
+                    errorMessage={
+                      errors?.paymentTerms?.[index]?.advancePercentage?.message
+                    }
+                  />
+                )}
+              />
+
+              <Controller
+                control={control}
+                name={`paymentTerms.${index}.balancePercentage`}
+                render={({ field: { onChange, name, value, ref } }) => (
+                  <NumericFormat
+                    name={name}
+                    value={value}
+                    onValueChange={vals => onChange(vals.floatValue)}
+                    getInputRef={ref}
+                    customInput={Input}
+                    suffix="%"
+                    decimalScale={2}
+                    allowNegative={false}
+                    label="Porcentaje pendiente"
+                    errorMessage={
+                      errors?.paymentTerms?.[index]?.balancePercentage?.message
+                    }
+                    disabled
+                  />
+                )}
+              />
+
+              <Controller
+                control={control}
+                name={`paymentTerms.${index}.creditPercentage`}
+                rules={{
+                  validate: val => {
+                    if (
+                      (currentType === 'CREDIT' ||
+                        currentType === 'ADVANCE_PAYMENT_CREDIT') &&
+                      (!val || val <= 0)
+                    ) {
+                      return 'El porcentaje de crédito debe ser mayor que 0';
+                    }
+                    return true;
+                  },
+
+                  max: { value: 100, message: 'Máximo 100' },
+                }}
+                render={({ field: { onChange, name, value, ref } }) => (
+                  <NumericFormat
+                    name={name}
+                    value={value}
+                    onValueChange={vals => onChange(vals.floatValue)}
+                    getInputRef={ref}
+                    customInput={Input}
+                    suffix="%"
+                    decimalScale={2}
+                    allowNegative={false}
+                    label="Porcentaje de crédito"
+                    errorMessage={
+                      errors?.paymentTerms?.[index]?.creditPercentage?.message
+                    }
+                    disabled={currentType !== 'CREDIT'}
+                  />
+                )}
+              />
+
+              <Controller
+                control={control}
+                name={`paymentTerms.${index}.creditDays`}
+                rules={{
+                  validate: val => {
+                    if (
+                      (currentType === 'CREDIT' ||
+                        currentType === 'ADVANCE_PAYMENT_CREDIT') &&
+                      (!val || val <= 0)
+                    ) {
+                      return 'En crédito los días deben ser mayores a 0';
+                    }
+                    return true;
+                  },
+                }}
+                render={({ field: { onChange, name, value, ref } }) => (
+                  <NumericFormat
+                    name={name}
+                    value={value}
+                    onValueChange={vals => onChange(vals.floatValue)}
+                    getInputRef={ref}
+                    customInput={Input}
+                    decimalScale={0}
+                    allowNegative={false}
+                    label="Días de crédito"
+                    errorMessage={
+                      errors?.paymentTerms?.[index]?.creditDays?.message
+                    }
+                    disabled={
+                      currentType === 'ADVANCE_PAYMENT_OUTSTANDING_BALANCE' ||
+                      currentType === 'OUTSTANDING_BALANCE' ||
+                      currentType === 'ADVANCE_PAYMENT'
+                    }
+                  />
+                )}
+              />
+            </Fragment>
+          );
+        })}
+      </div>
+    ),
   };
 
   const isLastStep = currentStep === steps.length - 1;
   const isCurrentStepInvalid = () => {
     const fieldsInStep = errorsValidations[steps[currentStep].id];
-    return fieldsInStep.some(field => !!errors[field as keyof typeof errors]);
+    return fieldsInStep?.some(field => !!errors[field as keyof typeof errors]);
   };
 
   return (
