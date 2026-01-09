@@ -45,7 +45,7 @@ export default function RequisitionCard({
             )}
         </div>
 
-        {data.sendTo.length ? (
+        {data?.sendTo?.length ? (
           <div className="text-xs text-gray-600 mb-2 flex justify-between">
             <span className="font-medium">
               {data.sendTo.length > 1

@@ -27,8 +27,8 @@ export default function RequisitionItemList({
     ),
     arrivalWindows: (
       <span className={baseStyles}>
-        {fmtTime(data.arrivalWindows[0].start)} –{' '}
-        {fmtTime(data.arrivalWindows[0].end)}
+        {fmtTime(data?.arrivalWindows?.[0]?.start)} –{' '}
+        {fmtTime(data?.arrivalWindows?.[0]?.end)}
       </span>
     ),
     category: (
