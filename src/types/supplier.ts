@@ -52,6 +52,8 @@ export type SupplierDTO = {
   supplierId: string;
   supplierStatus: StatusSupplier;
   paymentTerms: PaymentTerms[];
+  updatedAt?: string
+  createdAt?: string 
 };
 
 export type KeyofSupplier = keyof SupplierDTO;

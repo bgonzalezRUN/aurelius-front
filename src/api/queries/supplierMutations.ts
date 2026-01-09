@@ -4,6 +4,7 @@ import {
   deleteSupplier as deleteSupplierFn,
   type StatusChange,
   changeStatusSupplier as changeStatus,
+  updateSupplier as updateSupplierFn,
 } from '../services/supplier';
 import type { ApiError } from '../http';
 import type { SupplierDTO } from '../../types/supplier';
@@ -60,7 +61,23 @@ export function useSupplierMutations() {
         description: `El centro de costos se ha ${statusMessage[status]} correctamente.`,
       });
       queryClient.invalidateQueries({
-        queryKey: ['supplierById',  supplierId],
+        queryKey: ['supplierById', supplierId],
+      });
+    },
+  });
+
+  const updateSupplier = useMutation<
+    void,
+    ApiError,
+    { supplierId: string; data: SupplierDTO }
+  >({
+    mutationFn: ({ supplierId, data }) => updateSupplierFn(supplierId, data),
+    onSuccess: () => {
+      toast.success('Proveedor actualizado', {
+        description: 'El proveedor se ha actualizado correctamente.',
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['supplierById'],
       });
     },
   });
@@ -69,5 +86,6 @@ export function useSupplierMutations() {
     createSupplier,
     deleteSupplier,
     changeStatusSupplier,
+    updateSupplier,
   };
 }

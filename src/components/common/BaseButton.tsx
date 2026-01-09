@@ -4,6 +4,8 @@ import { type ReactNode } from 'react';
 export type ButtonVariant = 'primary' | 'secondary' | 'primaryDark' | 'red';
 type ButtonSize = 'xs' | 'sm' | 'md';
 
+export type ButtonTypes =  'button' | 'submit' | 'reset'
+
 const variantStyles: Record<ButtonVariant, string> = {
   primary: 'bg-primary-primary text-white hover:bg-primaryHover',
   secondary: 'bg-grey-300 text-white hover:bg-gray-300',
@@ -29,7 +31,7 @@ export default function ButtonBase({
   label: string | ReactNode;
   onclick?: () => void;
   disabled?: boolean;
-  type?: 'button' | 'submit' | 'reset';
+  type?: ButtonTypes
   variant?: ButtonVariant;
   size?: ButtonSize;
   isLoading?: boolean;

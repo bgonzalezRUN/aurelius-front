@@ -4,12 +4,14 @@ import { useCallback, useState, type ReactNode } from 'react';
 import CollaboratorForm from './CollaboratorForm';
 import { BaseButton } from '../common';
 import SupplierForm from './SupplierForm';
+import { usePopupStore } from '../../store/popup';
 
 type Role = 'user' | 'vendor';
 
 export default function Register() {
   const [role, setRole] = useState<Role | null>(null);
   const [showForm, setShowForm] = useState<boolean>(false);
+  const { openPopup: openPopupValidate } = usePopupStore();
 
   const registerType: {
     roleType: Role;
@@ -32,8 +34,13 @@ export default function Register() {
   ];
 
   const goBackHandler = useCallback(() => {
-    setShowForm(current => !current);
-  }, []);
+    openPopupValidate({
+      title: '¿Estas seguro que quieres volver atras?',
+      message: 'Al volver, perderás la información que ingresaste',
+      confirmButtonText: 'Volver',
+      onConfirm: () => setShowForm(current => !current),
+    });
+  }, [openPopupValidate]);
 
   if (showForm) {
     return (

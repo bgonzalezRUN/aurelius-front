@@ -100,7 +100,7 @@ export function Stepper({ steps, currentStep, className }: StepperProps) {
 
                   <span
                     className={clsx(
-                      'absolute top-10 w-24 text-center text-sm transition-colors line-clamp-2',
+                      'absolute top-10 w-24 text-center text-sm transition-colors line-clamp-2 leading-none mt-1',
                       {
                         'font-semibold ': isActive || isCompleted,
                         'font-semibold text-grey-300':

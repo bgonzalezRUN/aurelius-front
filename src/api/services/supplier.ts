@@ -19,6 +19,19 @@ export const createSupplier = async (data: SupplierDTO): Promise<void> => {
   return res.data;
 };
 
+export const updateSupplier = async (
+  supplierId: string,
+  data: SupplierDTO
+): Promise<void> => {
+  const formData = createFormData(data);
+  const res = await api.patch(`${SUPPLIER}/${supplierId}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return res.data;
+};
+
 export const getSuppliers = async (
   params?: Record<string, unknown>
 ): Promise<ApiCCResponse> => {
@@ -48,3 +61,4 @@ export const changeStatusSupplier = async (
   const res = await api.patch(`${SUPPLIER}/${supplierId}/${status}`);
   return res.data;
 };
+

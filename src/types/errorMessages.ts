@@ -8,6 +8,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
   'Wait to be assigned to a cost center.':
     'No has sido asignado a ningún CC, te estaremos notificando cuando se te asigne',
   'Invalid credentials': 'Correo o contraseña incorrectas.',
+  'User email already exists': 'El correo comercial que ingresaste ya está registrado'
 };
 
 export const DEFAULT_ERROR_MESSAGE =

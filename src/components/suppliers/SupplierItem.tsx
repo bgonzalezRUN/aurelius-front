@@ -12,10 +12,8 @@ export default function SupplierItem({ supplierId }: { supplierId: string }) {
   const { data } = useSupplierById(supplierId);
   if (!data) return null;
 
-  //   const baseStyles = 'text-base font-semibold text-grey-primary';
-
   const requisitionDetails = {
-    name: <p className="text-secondary font-bold">{data.registeredName}</p>,
+    name: <p className="text-secondary font-bold">{data.companyName}</p>,
     address: (
       <p className="text-grey-primary font-bold">{data.fiscalAddress}</p>
     ),

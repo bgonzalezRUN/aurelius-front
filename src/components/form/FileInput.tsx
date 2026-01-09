@@ -3,6 +3,7 @@ import React, {
   useState,
   useRef,
   type ChangeEvent,
+  useEffect,
 } from 'react';
 import { Upload, X } from 'lucide-react'; // Añadimos X para eliminar
 import { labelClasses } from './styles';
@@ -22,6 +23,7 @@ export interface FileInputProps
   accept?: string;
   multiple?: boolean;
   onFilesSelected: (files: FileSelection) => void;
+  currentFiles?: File[];
 }
 
 export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
@@ -35,6 +37,7 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
       multiple = false,
       onFilesSelected,
       disabled = false,
+      currentFiles,
       ...rest
     },
     ref
@@ -42,6 +45,15 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
     const [isDragging, setIsDragging] = useState(false);
     const [documentName, setDocumentName] = useState<string>('');
     const internalRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+      if (currentFiles?.length) {
+        const names = Array.from(currentFiles)
+          .map(file => file.name)
+          .join(', ');
+        setDocumentName(names);
+      }
+    }, [currentFiles]);
 
     // Combinamos la ref de React Hook Form con nuestra ref interna
     const inputRef =
@@ -90,7 +102,7 @@ export const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
       if (!multiple && files.length > 1) {
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(files[0]);
-        files = dataTransfer.files;        
+        files = dataTransfer.files;
       }
       if (inputRef.current) {
         inputRef.current.files = files;

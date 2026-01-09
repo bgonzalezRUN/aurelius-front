@@ -40,7 +40,7 @@ export const Input = forwardRef<HTMLInputElement, FormInputProps>(
     const isPassword = type === 'password';
 
     return (
-      <div className={clsx(`${containerClassName} w-full`, { 'mb-4': !errorMessage })}>
+      <div className={clsx(`${containerClassName} w-full`, { 'mb-2': !errorMessage })}>
         <label htmlFor={name} className={labelClasses}>
           {label}
         </label>
